@@ -1,0 +1,177 @@
+.info{
+    text-align: left;
+}
+.info tr td:first-child{
+    text-align:left;
+    height: 30px;
+    width: 100px;
+    font-weight: 600;
+    
+}
+.info td{
+    text-align: left;
+}
+
+th{
+    text-align: center;
+    vertical-align: middle;
+}
+tr,td{
+    text-align: center;
+    vertical-align: middle;
+}
+
+.square-deactive {
+    background-color:#D1D3D4;
+    border-color:#D1D3D4;
+    color:#f8f8f8;
+    font-weight:600;
+    font-size: 10pt;
+    width: 80px
+}
+.square-active {
+    background-color:#39B54A;
+    border-color:#39B54A;
+    color:#f8f8f8;
+    font-weight:600;
+    font-size: 10pt;
+    width: 80px
+}
+.square-redeem {
+    background-color: #8c1371;
+    border-color:#8c1371;
+    color:#f8f8f8;
+    font-weight:600;
+    font-size: 10pt;
+    width: 80px
+}
+.square-redeem:hover {
+    color:#f8f8f8;
+}
+
+.square-redeem:visited {
+    color:#f8f8f8;
+}
+.square-redeem:active {
+    color:#f8f8f8;
+}
+.square-redeem:link {
+    color:#f8f8f8;
+}
+
+.square-expire {
+    background-color: #cc001c;
+    border-color:#cc001c;
+    color:#f8f8f8;
+    font-weight:600;
+    font-size: 10pt;
+    width: 80px
+}
+.round-alert {
+    border-radius: 10px;
+    background: #ff0000;
+    padding: 20px; 
+    height: 75px; 
+    margin-bottom: 20px;
+  }
+
+.alert a:link    {color:yellow;}
+.alert a:visited {color:yellow;}
+.alert a:hover   {color:yellow;}
+.alert a:active  {color:orange;}
+
+
+/*dashboard widzet*/
+
+.dashboard-stat.red {
+    background-color: #BE1E2D;
+}
+
+.dashboard-stat.orange {
+    background-color: #F15A29;
+}
+
+.dashboard-stat.yellow {
+    background-color: #F7941D;
+}
+
+.dashboard-stat.green {
+    background-color: #CAA931;
+}
+
+.dashboard-stat {
+    display: block;
+    margin-bottom: 25px;
+    overflow: hidden;
+    border-radius: 2px;
+    background-color: #fff;
+    box-shadow: 0 0 30px rgba(69, 101, 173, 0.1);
+}
+
+.dashboard-stat:after, .dashboard-stat:before {
+    content: " ";
+    display: table;
+}
+
+
+
+.dashboard-stat .visual {
+    width: 80px;
+    height: 70px;
+    display: block;
+    float: left;
+    padding-top: 35px;
+    margin-bottom: 40px;
+    padding-left: 15px;
+    font-size: 35px;
+    line-height: 35px;
+}
+
+.dashboard-stat .details {
+    position: absolute;
+    right: 15px;
+    padding-right: 15px;
+}
+
+.dashboard-stat:after {
+    clear: both;
+}
+
+.dashboard-stat:after, .dashboard-stat:before {
+    content: " ";
+    display: table;
+}
+
+.dashboard-stat .details .number {
+    color: #FFF;
+}
+
+.dashboard-stat .details .number {
+    padding-top: 25px;
+    text-align: right;
+    font-size: 34px;
+    line-height: 36px;
+    letter-spacing: -1px;
+    margin-bottom: 0;
+    font-weight: 300;
+}
+
+.dashboard-stat .details .desc {
+    color: #FFF;
+    opacity: 1;
+    filter: alpha(opacity=100);
+}
+
+.dashboard-stat .visual>i {
+    color: #FFF;
+    opacity: .1;
+    filter: alpha(opacity=10);
+}
+
+.dashboard-stat .visual>i {
+    margin-left: -20px;
+    font-size: 100px;
+    line-height: 80px;
+}
+
+

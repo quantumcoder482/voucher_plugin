@@ -23,6 +23,10 @@ $(document).ready(function () {
         theme:"bootstrap"
     });
 
+    $('#sub_product').select2({
+        theme:"bootstrap"
+    });
+
     $('#status_id').select2({
         theme:"bootstrap"
     });
@@ -38,6 +42,42 @@ $(document).ready(function () {
     var $front_img = $("#front_img");
     var $back_img = $("#back_img");
     var upload_resp;
+
+
+    var $block_product = $('#block_product');
+    var $block_sub_product = $('#block_sub_product');
+
+    var isChecked = $("#payment_req").prop("checked");
+
+    if(isChecked){
+        $block_product.show();
+        $block_sub_product.show();
+    }else{
+        $block_product.hide();
+        $block_sub_product.hide();
+    }
+
+    $('#payment_req').on('ifChanged', function(e){
+        e.preventDefault();
+
+        $('#product').select2({
+            theme:"bootstrap"
+        });
+
+        $('#sub_product').select2({
+            theme:"bootstrap"
+        });
+
+        var isChecked = e.currentTarget.checked;
+
+        if (isChecked == true) {
+            $block_product.show('slow');
+            $block_sub_product.show('slow');
+        }else{
+            $block_product.hide('slow');
+            $block_sub_product.hide('slow');
+        }
+    });
 
 
 
@@ -115,6 +155,7 @@ $(document).ready(function () {
     ib_submit.click(function (e) {
 
         e.preventDefault();
+        var vid = $('#vid').val();
 
         $('#ibox_form').block({ message: null });
 
@@ -123,7 +164,7 @@ $(document).ready(function () {
 
                 if ($.isNumeric(data)) {
 
-                    location.reload();
+                   window.location.href = _url + "voucher/app/list_voucher_page/" + vid;
                 }
                 else {
                     $('#ibox_form').unblock();

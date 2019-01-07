@@ -21,10 +21,9 @@
     
                             <div class="col-md-8">
                                 <select id="country" name="country" style="width:100%" class="form-control">
-                                    <option value="{$voucher['country_id']}" selected>{$voucher['country_name']}</option>
-                                    {*{foreach $vehicles as $vehicle}*}
-                                    {*<option value="{$vehicle['country']}">{$vehicle['country']} - {$vehicle['vehicle_type']}</option>*}
-                                    {*{/foreach}*}
+                                    {foreach $country_list as $c}
+                                        <option value="{$c['id']}" {if $c['id'] eq $voucher['country_id']} selected {/if}> {$c['country_name']}</option>
+                                    {/foreach}
                                 </select>
                                 
                             </div>
@@ -34,10 +33,10 @@
                             <label class="col-md-4 control-label" for="category">Category <small class="red">*</small></label>
     
                             <div class="col-md-8">
-                                <select class="form-control" style="width:100%" id="category" name="category" disabled>
-                                    <option value="{$voucher['category']}" selected>{$voucher['category']}</option>
-                                    {*<option value="Silver">Silver</option>*}
-                                    {*<option value="Gold">Gold</option>*}
+                                <select class="form-control" style="width:100%" id="category" name="category">
+                                    {foreach $category_list as $c}
+                                        <option value="{$c['id']}" {if $c['id'] eq $voucher['category_id']} selected {/if}> {$c['category_name']}</option>
+                                    {/foreach}
                                 </select>
                                 <span class="help-block"> </span>
                             </div>
@@ -76,7 +75,6 @@
                                     <option value="annual"> Annual </option>
                                     <option value="monthly"> Monthly </option>
                                 </select>
-                                {*<span class="help-block"> {$_L['vehicle comment']}</span>*}
                             </div>
                         </div>
 
@@ -117,7 +115,7 @@
         <div class="col-md-5">
             <div class="ibox float-e-margins">
                 <div class="ibox-title">
-                    Uplolad Flag Image
+                    Upload Voucher Image
                 </div>
                 <div class="ibox-content" id="ibox_form" >
     
@@ -160,6 +158,7 @@
         $("#emsg").hide();
         $('#description').redactor(
             {
+                toolbar: false,
                 minHeight: 150 // pixels
             }
         );

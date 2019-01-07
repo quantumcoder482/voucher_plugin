@@ -13,26 +13,22 @@
                 </div>
             </div>
             <div class="ibox-content">
-
-                {if $view_type == 'filter'}
-                    <form class="form-horizontal" method="post" action="">
-                        <div class="form-group">
-                            <div class="col-md-12">
-                                <div class="input-group">
-                                    <div class="input-group-addon">
-                                        <span class="fa fa-search"></span>
-                                    </div>
-                                    <input type="text" name="name" id="foo_filter" class="form-control" placeholder="{$_L['Search']}..." />
-
+                <form class="form-horizontal" method="post" action="">
+                    <div class="form-group">
+                        <div class="col-md-12">
+                            <div class="input-group">
+                                <div class="input-group-addon">
+                                    <span class="fa fa-search"></span>
                                 </div>
+                                <input type="text" name="name" id="foo_filter" class="form-control" placeholder="{$_L['Search']}..." />
+
                             </div>
-
                         </div>
-                        <input type="hidden" id="sure_msg" value="{$_L['are_you_sure']}" />
-                    </form>
-                {/if}
 
-                <table class="table table-bordered table-hover sys_table footable" {if $view_type=='filter' } data-filter="#foo_filter" data-page-size="20"{/if}>
+                    </div>
+                    <input type="hidden" id="sure_msg" value="{$_L['are_you_sure']}" />
+                </form>
+                <table class="table table-bordered table-hover sys_table footable" data-filter="#foo_filter" data-page-size="20">
                     <thead>
                     <tr>
                         <th>#</th>
@@ -60,22 +56,22 @@
                                 {date( $config['df'], strtotime($v['created_date']))}
                             </td>
 
-                            <td data-value="{$v['country_name']}" id="{$v['id']}">
+                            <td class="view_voucher" data-value="{$v['country_name']}" id="{$v['id']}">
                                 <a href="#">{$v['country_name']}</a>
                             </td>
 
-                            <td data-value="{$v['voucher_img']}" alt="{$v['voucher_img']}">
+                            <td class="view_voucher" data-value="{$v['voucher_img']}" id="{$v['id']}" alt="{$v['voucher_img']}">
 
                                 {if {$v['voucher_img']} eq ''}
-                                    <img src="{$baseUrl}/apps/voucher/views/img/item_placeholder.png" width="40px" />
+                                    <a href="#"><img src="{$baseUrl}/apps/voucher/views/img/item_placeholder.png" width="40px" /></a>
                                 {else}
-                                    <img src="{$baseUrl}/apps/voucher/public/voucher_imgs/{$v['voucher_img']}" width="40px" />
+                                    <a href="#"><img src="{$baseUrl}/apps/voucher/public/voucher_imgs/{$v['voucher_img']}" width="40px" /></a>
                                 {/if}
 
                             </td>
 
-                            <td data-value="{$v['category']}" id="{$v['id']}">
-                                <a href="#">{$v['category']}</a>
+                            <td class="view_voucher" data-value="{$v['category_name']}" id="{$v['id']}">
+                                <a href="#">{$v['category_name']}</a>
                             </td>
 
                             <td data-value="{$v['cost_price']}" class="amount" data-a-sign="{if $v['currency_symbol'] eq ''} {$config['currency_code']} {else} {$v['currency_symbol']}{/if}">{$v['cost_price']}</td>
@@ -96,6 +92,9 @@
                             </td>
 
                             <td class="text-center">
+                                <a href="{$_url}voucher/app/list_voucher_page/{$v['id']}" class="btn btn-primary btn-xs add_page" id="{$v['id']}" data-toggle="tooltip" data-placement="top" title="Add Page">
+                                    <i class="fa fa-plus"></i>
+                                </a>
                                 {*{if $v['pay_status'] neq 0 && $v['expired'] neq 1}*}
                                     <a href="#" class="btn btn-xs generate" id="{$v['id']}" style="background-color:#4B0082; border-color:#4B0082; color:#f8f8f8"
                                        data-toggle="tooltip" data-placement="top" title="generate">
@@ -122,20 +121,15 @@
                     {/foreach}
 
                     </tbody>
-
-                    {if $view_type == 'filter'}
-                        <tfoot>
-                        <tr>
-                            <td style="text-align: right;" colspan="11">
-                                <ul class="pagination">
-                                </ul>
-                            </td>
-                        </tr>
-                        </tfoot>
-                    {/if}
-
+                    <tfoot>
+                    <tr>
+                        <td style="text-align: right;" colspan="11">
+                            <ul class="pagination">
+                            </ul>
+                        </td>
+                    </tr>
+                    </tfoot>
                 </table>
-                {$paginator['contents']}
             </div>
         </div>
     </div>

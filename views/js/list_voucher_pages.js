@@ -14,46 +14,36 @@ $(document).ready(function () {
 
     $('.clone_page').on('click', function (e) {
 
+        var vid = $('#vid').val();
         var id = this.id;
-
         e.preventDefault();
 
-        $('body').modalmanager('loading');
+        window.location.href = _url + "voucher/app/clone_page/" + vid +'/' + id;
 
-        $modal.load(_url + 'voucher/app/modal_generate_voucher/'+id, '', function () {
-
-            $modal.modal();
-
-        });
     });
 
     $('.edit_page').on('click', function (e) {
-
+        var vid = $('#vid').val();
         var id = this.id;
-
         e.preventDefault();
 
-        $('body').modalmanager('loading');
+        window.location.href = _url + "voucher/app/add_page/" + vid +'/' + id;
 
-        $modal.load(_url + 'voucher/app/modal_edit_voucher/'+id, '', function () {
-
-            $modal.modal();
-
-        });
     });
 
     $('.view_page').on('click', function (e) {
-
+        var vid = $('#vid').val();
         var id = this.id;
         e.preventDefault();
-        window.location.href = _url + "voucher/app/view_generated_vouchers" + id;
+        window.location.href = _url + "voucher/app/view_page/" + vid +'/' + id;
        
     });
 
     $(".cdelete").click(function (e) {
 
         e.preventDefault();
-        id = this.id;
+        var vid = $('#vid').val();
+        var id = this.id;
         var sure_msg = $('#sure_msg').val();
 
         bootbox.confirm(sure_msg, function (result) {
@@ -62,9 +52,25 @@ $(document).ready(function () {
 
                 var _url = $("#_url").val();
 
-                window.location.href = _url + "voucher/app/delete_voucher_format" + id;
+                window.location.href = _url + "voucher/app/delete_page/" + vid + '/' + id;
             }
         });
+    });
+
+    $('.view_redeem_page').on('click', function (e) {
+        var gid = $('#gid').val();
+        var id = this.id;
+        e.preventDefault();
+        window.location.href = _url + "voucher/app/view_redeem_page/" + gid +'/' + id +'/view';
+
+    });
+
+    $('.edit_redeem_page').on('click', function (e) {
+        var gid = $('#gid').val();
+        var id = this.id;
+        e.preventDefault();
+        window.location.href = _url + "voucher/app/view_redeem_page/" + gid +'/' + id + '/edit';
+
     });
 
 

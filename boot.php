@@ -10,6 +10,14 @@ $admin_voucher_sub_menus = [
    'link' => U.'voucher/app/add_list_country/'
   ],
   [
+   'name' => 'Add Category',
+   'link' => U.'voucher/app/add_category/'
+  ],
+  [
+   'name' => 'Add PDF Template',
+   'link' => U.'voucher/app/pdf_template/'
+  ],
+  [
    'name' => 'Add Voucher',
    'link' => U.'voucher/app/add_voucher/'
   ],
@@ -28,8 +36,23 @@ $admin_voucher_sub_menus = [
 
 ];
 
+$client_voucher_sub_menus = [
+ [
+  'name' => 'My Voucher',
+  'link' => U.'voucher/client/myvoucher'
+ ],
+ [
+  'name' => 'Voucher Shop',
+  'link' => U.'voucher/client/vouchershop'
+ ],
+ [
+  'name' => 'Client Voucher',
+  'link' => U.'voucher/client/clientvoucher'
+ ]
+
+];
+
+
 add_menu_admin('Voucher',U.'voucher/app','voucher','fa fa-credit-card',2,$admin_voucher_sub_menus);
 
-add_menu_client('My Voucher',U.'voucher/client/myvoucher','myvoucher','fa fa-credit-card',2);
-
-add_menu_client('Voucher Shop',U.'voucher/client/vouchershop','vouchershop','fa fa-credit-card',2);
+add_menu_client('Voucher',U.'voucher/client','voucher','fa fa-credit-card',2, $client_voucher_sub_menus);

@@ -12,8 +12,10 @@
                     <h5>
                         {if $type eq 'add'}
                             Add Voucher Page Form
-                        {else}
+                        {elseif $type eq 'edit'}
                             Edit Voucher Page Form
+                        {else}
+                            View Voucher Page Form
                         {/if}
                     </h5>
                 </div>
@@ -28,24 +30,24 @@
                             <label class="col-md-2 control-label" for="title">Title <small class="red">*</small></label>
 
                             <div class="col-md-10">
-                                <input type="text" id="title" name="title" class="form-control" value="{$val['title']}" autocomplete="off">
+                                <input type="text" id="title" name="title" class="form-control" value="{$val['title']}" autocomplete="off" {if $type eq 'view'} disabled {/if}>
                             </div>
                         </div>
 
                         <div class="form-group">
-                            <label class="col-md-2 control-label" for="payment">Payment</label>
+                            <label class="col-md-2 control-label" for="payment_req">Payment</label>
 
                             <div class="col-md-10">
                                 <div class="checkbox">
                                     <label>
-                                        <input type="checkbox" class="i-checks" name="payment_req" value="1" {if $val['payment_req'] eq '1'}checked{/if}>
+                                        <input type="checkbox" class="i-checks" id="payment_req" name="payment_req" value="1" {if $val['payment_req'] eq '1'}checked{/if} {if $type eq 'view'} disabled {/if}>
                                         Require Payment
                                     </label>
                                 </div>
                             </div>
                         </div>
 
-                        <div class="form-group">
+                        <div class="form-group" id="block_product">
                             <label class="col-md-2 control-label" for="product">Product <small class="red">*</small></label>
 
                             <div class="col-md-10">
@@ -53,7 +55,7 @@
                                 <select id="product" name="product_id" class="form-control" style="width:100%">
                                     <option value="">Select Product</option>
                                     {foreach $product_list as $p}
-                                        <option value="{$p['id']}" {if $p['id'] eq $val['product_id']}selected{/if} >{$p['name']}</option>
+                                        <option value="{$p['id']}" {if $p['id'] eq $val['product_id']}selected{/if} {if $type eq 'view'} disabled {/if}>{$p['name']}</option>
                                     {/foreach}
                                 </select>
                                 <span class="help-block">
@@ -62,15 +64,30 @@
                             </div>
                         </div>
 
+                        <div class="form-group" id="block_sub_product">
+                            <label class="col-md-2 control-label" for="sub_product">Sub-Product </label>
+
+                            <div class="col-md-10">
+
+                                <select id="sub_product" name="sub_product_id" class="form-control" style="width:100%">
+                                    <option value="">Select Product</option>
+                                    {foreach $product_list as $p}
+                                        <option value="{$p['id']}" {if $p['id'] eq $val['sub_product_id']}selected{/if} {if $type eq 'view'} disabled {/if}>{$p['name']}</option>
+                                    {/foreach}
+                                </select>
+                                <br>
+                            </div>
+                        </div>
+
                         <div class="form-group">
                             <label class="col-md-2 control-label" for="status_id">Status <small class="red">*</small></label>
 
                             <div class="col-md-10">
 
-                                <select id="status_id" name="status_id" class="form-control" style="width:100%">
+                                <select id="status_id" name="status_id" class="form-control" style="width:100%" {if $type eq 'view'} disabled {/if}>
                                     <option value="{$val['status_id']}" selected>{$val['status_id']}</option>
                                     <option value="redeem" >Redeem</option>
-                                    <option value="pending" >Pending</option>
+                                    <option value="processing" >Processing</option>
                                     <option value="confirm" >Confirm</option>
 
                                 </select>
@@ -83,7 +100,7 @@
                             <div class="col-md-10">
                                 <div class="checkbox">
                                     <label>
-                                        <input type="checkbox" class="i-checks" name="address" value="1" {if $val['address'] eq '1'}checked{/if}>
+                                        <input type="checkbox" class="i-checks" name="address" value="1" {if $val['address'] eq '1'}checked{/if} {if $type eq 'view'} disabled {/if}>
                                          Include user address
                                     </label>
                                 </div>
@@ -96,7 +113,7 @@
                             <div class="col-md-10">
                                 <div class="checkbox">
                                     <label>
-                                        <input type="checkbox" class="i-checks" name="date_range" value="1" {if $val['date_range'] eq '1'}checked{/if}>
+                                        <input type="checkbox" class="i-checks" name="date_range" value="1" {if $val['date_range'] eq '1'}checked{/if} {if $type eq 'view'} disabled {/if}>
                                          Include depart & return date
                                     </label>
                                 </div>
@@ -211,7 +228,7 @@
                         <div class="col-md-offset-2 col-md-10" style="text-align:right">
                             {if $type eq 'add'}
                                 <button class="btn btn-primary" type="submit" id="submit"><i class="fa fa-check"></i>{$_L['Submit']}</button>
-                            {else}
+                            {elseif $type eq 'edit'}
                                 <button class="btn btn-primary" type="submit" id="submit"><i class="fa fa-check"></i>{$_L['Update']}</button>
                             {/if}
                         </div>
@@ -228,7 +245,7 @@
                 <div class="ibox-title">
                     Upload Voucher Front
                 </div>
-                <div class="ibox-content" id="ibox_form">
+                <div class="ibox-content" id="ibox_form" {if $type eq 'view'} hidden {/if}>
 
                     <form action="" class="dropzone" id="upload_container1">
 
@@ -255,7 +272,7 @@
                 <div class="ibox-title">
                     Upload Voucher Back
                 </div>
-                <div class="ibox-content" id="ibox_form">
+                <div class="ibox-content" id="ibox_form" {if $type eq 'view'} hidden {/if}>
 
                     <form action="" class="dropzone" id="upload_container2">
 
@@ -271,7 +288,7 @@
 
                 <div class="ibox-content" id="ibox_form" style="text-align: center;">
                     {if $type neq 'add'}
-                        <img id="voucher_back" src="{$baseUrl}/apps/voucher/public/voucher_imgs/{$val['back_img ']}" style="border:1px solid darkgray"  width="100%">
+                        <img id="voucher_back" src="{$baseUrl}/apps/voucher/public/voucher_imgs/{$val['back_img']}" style="border:1px solid darkgray"  width="100%">
                     {else}
                         <img id="voucher_back" src="" style="border:1px solid darkgray" width="100%">
                     {/if}

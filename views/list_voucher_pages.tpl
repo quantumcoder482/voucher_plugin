@@ -7,15 +7,60 @@
     <div class="col-md-12">
         <div class="ibox float-e-margins">
             <div class="ibox-title">
-                <h5>Voucher Pages</h5>
+                <h5>
+                    Voucher Pages
+                    {if $gid neq ''}
+                        - {$voucher_info['category_name']} {$voucher_info['prefix']}-{$voucher_info['serial_number']}
+                    {else}
+                        - {$voucher_format['country_name']} {$voucher_format['category_name']}
+                    {/if}
+                </h5>
+
+                {if $gid eq ''}
                 <div class="ibox-tools">
                     <a href="{$_url}voucher/app/add_page/{$voucher_id}" class="btn btn-primary btn-xs add_page"><i class="fa fa-plus"></i>Add Page</a>
                 </div>
+                {/if}
+
             </div>
             <div class="ibox-content">
                 <div class="row">
                     <div class="col-md-4">
-                        <img src="{$baseUrl}/apps/voucher/public/voucher_imgs/{$voucher_img}" width="450px" />
+                        <img src="{$baseUrl}/apps/voucher/public/voucher_imgs/{$voucher_img}" width="100%" />
+                        <br>
+                        {if $gid neq ''}
+                        <div class="ibox-title">
+                            <h5>Voucher Details</h5>
+                        </div>
+                        <div class="ibox-content">
+                            <table style="text-align: left" width="100%">
+                                <tr>
+                                    <td width="40%" style="text-align: left">Date Activated:</td>
+                                    <td style="text-align: left">{$voucher_info['date']}</td>
+                                </tr>
+                                <tr>
+                                    <td width="40%" style="text-align: left">Expire Date:</td>
+                                    <td style="text-align: left">{$voucher_info['expiry_date']}</td>
+                                </tr>
+                                <tr>
+                                    <td width="40%" style="text-align: left">Type:</td>
+                                    <td style="text-align: left">{$voucher_info['category_name']}</td>
+                                </tr>
+                                <tr>
+                                    <td width="40%" style="text-align: left">Description:</td>
+                                    <td style="text-align: left">{$voucher_info['description']}</td>
+                                </tr>
+                                <tr>
+                                    <td width="40%" style="text-align: left">Voucher Number:</td>
+                                    <td style="text-align: left">{$voucher_info['prefix']}{$voucher_info['serial_number']}</td>
+                                </tr>
+                                <tr>
+                                    <td width="40%" style="text-align: left">Status:</td>
+                                    <td style="text-align: left">{if $voucher_info['status'] neq ''}{$voucher_info['status']}{else}Inactive{/if}</td>
+                                </tr>
+                            </table>
+                        </div>
+                        {/if}
                     </div>
                     <div class="col-md-8">
                         <form class="form-horizontal" method="post" action="">
@@ -40,63 +85,89 @@
                                 <th>Image</th>
                                 <th>Title</th>
                                 <th>Description</th>
-                                <th>Status</th>
+                                {if $gid neq ''}<th>Status</th>{/if}
                                 <th class="text-center" width="210px">Manage</th>
                             </tr>
                             </thead>
                             <tbody>
 
-                            {foreach $voucher_pages as $v}
+                            {foreach $voucher_pages as $key => $v}
                                 <tr>
                                     <td data-value="{$v['id']}">
-                                        {$v['id']}
+                                        {$key+1}
                                     </td>
 
                                     <td data-value="{$v['front_img']}" alt="voucher front image">
-
-                                        {if {$v['front_img']} eq ''}
-                                            <img src="{$baseUrl}/apps/voucher/views/img/item_placeholder.png" width="40px" />
+                                        {if $gid neq ''}
+                                            <a href="#" class="{if $page_status[$v['id']] neq 'redeem'}view_redeem_page{/if}" id="{$v['id']}">
+                                                <img src="{$baseUrl}/apps/voucher/public/voucher_imgs/{$v['front_img']}" width="40px" />
+                                            </a>
                                         {else}
-                                            <img src="{$baseUrl}/apps/voucher/public/voucher_imgs/{$v['front_img']}" width="40px" />
+                                            {if {$v['front_img']} eq ''}
+                                                <img src="{$baseUrl}/apps/voucher/views/img/item_placeholder.png" width="40px" />
+                                            {else}
+                                                <img src="{$baseUrl}/apps/voucher/public/voucher_imgs/{$v['front_img']}" width="40px" />
+                                            {/if}
                                         {/if}
 
                                     </td>
 
                                     <td data-value="{$v['title']}" id="{$v['id']}">
-                                        <a href="#">{$v['title']}</a>
+                                        {if $gid neq ''}
+                                            <a href="#" class="{if $page_status[$v['id']] neq 'redeem'}view_redeem_page{/if}" id="{$v['id']}">{$v['title']}</a>
+                                        {else}
+                                            <a href="#" class="view_page" id="{$v['id']}">{$v['title']}</a>
+                                        {/if}
+
                                     </td>
 
                                     <td data-value="{$v['description']}">
                                         {$v['description']}
                                     </td>
 
-                                    <td data-value="{$v['status']}">
-                                        {if {$v['status']} neq 1}
-                                            <a href="#" class="btn btn-xs square-deactive" id="{$v['id']}" disabled data-toggle="tooltip" data-placement="top" title="Active">
-                                                Deactive
-                                            </a>
-                                        {else}
-                                            <a href="#" class="btn btn-xs square-active" id="{$v['id']}" data-toggle="tooltip" data-placement="top" title="Deactive">
-                                                Active
-                                            </a>
+                                    {if $gid neq ''}
+                                    <td data-value="{$page_status[$v['id']]}">
+                                        {if $page_status[$v['id']] eq 'redeem' || $page_status[$v['id']] eq ''}
+                                        <a href="#" class="btn btn-xs square-redeem" id="{$v['id']}" data-toggle="tooltip" data-placement="top" title="Redeem">
+                                            Redeem
+                                        </a>
+                                        {elseif $page_status[$v['id']] eq 'confirm'}
+                                        <a href="#" class="btn btn-xs square-active" id="{$v['id']}" data-toggle="tooltip" data-placement="top" title="Confirm">
+                                            Confirm
+                                        </a>
+                                        {elseif $page_status[$v['id']] eq 'processing'}
+                                        <a href="#" class="btn btn-xs square-deactive" id="{$v['id']}" data-toggle="tooltip" data-placement="top" title="Processing">
+                                            Processing
+                                        </a>
                                         {/if}
-
                                     </td>
+                                    {/if}
 
-                                    <td class="text-center">
-                                        <a href="#" class="btn btn-primary btn-xs view_page" id="{$v['id']}" data-toggle="tooltip" data-placement="top" title="{$_L['View']}">
-                                            <i class="fa fa-file-text-o"></i>
-                                        </a>
-                                        <a href="#" class="btn btn-success btn-xs clone_page" id="{$v['id']}" data-toggle="tooltip" data-placement="top" title="{$_L['Clone']}">
-                                            <i class="fa fa-files-o"></i>
-                                        </a>
-                                        <a href="#" class="btn btn-info btn-xs edit_page" id="{$v['id']}" data-toggle="tooltip" data-placement="top" title="{$_L['Edit']}">
-                                            <i class="fa fa-pencil"></i>
-                                        </a>
-                                        <a href="#" class="btn btn-danger btn-xs cdelete" id="{$v['id']}" data-toggle="tooltip" data-placement="top" title="{$_L['Delete']}">
-                                            <i class="fa fa-trash"></i>
-                                        </a>
-                                    </td>
+                                    {if $gid neq ''}
+                                        <td class="text-center">
+                                            <a href="#" class="btn btn-primary btn-xs {if $page_status[$v['id']] neq 'redeem'}view_redeem_page{/if}" id="{$v['id']}" data-toggle="tooltip" data-placement="top" title="{$_L['View']}">
+                                                <i class="fa fa-file-text-o"></i>
+                                            </a>
+                                            <a href="#" class="btn btn-info btn-xs {if $page_status[$v['id']] neq 'redeem'}edit_redeem_page{/if}" id="{$v['id']}" data-toggle="tooltip" data-placement="top" title="{$_L['Edit']}">
+                                                <i class="fa fa-pencil"></i>
+                                            </a>
+                                        </td>
+                                    {else}
+                                        <td class="text-center">
+                                            <a href="#" class="btn btn-primary btn-xs view_page" id="{$v['id']}" data-toggle="tooltip" data-placement="top" title="{$_L['View']}">
+                                                <i class="fa fa-file-text-o"></i>
+                                            </a>
+                                            <a href="#" class="btn btn-success btn-xs clone_page" id="{$v['id']}" data-toggle="tooltip" data-placement="top" title="{$_L['Clone']}">
+                                                <i class="fa fa-files-o"></i>
+                                            </a>
+                                            <a href="#" class="btn btn-info btn-xs edit_page" id="{$v['id']}" data-toggle="tooltip" data-placement="top" title="{$_L['Edit']}">
+                                                <i class="fa fa-pencil"></i>
+                                            </a>
+                                            <a href="#" class="btn btn-danger btn-xs cdelete" id="{$v['id']}" data-toggle="tooltip" data-placement="top" title="{$_L['Delete']}">
+                                                <i class="fa fa-trash"></i>
+                                            </a>
+                                        </td>
+                                    {/if}
                                 </tr>
                             {/foreach}
 
@@ -112,13 +183,104 @@
                                 </tfoot>
 
                         </table>
-
+                    <input type="hidden" id="vid" name="vid" value="{$voucher_id}">
+                    <input type="hidden" id="gid" name="gid" value="{$gid}">
                     </div>
                 </div>
             </div>
         </div>
     </div>
 </div>
+{if $gid neq ''}
+    <div class="row">
+        <div class="col-md-12">
+            <div class="ibox float-e-margins">
+                <div class="ibox-title">
+                    <h5>
+                        Recent Transaction
+                    </h5>
+                </div>
+                <div class="ibox-content">
+                    <div class="row">
+                        <div class="col-md-12">
+                            <table class="table table-bordered table-hover sys_table footable" data-filter="#foo_filter" data-page-size="10" >
+                                <thead>
+                                <tr>
+                                    <th>Invoice No.</th>
+                                    <th>Invoice Date</th>
+                                    <th>Product Name (Sub product)</th>
+                                    <th>Account</th>
+                                    <th>Amount</th>
+                                    <th>Status</th>
+                                </tr>
+                                </thead>
+                                <tbody>
+
+                                {foreach $recent_transaction as $t}
+                                    <tr>
+                                        <td data-value="{$t['invoice_id']}">
+                                            {if $t['invoice_id'] eq '0' || $t['invoice_id'] eq ''}
+                                                -
+                                            {else}
+                                                <a href="{$invoice_url[$t['id']]}" >{$t['invoice_id']}</a>
+                                            {/if}
+
+                                        </td>
+                                        <td data-value="{strtotime($t['invoice_date'])}">
+                                            {if $t['invoice_date'] eq '0' || $t['invoice_date'] eq ''}
+                                                -
+                                            {else}
+                                                {date( $config['df'], strtotime($t['invoice_date']))}
+                                            {/if}
+
+                                        </td>
+                                        <td data-value="{$t['product_name']}">
+                                            {if $t['product_name'] neq ''}
+                                                {$t['product_name']} {if $t['sub_product_req'] eq '1'}( {$t['sub_product_name']} ){/if}
+                                            {else}
+                                                -
+                                            {/if}
+                                        </td>
+                                        <td data-value="{$t['customer_name']}">
+                                            <a href="{$account_url[$t['id']]}">{$t['customer_name']}</a>
+                                        </td>
+                                        <td data-value="{$t['invoice_amount']}" class="amount" data-a-sign="{$config['currency_code']} ">{$t['invoice_amount']}</td>
+                                        <td data-value="{$t['invoice_status']}">
+                                            {if $t['invoice_status'] eq 'Paid'}
+                                                <div class="label-success" style="margin:0 auto; font-size:85%; width:85px">Paid</div>
+                                            {elseif $t['invoice_status'] eq 'Unpaid'}
+                                                <div class="label-danger" style="margin:0 auto; font-size:85%; width:85px">Unpaid</div>
+                                            {elseif $t['invoice_status'] eq 'Partially Paid'}
+                                                <div class="label-warning" style="margin:0 auto; font-size:85%; width:85px">Partially Paid</div>
+                                            {else}
+                                                -
+                                            {/if}
+                                        </td>
+
+                                    </tr>
+                                {/foreach}
+
+                                </tbody>
+
+                                <tfoot>
+                                <tr>
+                                    <td style="text-align: right;" colspan="11">
+                                        <ul class="pagination">
+                                        </ul>
+                                    </td>
+                                </tr>
+                                </tfoot>
+
+                            </table>
+
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+{/if}
+
 {/block}
 {block name=script}
     <script type="text/javascript" src="{$app_url}apps/voucher/views/js/list_voucher_pages.js"></script>

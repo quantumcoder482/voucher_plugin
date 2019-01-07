@@ -8,13 +8,14 @@ $(document).ready(function () {
     $("#emsg").hide();
     $('#description').redactor(
         {
+            toolbar: false,
             minHeight: 200 // pixels
         }
     );
+
+    $('.footable').footable();
     $.fn.modal.defaults.width = '800px';
-
     var $modal = $('#ajax-modal');
-
     $('[data-toggle="tooltip"]').tooltip();
 
 
@@ -25,6 +26,10 @@ $(document).ready(function () {
 
     $country.select2({
         theme: "bootstrap"
+    });
+
+    $category.select2({
+        theme:"bootstrap"
     });
 
     $expiry_duration.select2({
@@ -149,7 +154,7 @@ $(document).ready(function () {
 
                 if ($.isNumeric(data)) {
 
-                    location.reload();
+                    window.location.href = _url + 'voucher/app/list_voucher';
                 }
                 else {
                     $('#ibox_form').unblock();

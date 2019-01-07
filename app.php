@@ -23,6 +23,99 @@ switch ($action){
         $latestincomes = null;
         $latestexpenses = null;
 
+        $today = date('Y-m-d');
+
+        $total_expired = ORM::for_table('voucher_generated')
+            ->where_lt('voucher_generated.expiry_date', $today)
+            ->count();
+
+        $total_page_redeem = ORM::for_table('voucher_page_transaction')->count();
+        $total_voucher_redeem = ORM::for_table('voucher_generated')
+            ->where('redeem_status', 'Redeem')
+            ->count();
+
+        $total_generated_voucher = ORM::for_table('voucher_generated')->count();
+
+
+        $redeem_vouchers = ORM::for_table('voucher_generated')
+            ->left_outer_join('crm_accounts', array('crm_accounts.id', '=', 'voucher_generated.contact_id'))
+            ->left_outer_join('voucher_format', array('voucher_format.id', '=', 'voucher_generated.voucher_format_id'))
+            ->left_outer_join('voucher_category', array('voucher_category.id', '=', 'voucher_format.category_id'))
+            ->inner_join('voucher_country', array('voucher_country.id', '=', 'voucher_format.country_id'))
+            ->select('voucher_generated.*')
+            ->select('crm_accounts.account', 'customer')
+            ->select('voucher_country.country_name', 'country_name')
+            ->select('voucher_category.category_name', 'category')
+            ->select('voucher_format.expiry_day', 'expiry_day')
+            ->where('redeem_status', 'Redeem')
+            ->find_array();
+
+        $voucher_status = array();
+        foreach ($redeem_vouchers as $v){
+
+            $date1 = date_create($today);
+            $date2 = date_create($v['expiry_date']);
+            $rest = date_diff($date1, $date2);
+            $rest = intval($rest->format("%a"));
+
+            if($date2 < $date1){
+                $voucher_status[$v['id']] = 'Expired';
+            } elseif( $rest < intval($v['expiry_day'])) {
+                $voucher_status[$v['id']] = 'Limit';
+            } else {
+                if($v['status'] == 'Paid'){
+                    $voucher_status[$v['id']] = 'Active';
+                }else {
+                    $voucher_status[$v['id']] = 'Inactive';
+                }
+
+            }
+        }
+
+        $redeem_voucher_pages = ORM::for_table('voucher_page_transaction')
+            ->order_by_desc('id')
+            ->find_array();
+
+
+        $recent_vouchers = ORM::for_table('voucher_generated')
+        ->left_outer_join('crm_accounts', array('crm_accounts.id', '=', 'voucher_generated.contact_id'))
+        ->left_outer_join('sys_invoices', array('sys_invoices.id' ,'=', 'voucher_generated.invoice_id'))
+        ->left_outer_join('voucher_format', array('voucher_format.id', '=', 'voucher_generated.voucher_format_id'))
+        ->select('voucher_generated.*')
+        ->select('crm_accounts.account', 'account')
+        ->select('voucher_format.sales_price', 'amount')
+        ->select('sys_invoices.status', 'invoice_status')
+        ->find_array();
+
+
+        $paid_count = 0;
+        $unpaid_count = 0;
+        $partially_count = 0;
+        $total_count = 0;
+
+        foreach($recent_vouchers as $v){
+            if($v['invoice_status'] == 'Paid'){
+                $paid_count++;
+            }elseif ($v['invoice_status'] == 'Unpaid' || $v['invoice_id'] == '-1' || $v['invoice_id'] == '0'){
+                $unpaid_count++;
+            }else{
+                $partially_count++;
+            }
+            $total_count++;
+        }
+
+        $count = array(
+            'paid' => $paid_count,
+            'unpaid' => $unpaid_count,
+            'partially' => $partially_count
+        );
+
+        $percent = array(
+            'paid' => floor($paid_count/$total_count*100),
+            'unpaid' => floor($unpaid_count/$total_count*100),
+            'partially' => floor($partially_count/$total_count*100)
+        );
+
 
         $ui->assign('xheader', Asset::css(array('modal','dp/dist/datepicker.min','footable/css/footable.core.min','dropzone/dropzone','redactor/redactor','s2/css/select2.min')));
         $ui->assign('xfooter', Asset::js(array('modal','dp/dist/datepicker.min','footable/js/footable.all.min','dropzone/dropzone','redactor/redactor.min','numeric','s2/js/select2.min',
@@ -32,7 +125,14 @@ switch ($action){
             '_include' => 'dashboard',
             'redeem_vouchers' => $redeem_vouchers,
             'redeem_voucher_pages' => $redeem_voucher_pages,
-            'recent_vouchers' =>$recent_vouchers,
+            'recent_vouchers' => $recent_vouchers,
+            'total_expired' => $total_expired,
+            'total_page_redeem' => $total_page_redeem,
+            'total_voucher_redeem' => $total_voucher_redeem,
+            'total_generated_voucher' => $total_generated_voucher,
+            'voucher_status' => $voucher_status,
+            'percent' => $percent,
+            'count' => $count,
             'latestincomes' => $latestincomes,
             'latestexpenses' => $latestexpenses,
             'baseUrl' => $baseUrl
@@ -82,7 +182,7 @@ switch ($action){
         $id = _post('cid');
         $country_name =_post('country_name');
         $prefix = _post('prefix');
-        $category = _post('category');
+//        $category = _post('category');
         $description = _post('description');
         $flag_img = _post('flag_img');
 
@@ -96,18 +196,16 @@ switch ($action){
         if(!$prefix){
             $msg .= 'Prefix is required <br>';
         }
-        if(!$category){
-            $msg .= 'Category is requried <br>';
-        }
+//        if(!$category){
+//            $msg .= 'Category is requried <br>';
+//        }
         if(!$flag_img){
-            $msg .= 'Flag Image is requeried <br>';
+            $msg .= 'Flag Image is required <br>';
         }
 
         if($id == ''){
             $country_data = ORM::for_table('voucher_country')
                 ->where('country_name', $country_name)
-                ->where('prefix', $prefix)
-                ->where('category', $category)
                 ->find_one();
             if($country_data){
                 $msg .= 'Already Created Country Data';
@@ -125,7 +223,6 @@ switch ($action){
 
             $d->country_name = $country_name;
             $d->prefix = $prefix;
-            $d->category = $category;
             $d->description = $description;
             $d->flag_img = $flag_img;
 
@@ -169,7 +266,6 @@ switch ($action){
             $val['id']=$id;
             $val['country_name']=$country->country_name;
             $val['prefix']=$country->prefix;
-            $val['category']=$country->category;
             $val['description']=$country->description;
             $val['flag_img']=$country->flag_img;
 
@@ -177,7 +273,6 @@ switch ($action){
             $val['id']="";
             $val['country_name']="";
             $val['prefix']="";
-            $val['category']="";
             $val['description']="";
             $val['flag_img']="";
         }
@@ -203,7 +298,6 @@ switch ($action){
         $country_info = [
             'country_name' => $d->country_name,
             'prefix' => $d->prefix,
-            'category' => $d->category,
             'description' => $d->description,
             'flag_img' => $d->flag_img
         ];
@@ -214,20 +308,278 @@ switch ($action){
         break;
 
 /*
- *   Add Voucher  (add_voucher.tpl, add_voucher.js)
+ *  Add Category
  */
 
+    case 'add_category':
 
-    case 'add_voucher':
+        $baseUrl = APP_URL;
+        $category_list = ORM::for_table('voucher_category')->order_by_asc('category_name')->find_array();
 
-        $countries = Countries::all($config['country']); // may add this $config['country_code']
-        $country_list = ORM::for_table('voucher_country')->order_by_asc('country_name')->find_array();
 
+        $ui->assign('xheader', Asset::css(array('modal','dp/dist/datepicker.min','footable/css/footable.core.min','dropzone/dropzone','redactor/redactor','s2/css/select2.min')));
+        $ui->assign('xfooter', Asset::js(array('modal','dp/dist/datepicker.min','footable/js/footable.all.min','dropzone/dropzone','redactor/redactor.min','numeric','s2/js/select2.min',
+            's2/js/i18n/'.lan(),)));
+
+
+
+        view('app_wrapper',[
+            '_include' => 'category_list',
+            'baseUrl' => $baseUrl,
+            'category_list' => $category_list
+        ]);
+        break;
+
+    case 'post_category':
+
+        $id = _post('cid');
+        $category_name = _post('category_name');
+        $category_name = trim($category_name);
+        $description = _post('description');
+
+        $msg = '';
+
+        if($category_name == ''){
+            $msg .= 'Title is required <br>';
+        }
+
+        if($msg == ''){
+            if($id == ''){
+                _msglog('s','Category Added Successfully');
+                $d = ORM::for_table('voucher_category')->create();
+            } else {
+                _msglog('s','Category Updated Successfully');
+                $d = ORM::for_table('voucher_category')->find_one($id);
+            }
+
+            $d->category_name = $category_name;
+            $d->description = $description;
+
+            $d->save();
+            echo $d->id();
+
+        }else {
+            echo $msg;
+        }
+
+        break;
+
+    case 'modal_edit_category':
+
+        $id= route(3);
+        $modal_type = "edit";
+        if(!$id){
+            $modal_type = "add";
+        }
+
+        $category = ORM::for_table('voucher_category')->find_one($id);
         $baseUrl = APP_URL;
 
 
-        $ui->assign('xheader', Asset::css(array('modal','dp/dist/datepicker.min','dropzone/dropzone','redactor/redactor','s2/css/select2.min')));
-        $ui->assign('xfooter', Asset::js(array('modal','dp/dist/datepicker.min','dropzone/dropzone','redactor/redactor.min','numeric','s2/js/select2.min',
+        $val=array();
+
+        if($category){
+            $val['id']=$id;
+            $val['category_name']=$category->category_name;
+            $val['description']=$category->description;
+        }else{
+            $val['id']="";
+            $val['category_name']="";
+            $val['description']="";
+        }
+
+
+
+        view('wrapper_modal',[
+            '_include'=>'modal_edit_category',
+            'val' => $val,
+            'baseUrl' => $baseUrl,
+            'modal_type' => $modal_type
+        ]);
+
+        break;
+
+    case 'delete_category':
+
+        Event::trigger('voucher/app/delete_category');
+        $id = route(3);
+
+        $d = ORM::for_table('voucher_category')->find_one($id);
+
+        if ($d) {
+            $d->delete();
+            r2(U . 'voucher/app/add_category', 's', 'Category Delete Successfully');
+        }
+
+        break;
+
+
+/*
+ *  Add Template
+ */
+
+    case 'pdf_template':
+
+
+        $list_template = ORM::for_table('voucher_template')->order_by_asc('template_name')->find_array();
+        $baseUrl = APP_URL;
+
+
+        $ui->assign('xheader', Asset::css(array('modal','dp/dist/datepicker.min','footable/css/footable.core.min','dropzone/dropzone','redactor/redactor','s2/css/select2.min')));
+        $ui->assign('xfooter', Asset::js(array('modal','dp/dist/datepicker.min','footable/js/footable.all.min','dropzone/dropzone','redactor/redactor.min','numeric','s2/js/select2.min',
+            's2/js/i18n/'.lan(),)));
+
+
+
+        view('app_wrapper',[
+            '_include' => 'pdf_template',
+            'baseUrl' => $baseUrl,
+            'list_template' => $list_template
+        ]);
+
+
+        break;
+
+    case 'post_template':
+
+        $id = _post('tid');
+        $template_name = _post('template_name');
+        $description = _post('description');
+        $cover_img = _post('cover_img');
+        $voucher_template = _post('voucher_template');
+        $voucher_pgnum = _post('voucher_pgnum');
+
+
+        $msg = '';
+
+        if(!$template_name){
+            $msg .= 'Title is required <br>';
+        }
+        if(!$cover_img){
+            $msg .= 'Cover Image is required <br>';
+        }
+        if(!$voucher_template){
+            $msg .= 'PDF Template is required <br>';
+        }
+        if(!$voucher_pgnum){
+            $msg .= 'PDF Page No is required <br>';
+        }elseif(!is_numeric($voucher_pgnum)){
+            $msg = 'PDf Page No is not Integer <br>';
+        }
+
+
+        if($msg == ''){
+            if($id == ''){
+                _msglog('s','Template Added Successfully');
+                $d = ORM::for_table('voucher_template')->create();
+            } else {
+                _msglog('s','Template Updated Successfully');
+                $d = ORM::for_table('voucher_template')->find_one($id);
+            }
+
+            $d->template_name = $template_name;
+            $d->voucher_pgnum = $voucher_pgnum;
+            $d->description = $description;
+            $d->cover_img = $cover_img;
+            $d->voucher_template = $voucher_template;
+
+
+            $d->save();
+            echo $d->id();
+        } else {
+            echo $msg;
+        }
+
+        break;
+
+    case 'modal_edit_template':
+
+        $id= route(3);
+        $modal_type = "edit";
+        if(!$id){
+            $modal_type = "add";
+        }
+
+        $voucher_template = ORM::for_table('voucher_template')->find_one($id);
+        $baseUrl = APP_URL;
+
+
+        $val=array();
+
+        if($voucher_template){
+            $val['id']=$id;
+            $val['template_name'] = $voucher_template->template_name;
+            $val['voucher_pgnum'] = $voucher_template->voucher_pgnum;
+            $val['description'] = $voucher_template->description;
+            $val['cover_img'] = $voucher_template->cover_img;
+            $val['voucher_template'] = $voucher_template->voucher_template;
+
+        }else{
+            $val['id']="";
+            $val['template_name']="";
+            $val['voucher_pgnum']="";
+            $val['description']="";
+            $val['cover_img']="";
+            $val['voucher_template'] = "";
+        }
+
+
+
+        view('wrapper_modal',[
+            '_include'=>'modal_edit_template',
+            'val' => $val,
+            'baseUrl' => $baseUrl,
+            'modal_type' => $modal_type
+        ]);
+
+        break;
+
+    case 'delete_template':
+
+        Event::trigger('voucher/app/delete_template');
+        $id = route(3);
+
+        $d = ORM::for_table('voucher_template')->find_one($id);
+
+        if ($d) {
+            $d->delete();
+            r2(U . 'voucher/app/pdf_template', 's', 'Template Delete Successfully');
+        }
+
+        break;
+
+    case 'get_template_info':
+
+        $id = _post('id');
+        $template_info = array();
+
+        $d = ORM::for_table('voucher_template')->find_one($id);
+        $template_info = [
+            'id' => $d->id,
+            'template_name' => $d->template_name,
+            'cover_img' => $d->cover_img,
+            'description' => $d->description,
+            'voucher_template' => $d->voucher_template
+        ];
+
+        header('Content-Type: application/json');
+        echo json_encode($template_info);
+
+        break;
+
+/*
+ *   Add Voucher  (add_voucher.tpl, add_voucher.js)
+ */
+
+    case 'add_voucher':
+
+        $country_list = ORM::for_table('voucher_country')->order_by_asc('country_name')->find_array();
+        $category_list = ORM::for_table('voucher_category')->order_by_asc('category_name')->find_array();
+
+        $baseUrl = APP_URL;
+
+        $ui->assign('xheader', Asset::css(array('modal','dp/dist/datepicker.min','footable/css/footable.core.min','dropzone/dropzone','redactor/redactor','s2/css/select2.min')));
+        $ui->assign('xfooter', Asset::js(array('modal','dp/dist/datepicker.min','footable/js/footable.all.min','dropzone/dropzone','redactor/redactor.min','numeric','s2/js/select2.min',
             's2/js/i18n/'.lan(),)));
         $ui->assign('xjq', '
             $(\'.amount\').autoNumeric(\'init\', {
@@ -246,8 +598,8 @@ switch ($action){
         view('app_wrapper',[
             '_include' => 'add_voucher',
             'baseUrl' => $baseUrl,
-            'countries' => $countries,
-            'country_list' => $country_list
+            'country_list' => $country_list,
+            'category_list' => $category_list
 
         ]);
 
@@ -257,6 +609,7 @@ switch ($action){
 
         $id = _post('vid');
         $country_id = _post('country');
+        $category_id = _post('category');
         $created_date = _post('date');
         $billing_cycle = _post('billing_cycle');
         $expiry_day = _post('expiry_day');
@@ -272,6 +625,9 @@ switch ($action){
 
         if(!$country_id){
             $msg .= 'Country is required <br>';
+        }
+        if(!$category_id){
+            $msg .= 'Category is required <br>';
         }
         if(!$created_date){
             $msg .= 'Date is required <br>';
@@ -292,6 +648,15 @@ switch ($action){
             $msg .= 'Voucher Image is required <br>';
         }
 
+        $voucher = ORM::for_table('voucher_format')
+            ->where('country_id', $country_id)
+            ->where('category_id', $category_id)
+            ->find_one();
+
+
+        if($voucher && ($id == '' || $id != $voucher['id'])){
+            $msg .= 'Already Exist Voucher Format <br>';
+        }
 
         if($msg == ''){
 
@@ -305,6 +670,7 @@ switch ($action){
 
 
             $d->country_id = $country_id;
+            $d->category_id = $category_id;
             $d->created_date = $created_date;
             $d->expiry_day = $expiry_day;
             $d->cost_price = $cost_price;
@@ -327,10 +693,10 @@ switch ($action){
 
     case 'list_voucher':
 
-        $countries = Countries::all($config['country']); // may add this $config['country_code']
-
-        $vouchers = ORM::for_table('voucher_format')->select_many('voucher_format.*','voucher_country.country_name', 'voucher_country.prefix', 'voucher_country.category')
-            ->join('voucher_country',array('voucher_country.id','=','voucher_format.country_id'))
+        $vouchers = ORM::for_table('voucher_format')
+            ->left_outer_join('voucher_country',array('voucher_country.id','=','voucher_format.country_id'))
+            ->left_outer_join('voucher_category', array('voucher_category.id', '=', 'voucher_format.category_id'))
+            ->select_many('voucher_format.*','voucher_country.country_name', 'voucher_country.prefix', 'voucher_category.category_name')
             ->order_by_desc('voucher_format.created_date')
             ->find_many();
 
@@ -342,18 +708,13 @@ switch ($action){
             $active_voucher[$v['id']] = ORM::for_table('voucher_generated')
                 ->left_outer_join('sys_invoices', array('voucher_generated.invoice_id', '=', 'sys_invoices.id'))
                 ->where('voucher_format_id', $v['id'])
-                ->where('status', 'Active')
                 ->where('sys_invoices.status', 'Paid')
                 ->count();
             $pages[$v['id']] = ORM::for_table('voucher_pages')->where('voucher_format_id', $v['id'])->count();
         }
 
-        $view_type = 'default';
-        $view_type = 'filter';
-        $paginator = array();
 
         $baseUrl = APP_URL;
-
 
         $ui->assign('xheader', Asset::css(array('modal','dp/dist/datepicker.min','footable/css/footable.core.min','dropzone/dropzone','redactor/redactor','s2/css/select2.min')));
         $ui->assign('xfooter', Asset::js(array('modal','dp/dist/datepicker.min','footable/js/footable.all.min','dropzone/dropzone','redactor/redactor.min','numeric','s2/js/select2.min',
@@ -372,8 +733,6 @@ switch ($action){
 
         ');
 
-        $paginator['contents'] = "";
-
 
         view('app_wrapper',[
             '_include' => 'list_voucher',
@@ -381,9 +740,7 @@ switch ($action){
             'generated_voucher' => $generated_voucher,
             'active_voucher' => $active_voucher,
             'pages' => $pages,
-            'view_type' => $view_type,
             'baseUrl' => $baseUrl,
-            'paginator' => $paginator
         ]);
         break;
 
@@ -391,19 +748,23 @@ switch ($action){
 
         $id = route(3);
         $baseUrl = APP_URL;
+        $country_list = ORM::for_table('voucher_country')->order_by_asc('country_name')->find_array();
+        $category_list = ORM::for_table('voucher_category')->order_by_asc('category_name')->find_array();
 
-
-        $voucher = ORM::for_table('voucher_format')->select_many('voucher_format.*','voucher_country.country_name', 'voucher_country.prefix', 'voucher_country.category')
-            ->join('voucher_country',array('voucher_country.id','=','voucher_format.country_id'))
+        $voucher = ORM::for_table('voucher_format')
+            ->left_outer_join('voucher_country',array('voucher_country.id','=','voucher_format.country_id'))
+            ->left_outer_join('voucher_category', array('voucher_category.id', '=', 'voucher_format.category_id'))
+            ->select_many('voucher_format.*','voucher_country.country_name', 'voucher_country.prefix', 'voucher_category.category_name')
             ->order_by_asc('voucher_format.id')
             ->find_one($id);
 
 
         view('wrapper_modal',[
-           '_include' => 'modal_edit_voucher',
-           'baseUrl' => $baseUrl,
-           'voucher' => $voucher
-
+            '_include' => 'modal_edit_voucher',
+            'baseUrl' => $baseUrl,
+            'voucher' => $voucher,
+            'country_list' => $country_list,
+            'category_list' => $category_list
         ]);
 
 
@@ -427,15 +788,43 @@ switch ($action){
     case 'modal_generate_voucher':
 
         $id = route(3);
-        $voucher = ORM::for_table('voucher_format')->select_many('voucher_format.*','voucher_country.country_name', 'voucher_country.prefix', 'voucher_country.category')
-            ->join('voucher_country',array('voucher_country.id','=','voucher_format.country_id'))
-            ->order_by_asc('voucher_format.id')
-            ->find_one($id);
+        $g_id = route(4);
         $baseUrl = APP_URL;
 
 
+        $voucher = ORM::for_table('voucher_format')
+            ->left_outer_join('voucher_country',array('voucher_country.id','=','voucher_format.country_id'))
+            ->left_outer_join('voucher_category', array('voucher_category.id', '=', 'voucher_format.category_id'))
+            ->select_many('voucher_format.*','voucher_country.country_name', 'voucher_country.prefix', 'voucher_category.category_name')
+            ->order_by_asc('voucher_format.id')
+            ->find_one($id);
+
+        $val = array();
+
+        if($g_id){
+            $g_id = str_replace('eid', '', $g_id);
+            $val = ORM::for_table('voucher_generated')
+                ->left_outer_join('voucher_template', array('voucher_template.id', '=', 'voucher_generated.template_id'))
+                ->select_many('voucher_generated.*', 'voucher_template.cover_img', 'voucher_template.voucher_template', 'voucher_template.voucher_pgnum')
+                ->find_one($g_id);
+        }else{
+            $val['id'] = '';
+            $val['contact_id'] = '';
+            $val['agent_id'] = '';
+            $val['serial_number'] = '';
+            $val['serial_pgnum'] = '';
+            $val['template_id'] = '';
+            $val['cover_img'] = '';
+            $val['description'] = '';
+            $val['create_invoice'] = '';
+            $val['add_payment'] = '';
+            $val['invoice_id'] = '';
+            $val['status'] = 'Active';
+        }
+
         $customers = ORM::for_table('crm_accounts')->where_in('type',array('Customer','Customer,Supplier'))->order_by_asc('account')->find_many();
         $suppliers = ORM::for_table('crm_accounts')->where_in('type',array('Supplier','Customer,Supplier'))->order_by_asc('account')->find_many();
+        $voucher_templates = ORM::for_table('voucher_template')->order_by_asc('template_name')->find_array();
 
         // default setting
 
@@ -447,100 +836,196 @@ switch ($action){
            '_include' => 'modal_generate_voucher',
             'customers' => $customers,
             'suppliers' => $suppliers,
+            'val' => $val,
             'voucher' => $voucher,
             'baseUrl' => $baseUrl,
             'create_invoice' => $create_invoice,
-            'add_payment' => $add_payment
+            'add_payment' => $add_payment,
+            'voucher_templates' => $voucher_templates
         ]);
         break;
 
     case 'post_generate_voucher':
 
         $id = _post('vid');
+        $gid = _post('gid');
+
         $contact_id = _post('contact_id');
-        $partner_id = _post('partner_id');
+        $agent_id = _post('agent_id');
         $prefix = _post('prefix');
         $serial_numbers = _post('serial_number');
-        $serial_pgnum = _post('page_number');
         $total_voucher = _post('total_voucher');
         $date = _post('date');
         $create_invoice = _post('create_invoice');
         $add_payment = _post('add_payment');
         $description = _post('description');
-        $voucher_template = _post('voucher_template');
+        $template_id = _post('template_id');
+        $invoice_id = _post('invoice_id');
+        $status = _post('status');
 
         $msg = '';
 
-        if(!$contact_id){
-            $msg .= 'Contact is required. <br>';
-        }
         if(!$serial_numbers){
-            $msg .= 'Serial Number is required. <br>';
+            $msg .= 'Serial Number is required <br>';
+        }else{
+            $serial_arr = explode(',',$serial_numbers);
+            foreach($serial_arr as $s){
+                $v = ORM::for_table('voucher_generated')->where('serial_number', $s)->find_one();
+                if($gid){
+                    if($v && $gid != $v['id']){
+                        $msg .= $s.' is already exist <br>';
+                    }
+                }elseif($v){
+                    $msg .= $s.' is already exist <br>';
+                }
+            }
+
         }
-        if(!$serial_pgnum){
-            $msg .= 'Page Number is required. <br>';
-        }
-        if(!$date){
-            $msg .= 'Date is required. <br>';
-        }
-        if(!$voucher_template){
-            $msg .= 'Pdf Template is required. <br>';
+
+        if(!$template_id){
+            $msg .= 'Template is required <br>';
         }
 
         if($msg == ''){
 
             if($total_voucher){
 
-                // Create Invoice
+                // expiry date
+                if($id != ''){
 
-                $invoice_id = null;
+                    $v = ORM::for_table('voucher_format')->find_one($id);
 
-                if($create_invoice == 'create'){
-                    $voucher_info = ORM::for_table('voucher_format')
-                        ->left_outer_join('voucher_country', array('voucher_country.id', '=', 'voucher_format.country_id'))
-                        ->find_one($id);
+                    switch ($v['billing_cycle']){
+                        case 'annual':
+                            $interval = new DateInterval('P1Y');
+                            $expiry_date = date_create($date)->add($interval);
+                            $expiry_date = $expiry_date->format('Y-m-d');
 
-                    $amount = $total_voucher * $voucher_info['sales_price'];
-                    $item_name = $voucher_info['country_name'].' '.$voucher_info['category'].' Voucher';
-                    $invoice = Invoice::forSingleItem($contact_id, $item_name, $amount);
+                            break;
+                        case 'monthly':
+                            $interval = new DateInterval('P1M');
+                            $expiry_date = date_create($date)->add($interval);
+                            $expiry_date = $expiry_date->format('Y-m-d');
+                            break;
+                    }
 
-                    $invoice_id = $invoice['id'];
                 }
 
-                if($add_payment == 'add_payment'){
+                /*
+                // invoice create
+                if($invoice_id == ''){
 
+                    // Create Invoice
+
+                    $invoice_id = null;
+
+                    if($create_invoice == 'create'){
+
+                        $voucher_info = ORM::for_table('voucher_format')
+                            ->left_outer_join('voucher_country', array('voucher_country.id', '=', 'voucher_format.country_id'))
+                            ->find_one($id);
+
+                        $amount = $total_voucher * $voucher_info['sales_price'];
+                        $item_name = $voucher_info['country_name'].' '.$voucher_info['category'].' Voucher';
+                        $invoice = Invoice::forSingleItem($contact_id, $item_name, $amount);
+
+                        $invoice_id = $invoice['id'];
+
+                    }
+
+                    if($add_payment == 'add_payment'){
+                        $invoice_info = ORM::for_table('sys_invoices')->find_one($invoice_id);
+                        $total_price = $invoice_info['total'];
+                        if($invoice_info){
+
+                            $invoice_info->status = 'Paid';
+                            $invoice_info->credit = $total_price;
+                            $invoice_info->save();
+
+                            // Customer balance chanage
+
+                            $customer_info = ORM::for_table('crm_accounts')->find_one($contact_id);
+                            if($customer_info){
+                                if($customer_info['balance'] < $total_price){
+                                    echo "Customer's credit balance is not enough";
+                                    break;
+                                }
+                                $customer_info->balance = $customer_info['balance']-$total_price;
+                                $customer_info->save();
+                            }
+
+                            // Transaction change
+
+                            $account = 'Credit';
+                            $type = 'Income';
+                            $amount = $total_price;
+                            $payer_id = $contact_id;
+                            $method = 'Credit';
+                            $ref = 'Client Paid with Account Credit';
+                            $des = 'Invoice: '.$invoice_info->id().' Payment from Credit';
+                            $date = date('Y-m-d');
+                            $cr = $total_price;
+                            $iid = $invoice_info->id();
+                            $updated_at = date('Y-m-d H:i:s');
+
+                            $transaction = ORM::for_table('sys_transactions')->create();
+                            $transaction->account = $account;
+                            $transaction->type = $type;
+                            $transaction->amount = $amount;
+                            $transaction->payerid = $payer_id;
+                            $transaction->method = $method;
+                            $transaction->ref = $ref;
+                            $transaction->description = $des;
+                            $transaction->date = $date;
+                            $transaction->cr = $cr;
+                            $transaction->iid = $iid;
+                            $transaction->updated_at = $updated_at;
+                            $transaction->save();
+
+                        }
+
+                    }
 
                 }
+                */
 
                 $voucher_numbers = explode(',',$serial_numbers);
 
                 for($i=1;$i<=$total_voucher;$i++){
 
-                    $d = ORM::for_table('voucher_generated')->create();
+                    if($gid == ''){
+                        $d = ORM::for_table('voucher_generated')->create();
+                        _msglog('s','Voucher Generated Successfully');
+                    }else {
+                        $d = ORM::for_table('voucher_generated')->find_one($gid);
+                        _msglog('s','Voucher Updated Successfully');
+                    }
+
 
                     $serial_number = $voucher_numbers[$i-1];
 
                     // voucher pdf create
 
-                    $template_file = 'apps/voucher/public/template/'.$voucher_template;
-                    $newfile = 'apps/voucher/public/vouchers/'.$serial_number.'.pdf';
+//                    $template_file = 'apps/voucher/public/template/'.$voucher_template;
+//                    $newfile = 'apps/voucher/public/vouchers/'.$serial_number.'.pdf';
                     $voucher_pdf = $serial_number.'.pdf';
-                    if(!copy($template_file,$newfile))
-                    {
-                        echo "failed to copy $file";
-                        break;
-                    } else {
-                      $voucher_pdf = $serial_number.'.pdf';
-                    }
+//                    if(!copy($template_file,$newfile))
+//                    {
+//                        echo "failed to copy $file";
+//                        break;
+//                    } else {
+//                      $voucher_pdf = $serial_number.'.pdf';
+//                    }
 
 
                     // insert into database
 
                     $d->voucher_format_id = $id;
                     $d->contact_id = $contact_id;
-                    $d->partner_id = $partner_id;
+                    $d->agent_id = $agent_id;
                     $d->serial_number = $serial_number;
-                    $d->serial_pgnum = $serial_pgnum;
+//                    $d->serial_pgnum = $serial_pgnum;
+
                     if($create_invoice == 'create'){
                         $d->create_invoice = 1;
                     }else {
@@ -551,17 +1036,19 @@ switch ($action){
                     }else {
                         $d->add_payment = 0;
                     }
+
                     $d->date = $date;
+                    $d->expiry_date = $expiry_date;
                     $d->prefix = $prefix;
                     $d->description = $description;
                     $d->invoice_id = $invoice_id;
-                    $d->voucher_template = $voucher_template;
+                    $d->template_id = $template_id;
                     $d->voucher_pdf = $voucher_pdf;
-
+                    $d->status = $status;
                     $d->save();
 
                 }
-                _msglog('s','Voucher Generated Successfully');
+
                 echo $d->id();
             }
 
@@ -583,10 +1070,12 @@ switch ($action){
         $vid = route(3);
 
 
-//        $ui->assign('companies',db_find_array('sys_companies',array('id','company_name')));
+//        $ui->assign('xheader', Asset::css(array('modal','dp/dist/datepicker.min','footable/css/footable.core.min','dropzone/dropzone','redactor/redactor','s2/css/select2.min')));
+//        $ui->assign('xfooter', Asset::js(array('modal','dp/dist/datepicker.min','footable/js/footable.all.min','dropzone/dropzone','redactor/redactor.min','numeric','s2/js/select2.min',
+//            's2/js/i18n/'.lan(),)));
 
-        $ui->assign('xheader',Asset::css(array('popover/popover','select/select.min','s2/css/select2.min','dt/dt','modal', 'dp/dist/datepicker.min')));
-        $ui->assign('xfooter',Asset::js(array('popover/popover','js/redirect','select/select.min','s2/js/select2.min','s2/js/i18n/'.lan(),'dt/dt','modal', 'dp/dist/datepicker.min')));
+        $ui->assign('xheader',Asset::css(array('popover/popover','redactor/redactor','select/select.min','s2/css/select2.min','dt/dt','modal','dropzone/dropzone', 'dp/dist/datepicker.min')));
+        $ui->assign('xfooter',Asset::js(array('popover/popover','redactor/redactor.min','js/redirect','select/select.min','s2/js/select2.min','s2/js/i18n/'.lan(),'dt/dt','modal', 'dropzone/dropzone', 'dp/dist/datepicker.min')));
         $ui->assign('jsvar', '
         _L[\'are_you_sure\'] = \''.$_L['are_you_sure'].'\';
         ');
@@ -595,10 +1084,6 @@ switch ($action){
         view('app_wrapper',[
             '_include' => 'generated_voucher_list',
             'vid' => $vid
-//            'vouchers' => $vouchers,
-//            'view_type' => $view_type,
-//            'baseUrl' => $baseUrl,
-//            'paginator' => $paginator
         ]);
 
         break;
@@ -616,7 +1101,7 @@ switch ($action){
         $columns[] = 'prefix';
         $columns[] = 'serial_number';
         $columns[] = 'contact_name';
-        $columns[] = 'partner_name';
+        $columns[] = 'agent_name';
         $columns[] = 'date';
         $columns[] = 'redeem';
         $columns[] = 'description';
@@ -635,21 +1120,25 @@ switch ($action){
 
         $d = ORM::for_table('voucher_generated')
             ->left_outer_join('crm_accounts',array('voucher_generated.contact_id','=','contact.id'),'contact')
-            ->left_outer_join('crm_accounts',array('voucher_generated.partner_id','=','partner.id'), 'partner')
+            ->left_outer_join('crm_accounts',array('voucher_generated.agent_id','=','agent.id'), 'agent')
             ->left_outer_join('voucher_format',array('voucher_format.id','=','voucher_generated.voucher_format_id'));
 
         $d->select('voucher_generated.id','id');
         $d->select('voucher_generated.date', 'date');
+        $d->select('voucher_generated.expiry_date', 'expiry_date');
         $d->select('voucher_generated.prefix','prefix');
+        $d->select('voucher_generated.contact_id', 'contact_id');
+        $d->select('voucher_generated.agent_id', 'agent_id');
         $d->select('voucher_generated.serial_number', 'serial_number');
         $d->select('voucher_generated.description', 'description');
         $d->select('voucher_generated.voucher_format_id', 'voucher_format_id');
-//        $d->select('voucher_generated.status', 'status');
+        $d->select('voucher_generated.invoice_id', 'invoice_id');
+        $d->select('voucher_generated.status', 'status');
         $d->select('voucher_format.voucher_img', 'img');
         $d->select('voucher_format.billing_cycle', 'billing_cycle');
         $d->select('voucher_format.expiry_day', 'expiry_day');
         $d->select('contact.account', 'contact_name');
-        $d->select('partner.account', 'partner_name');
+        $d->select('agent.account', 'agent_name');
 
         $d->where_equal('voucher_format_id', $format_id);
 
@@ -677,11 +1166,11 @@ switch ($action){
 
         }
 
-        $partner_name = _post('partner');
+        $agent_name = _post('agent');
 
-        if($partner_name != ''){
+        if($agent_name != ''){
 
-            $d->where_like('partner.account',"%$partner_name%");
+            $d->where_like('agent.account',"%$agent_name%");
 
         }
 
@@ -719,28 +1208,43 @@ switch ($action){
 
             $img = '<img src="' . APP_URL . '/apps/voucher/public/voucher_imgs/' . $xs['img'] . '" width="42px" alt="">';
 
-            switch ($xs['billing_cycle']){
-                case 'annual':
-                    $interval = new DateInterval('P1Y');
-                    $expiry_date = date_create($xs['date'])->add($interval);
-                    $expiry_date = $expiry_date->format('Y-m-d');
-
-                    break;
-                case 'monthly':
-                    $interval = new DateInterval('P1M');
-                    $expiry_date = date_create($xs['date'])->add($interval);
-                    $expiry_date = $expiry_date->format('Y-m-d');
-                    break;
-            }
-
-
-            if($xs['partner_name'] == ''){
-                $xs['partner_name']  =  '-';
+            if($xs['agent_name'] == ''){
+                $xs['agent_name']  =  '-';
+            }else{
+                $xs['agent_name'] = "<a href='".U."contacts/view/".$xs['agent_id']."/summary/'>".$xs['agent_name']."</a>";
             }
             if($xs['contact_name'] == ''){
                 $xs['contact_name'] = '-';
+            }else{
+                $xs['contact_name'] = "<a href='".U."contacts/view/".$xs['contact_id']."/summary/'>".$xs['contact_name']."</a>";
             }
 
+
+            $page_count = ORM::for_table('voucher_pages')->where('voucher_format_id', $xs['voucher_format_id'])->count();
+            $redeem_count = ORM::for_table('voucher_page_transaction')->where('voucher_id', $xs['id'])->count();
+            $voucher_invoice = ORM::for_table('sys_invoices')->where_equal('id', $xs['invoice_id'])->find_one();
+
+
+            if($xs['status'] == 'Inactive' || $xs['status'] == ''){
+                $voucher_status = "<a href='#' class='btn btn-xs square-deactive' id='".$xs['id']."' data-toggle='tooltip' data-placement='top' title='Inactive'>Inactive</a>";
+
+                if($xs['expiry_date'] < date('Y-m-d')){
+                    $voucher_status = "<a href='#' class='btn btn-xs square-expire' id='".$xs['id']."' data-toggle='tooltip' data-placement='top' title='Expired'>Expired</a>";
+                }
+
+                $xs['date'] = '-';
+                $xs['expiry_date'] = '-';
+            }
+
+            if($xs['status'] == 'Active'){
+                $voucher_status = "<a href='#' class='btn btn-xs square-active' id='".$xs['id']."' data-toggle='tooltip' data-placement='top' title='Active'>Active</a>";
+                $img = "<a href='".U."voucher/app/list_voucher_page/".$format_id."/".$xs['id']."'>".$img."</a>";
+                $xs['serial_number'] = "<a href='".U."voucher/app/list_voucher_page/".$format_id."/".$xs['id']."'>".$xs['serial_number']."</a>";
+
+                if($xs['expiry_date'] < date('Y-m-d')){
+                    $voucher_status = "<a href='#' class='btn btn-xs square-expire' id='".$xs['id']."' data-toggle='tooltip' data-placement='top' title='Expired'>Expired</a>";
+                }
+            }
 
 
             $records["data"][] = array(
@@ -749,16 +1253,16 @@ switch ($action){
                 1 => $img,
                 2 => $xs['date'],
                 3 => htmlentities($xs['prefix']),
-                4 => htmlentities($xs['serial_number']),
-                5 => htmlentities($xs['contact_name']),
-                6 => htmlentities($xs['partner_name']),
-                7 => $expiry_date,
-                8 => 'redeem',
+                4 => $xs['serial_number'],
+                5 => $xs['contact_name'],
+                6 => $xs['agent_name'],
+                7 => $xs['expiry_date'],
+                8 => $page_count. '<span style="color:#CAA931">('.$redeem_count.')</span>',
                 9 => htmlentities($xs['description']),
-                10 => htmlentities('status'),
+                10 => $voucher_status,
                 11 => '
                 <a href="' . U . 'voucher/app/download_generated_voucher/' . $xs['id'] . '" class="btn btn-primary btn-xs cview" id="vid' . $xs['id'] . '"><i class="fa fa-download"></i> </a>
-                <a href="' . U . 'voucher/app/edit_generated_voucher/' . $xs['id'] . '" class="btn btn-warning btn-xs cedit" id="eid' . $xs['id'] . '"><i class="glyphicon glyphicon-pencil"></i> </a>
+                <a href="#" class="btn btn-warning btn-xs cedit" id="eid' . $xs['id'] . '"><i class="glyphicon glyphicon-pencil"></i> </a>
                 <a href="#" class="btn btn-danger btn-xs cdelete" id="uid' . $xs['id'] . '"><i class="fa fa-trash"></i> </a>
                 ',
 
@@ -807,7 +1311,10 @@ switch ($action){
 
         $id = route(3);
 
-        $voucher_data = ORM::for_table('voucher_generated')->find_one($id);
+        $voucher_data = ORM::for_table('voucher_generated')
+            ->left_outer_join('voucher_template', array('voucher_template.id', '=', 'voucher_generated.template_id'))
+            ->select_many('voucher_generated.*', 'voucher_template.cover_img', 'voucher_template.voucher_template', 'voucher_template.voucher_pgnum')
+            ->find_one($id);
 
         $template_file = 'apps/voucher/public/template/'.$voucher_data['voucher_template'];
         $newfile = $voucher_data['serial_number'].'.pdf';
@@ -820,10 +1327,16 @@ switch ($action){
             $import_page = $pdf->ImportPage($i);
             $pdf->SetPageTemplate($import_page);
 
-            if($i == $voucher_data['serial_pgnum']+1 ){
-                $pdf->SetFont('Arial','B',18);
-                $pdf->SetXY(112,74);
-                $pdf->cell(0,0,$voucher_data['serial_number']);
+            if($i == 8){
+                $pdf->SetFont('Arial','B',16);
+                $pdf->SetXY(140,109);
+                $pdf->cell(0,0,$voucher_data['prefix'].' '.$voucher_data['serial_number']);
+            }
+
+            if($i == 52 ){
+                $pdf->SetFont('Arial','B',16);
+                $pdf->SetXY(109,74);
+                $pdf->cell(0,0,$voucher_data['prefix'].' '.$voucher_data['serial_number']);
             }
             $pdf->AddPage();
 
@@ -844,8 +1357,10 @@ switch ($action){
 
         Event::trigger('client/app/voucher_transaction/');
 
-        $customers = ORM::for_table('crm_accounts')->order_by_asc('id')->find_array();
+        $customers = ORM::for_table('crm_accounts')->where_in('type',array('Customer','Customer,Supplier'))->order_by_asc('account')->find_many();
+        $agents = ORM::for_table('crm_accounts')->where_in('type',array('Supplier','Customer,Supplier'))->order_by_asc('account')->find_many();
         $countries = ORM::for_table('voucher_country')->order_by_asc('country_name')->find_array();
+        $categories = ORM::for_table('voucher_category')->order_by_asc('category_name')->find_array();
 
 
         $ui->assign('xheader', Asset::css(array('s2/css/select2.min', 'dt/dt', 'fc/fc', 'fc/fc_ibilling', 'daterangepicker/daterangepicker')));
@@ -869,7 +1384,9 @@ switch ($action){
         view('app_wrapper',[
             '_include' => 'voucher_transaction',
             'countries' => $countries,
-            'customers' => $customers
+            'categories' => $categories,
+            'customers' => $customers,
+            'agents' => $agents
         ]);
         break;
 
@@ -881,6 +1398,7 @@ switch ($action){
         $columns[] = 'id';
         $columns[] = 'date';
         $columns[] = 'customer';
+        $columns[] = 'agent';
         $columns[] = 'country_name';
         $columns[] = 'category';
         $columns[] = 'date';
@@ -897,20 +1415,29 @@ switch ($action){
 
 
         $d = ORM::for_table('voucher_generated')
-            ->left_outer_join('crm_accounts',array('voucher_generated.contact_id','=','contact.id'),'contact')
+            ->left_outer_join('crm_accounts',array('contact.id','=','voucher_generated.contact_id'),'contact')
+            ->left_outer_join('crm_accounts',array('agent.id','=','voucher_generated.agent_id'),'agent')
             ->left_outer_join('voucher_format',array('voucher_format.id','=','voucher_generated.voucher_format_id'))
-            ->left_outer_join('voucher_country', array('voucher_country.id', '=', 'voucher_format.country_id'));
+            ->left_outer_join('voucher_country', array('voucher_country.id', '=', 'voucher_format.country_id'))
+            ->left_outer_join('sys_invoices',array('sys_invoices.id','=','voucher_generated.invoice_id'))
+            ->left_outer_join('voucher_category',array('voucher_category.id','=','voucher_format.category_id'));
 
         $d->select('voucher_generated.id','id');
         $d->select('voucher_generated.date', 'date');
+        $d->select('voucher_generated.expiry_date', 'expiry_date');
         $d->select('voucher_generated.serial_number', 'serialnumber');
         $d->select('voucher_generated.contact_id', 'customer_id');
+        $d->select('voucher_generated.invoice_id', 'invoice_id');
+        $d->select('voucher_generated.status', 'status');
         $d->select('voucher_format.billing_cycle', 'billing_cycle');
         $d->select('voucher_format.expiry_day', 'expiry_day');
         $d->select('voucher_format.country_id', 'country_id');
+        $d->select('voucher_format.category_id', 'category_id');
         $d->select('voucher_country.country_name', 'country_name');
-        $d->select('voucher_country.category', 'category');
+        $d->select('voucher_category.category_name', 'category_name');
         $d->select('contact.account', 'customer');
+        $d->select('agent.account', 'agent');
+        $d->select('sys_invoices.status','invoice_status');
 
 
         $customer_id = _post('customer');
@@ -918,9 +1445,14 @@ switch ($action){
             $d->where_equal('voucher_generated.contact_id', $customer_id);
         }
 
+        $agent_id = _post('agent');
+        if($agent_id != ''){
+            $d->where_equal('voucher_generated.agent_id', $agent_id);
+        }
+
         $category = _post('category');
         if ($category != '') {
-            $d->where_equal('voucher_country.category', $category);
+            $d->where_equal('voucher_format.category_id', $category);
         }
 
         $country_id = _post('country');
@@ -928,21 +1460,6 @@ switch ($action){
             $d->where_equal('voucher_format.country_id', $country_id);
         }
 
-        $status = _post('status');
-        if($status != ''){
-            switch ($status){
-
-                case 'Active':
-
-                    break;
-                case 'Inactive':
-
-                    break;
-                case 'Expired':
-
-                    break;
-            }
-        }
 
         $reportrange = _post('reportrange');
         if ($reportrange != '') {
@@ -953,15 +1470,44 @@ switch ($action){
             $d->where_lte('date', $to_date);
         }
 
+        $status = _post('status');
+        if($status != ''){
+            $today = date('Y-m-d');
+            switch ($status){
+                case 'Expired':
+                    $d->where_lt('expiry_date', $today);
+                    break;
+                case 'Active':
+                    $d->where_equal('voucher_generated.status','Active');
+                    $d->where_gte('expiry_date',$today);
+                    break;
+                case 'Inactive':
+                    $d->where_equal('voucher_generated.status','Inactive');
+//                    $d->where_any_is(array(
+//                        array('sys_invoices.status'=>'Unpaid'),
+//                        array('sys_invoices.status'=>'Partially Paid'),
+//                        array('voucher_generated.invoice_id'=>'0'))
+//                    );
+                    $d->where_gte('expiry_date',$today);
+                    break;
+
+            }
+        }
+
 
         $filter_customer = _post('filter_customer');
         if($filter_customer != ''){
             $d->where_like('contact.account',"%$filter_customer%");
         }
 
+        $filter_agent = _post('filter_agent');
+        if($filter_agent != ''){
+            $d->where_like('agent.account',"%$filter_agent%");
+        }
+
         $filter_category = _post('filter_category');
         if($filter_category != ''){
-            $d->where_like('voucher_country.category',"%$filter_category%");
+            $d->where_like('voucher_category.category_name',"%$filter_category%");
         }
 
         $filter_country = _post('filter_country');
@@ -1005,33 +1551,31 @@ switch ($action){
 
 //        print_r($x);
 
-        foreach($x as $xs) {
+        foreach($x as $key => $xs) {
 
-            switch ($xs['billing_cycle']){
-                case 'annual':
-                    $interval = new DateInterval('P1Y');
-                    $expiry_date = date_create($xs['date'])->add($interval);
-                    $expiry_date = $expiry_date->format('Y-m-d');
+            $today = date('Y-m-d');
 
-                    break;
-                case 'monthly':
-                    $interval = new DateInterval('P1M');
-                    $expiry_date = date_create($xs['date'])->add($interval);
-                    $expiry_date = $expiry_date->format('Y-m-d');
-                    break;
+            if($xs['status'] == 'Active' && $xs['expiry_date'] > $today){
+                $status_str = "<div class='label-success' style='margin:0 auto; font-size:85%;width:65px'>Active</div>";
             }
-
+            if(($xs['status'] == 'Inactive' || $xs['status'] == '') && $xs['expiry_date'] > $today){
+                $status_str = "<div class='label-default' style='margin:0 auto; font-size:85%;width:65px'>Inactive</div>";
+            }
+            if($xs['expiry_date'] < $today){
+                $status_str = "<div class='label-danger' style='margin:0 auto; font-size:85%;width:65px'>Expired</div>";
+            }
 
             $records["data"][] = array(
                 0 => $xs['id'],
                 1 => $xs['date'],
                 2 => htmlentities($xs['customer']),
-                3 => htmlentities($xs['country_name']),
-                4 => htmlentities($xs['category']),
-                5 => $expiry_date,
-                6 => htmlentities($xs['serialnumber']),
-                7 => '',
-                8 => '<a href="' . U . 'voucher/app/edit_generated_voucher/' . $xs['id'] . '" class="btn btn-primary btn-xs"><i class="fa fa-file-text-o"></i></a>',
+                3 => htmlentities($xs['agent']),
+                4 => htmlentities($xs['country_name']),
+                5 => htmlentities($xs['category_name']),
+                6 => $xs['expiry_date'],
+                7 => htmlentities($xs['serialnumber']),
+                8 => $status_str,
+                9 => '<a href="' . U . 'voucher/app/edit_generated_voucher/' . $xs['id'] . '" class="btn btn-primary btn-xs"><i class="fa fa-file-text-o"></i></a>',
             );
         }
 
@@ -1046,6 +1590,7 @@ switch ($action){
 /*
  *  Voucher Settings
  */
+
     case 'voucher_setting':
 
         $setting_data = ORM::for_table('voucher_setting')->find_array();
@@ -1059,12 +1604,24 @@ switch ($action){
         $ui->assign('xheader', Asset::css(array('modal','dp/dist/datepicker.min','footable/css/footable.core.min','dropzone/dropzone','redactor/redactor','s2/css/select2.min')));
         $ui->assign('xfooter', Asset::js(array('modal','dp/dist/datepicker.min','footable/js/footable.all.min','dropzone/dropzone','redactor/redactor.min','numeric','s2/js/select2.min',
             's2/js/i18n/'.lan(),)));
+        $ui->assign('xjq', '
+            $(\'.amount\').autoNumeric(\'init\', {
+            dGroup: ' . $config['thousand_separator_placement'] . ',
+            aPad: ' . $config['currency_decimal_digits'] . ',
+            pSign: \'' . $config['currency_symbol_position'] . '\',
+            aDec: \'' . $config['dec_point'] . '\',
+            aSep: \'' . $config['thousands_sep'] . '\',
+            vMax: \'9999999999999999.00\',
+            vMin: \'-9999999999999999.00\'
+            });
+            $(\'[data-toggle="tooltip"]\').tooltip();
 
+        ');
 
 
         view('app_wrapper',[
             '_include' => 'voucher_setting',
-            'setting' => $setting
+            'setting' => $setting,
         ]);
 
         break;
@@ -1076,9 +1633,9 @@ switch ($action){
         $d->value = $agreement_text;
         $d->save();
 
-        $product_fee = _post('product_fee');
-        $d = ORM::for_table('voucher_setting')->where_equal('setting','product_fee')->find_one();
-        $d->value = $product_fee;
+        $activation_fee = _post('activation_fee');
+        $d = ORM::for_table('voucher_setting')->where_equal('setting','activation_fee')->find_one();
+        $d->value = $activation_fee;
         $d->save();
 
         _msglog('s','Settings Updated Successfully');
@@ -1115,11 +1672,75 @@ switch ($action){
 
     case 'list_voucher_page':
 
-        $id = route(3);
-        $voucher_pages = ORM::for_table('voucher_pages')->where_equal('voucher_format_id',$id)->order_by_desc('id')->find_many();
-        $voucher_format = ORM::for_table('voucher_format')->find_one($id);
-
+        $vid = route(3);
+        $gid = route(4);
         $baseUrl =APP_URL;
+
+        $voucher_pages = ORM::for_table('voucher_pages')->where_equal('voucher_format_id',$vid)->order_by_asc('id')->find_many();
+        $voucher_format = ORM::for_table('voucher_format')
+            ->left_outer_join('voucher_country', array('voucher_country.id', '=', 'voucher_format.country_id'))
+            ->left_outer_join('voucher_category', array('voucher_category.id', '=', 'voucher_format.category_id'))
+            ->select_many('voucher_format.*', 'voucher_country.country_name', 'voucher_category.category_name')
+            ->find_one($vid);
+
+        $page_status = array();
+        $today = date('Y-m-d');
+        $total_pages = 0;
+
+        foreach($voucher_pages as $v){
+            $page_status[$v['id']] = 'redeem';
+            $redeem_page = ORM::for_table('voucher_page_transaction')
+                ->where('voucher_id', $gid)
+                ->where('page_id',$v['id'])
+                ->find_one();
+
+            if($redeem_page) {
+                if ($redeem_page['status'] == 'Confirm') {
+                    $page_status[$v['id']] = 'confirm';
+                }elseif ($redeem_page['status'] == 'Processing' && $redeem_page['return_date'] < $today) {
+                    $redeem_page->status = 'Confirm';
+                    $page_status[$v['id']] = 'confirm';
+                    $redeem_page->save();
+                } else {
+                    $page_status[$v['id']] = 'processing';
+                }
+            }
+            $total_pages++;
+        }
+
+        $voucher_info = array();
+        $recent_transaction = array();
+        $invoice_url = array();
+        $account_url = array();
+        if($gid != ''){
+            $voucher_info = ORM::for_table('voucher_generated')
+                ->left_outer_join('voucher_format', array('voucher_format.id', '=', 'voucher_generated.voucher_format_id'))
+                ->left_outer_join('voucher_category', array('voucher_category.id', '=', 'voucher_format.category_id'))
+                ->select_many('voucher_generated.*', 'voucher_category.category_name')
+                ->find_one($gid);
+
+            $recent_transaction = ORM::for_table('voucher_page_transaction')
+                ->left_outer_join('sys_invoices', array('sys_invoices.id','=','voucher_page_transaction.invoice_id'))
+                ->left_outer_join('voucher_generated', array('voucher_generated.id', '=', 'voucher_page_transaction.voucher_id'))
+                ->select_many('voucher_page_transaction.*')
+                ->select('sys_invoices.id', 'invoice_id')
+                ->select('sys_invoices.total', 'invoice_amount')
+                ->select('sys_invoices.date', 'invoice_date')
+                ->select('sys_invoices.vtoken', 'invoice_vtoken')
+                ->select('sys_invoices.status', 'invoice_status')
+                ->select('voucher_generated.contact_id')
+                ->where('voucher_id', $gid)
+                ->order_by_desc('id')
+                ->find_array();
+
+            foreach($recent_transaction as $r){
+                $invoice_url[$r['id']] = U.'invoices/view/'.$r['invoice_id'].'/';
+                $account_url[$r['id']] = U.'contacts/view/'.$r['contact_id'].'/summary/';
+            }
+
+
+        }
+
 
         $ui->assign('xheader', Asset::css(array('modal','dp/dist/datepicker.min','footable/css/footable.core.min','dropzone/dropzone','redactor/redactor','s2/css/select2.min')));
         $ui->assign('xfooter', Asset::js(array('modal','dp/dist/datepicker.min','footable/js/footable.all.min','dropzone/dropzone','redactor/redactor.min','numeric','s2/js/select2.min',
@@ -1128,8 +1749,16 @@ switch ($action){
         view('app_wrapper',[
             '_include' => 'list_voucher_pages',
             'voucher_pages' => $voucher_pages,
+            'voucher_format' => $voucher_format,
             'voucher_img' => $voucher_format['voucher_img'],
             'voucher_id' => $voucher_format['id'],
+            'page_status' => $page_status,
+            'gid' => $gid,
+            'voucher_info' => $voucher_info,
+            'recent_transaction' => $recent_transaction,
+            'invoice_url' => $invoice_url,
+            'account_url' => $account_url,
+            'total_pages' => $total_pages,
             'baseUrl' => $baseUrl
 
         ]);
@@ -1146,7 +1775,7 @@ switch ($action){
         $baseUrl = APP_URL;
 
         if($page_id){
-            $page_data = ORM::for_table('voucher_pages')->find_one($id);
+            $page_data = ORM::for_table('voucher_pages')->find_one($page_id);
             $type = "edit";
         }
 
@@ -1172,6 +1801,94 @@ switch ($action){
         ]);
 
         break;
+        
+    case 'view_page':
+
+        $voucher_format_id = route(3);
+        $page_id = route(4);
+
+        $type = "add";
+        $page_data = null;
+        $baseUrl = APP_URL;
+
+        if($page_id){
+            $page_data = ORM::for_table('voucher_pages')->find_one($page_id);
+            $type = "view";
+        }
+
+        $product_list = ORM::for_table('sys_items')->order_by_asc('name')->find_many();
+        $cf = ORM::for_table('voucher_customfields')->order_by_asc('id')->find_many();
+
+
+
+        $ui->assign('xheader', Asset::css(array('modal','dp/dist/datepicker.min','footable/css/footable.core.min','dropzone/dropzone','redactor/redactor','s2/css/select2.min')));
+        $ui->assign('xfooter', Asset::js(array('modal','dp/dist/datepicker.min','footable/js/footable.all.min','dropzone/dropzone','redactor/redactor.min','numeric','s2/js/select2.min',
+            's2/js/i18n/'.lan(),)));
+
+        view('app_wrapper',[
+            '_include' => 'add_page',
+            'val' => $page_data,
+            'pid' => $page_id,
+            'vid' => $voucher_format_id,
+            'product_list' => $product_list,
+            'type' => $type,
+            'baseUrl' => $baseUrl,
+            'content_inner' => inner_contents($config['c_cache']),
+            'cf' => $cf
+
+        ]);
+        break;
+
+    case 'clone_page':
+
+        $voucher_format_id = route(3);
+        $page_id = route(4);
+
+        $page_data = null;
+        $baseUrl = APP_URL;
+
+        if($page_id){
+            $page_data = ORM::for_table('voucher_pages')->find_one($page_id);
+        }
+
+        if($page_data){
+            $clone_page = ORM::for_table('voucher_pages')->create();
+
+            $clone_page->voucher_format_id = $voucher_format_id;
+            $clone_page->title = $page_data['title'];
+            $clone_page->product_id = $page_data['product_id'];
+            $clone_page->status_id = $page_data['status_id'];
+            $clone_page->payment_req = $page_data['payment_req'];
+            $clone_page->address = $page_data['address'];
+            $clone_page->date_range = $page_data['date_range'];
+            $clone_page->remark = $page_data['remark'];
+            $clone_page->front_img = $page_data['front_img'];
+            $clone_page->back_img = $page_data['back_img'];
+
+            $clone_page->save();
+
+            r2(U.'voucher/app/list_voucher_page/'.$voucher_format_id,'s','Cloned Voucher Page');
+        }
+
+
+
+        break;
+
+    case 'delete_page':
+
+        Event::trigger('voucher/app/delete_page');
+        $vid = route(3);
+        $pid = route(4);
+
+
+        $d = ORM::for_table('voucher_pages')->find_one($pid);
+
+        if ($d) {
+            $d->delete();
+            r2(U.'voucher/app/list_voucher_page/'.$vid.'/'.$pid.'/','s','Voucher page Deleted Successfully');
+        }
+
+        break;
 
     case 'post_page':
 
@@ -1179,6 +1896,7 @@ switch ($action){
         $page_id = _post('pid');
         $title = _post('title');
         $product_id = _post('product_id');
+        $sub_product_id = _post('sub_product_id');
         $payment_req = _post('payment_req');
         $status_id = _post('status_id');
         $address = _post('address');
@@ -1195,9 +1913,6 @@ switch ($action){
         if(!$title){
             $msg .= 'Title is required <br>';
         }
-        if(!$product_id){
-            $msg .= 'Product is required <br>';
-        }
         if(!$status_id){
             $msg .= 'Status is requried <br>';
         }
@@ -1208,19 +1923,23 @@ switch ($action){
             $msg .= 'Back Image is required <br>';
         }
 
+        if($payment_req == '1' && !$product_id){
+            $msg .= 'Product is required <br>';
+        }
 
         if($msg ==''){
             if($page_id == ''){
-                _msglog('s','Voucher Added Successfully');
+                _msglog('s','Voucher Page Added Successfully');
                 $d = ORM::for_table('voucher_pages')->create();
             } else {
-                _msglog('s','Voucher Update Successfully');
+                _msglog('s','Voucher Page Update Successfully');
                 $d = ORM::for_table('voucher_pages')->find_one($page_id);
             }
 
             $d->voucher_format_id = $voucher_format_id;
             $d->title = $title;
             $d->product_id = $product_id;
+            $d->sub_product_id = $sub_product_id;
             $d->status_id = $status_id;
             $d->payment_req = $payment_req;
             $d->address = $address;
@@ -1231,7 +1950,9 @@ switch ($action){
 
             $d->save();
 
+//            r2(U.'voucher/app/list_voucher_page/'.$voucher_format_id);
             echo $d->id();
+
         }  else {
             echo $msg;
         }
@@ -1362,6 +2083,103 @@ switch ($action){
 
         break;
 
+    case 'view_redeem_page':
+
+        $voucher_id = route(3);
+        $page_id = route(4);
+        $type = route(5);
+
+        $baseUrl = APP_URL;
+
+        $page_setting =ORM::for_table('voucher_pages')->find_one($page_id);
+        $transaction_data = ORM::for_table('voucher_page_transaction')
+            ->where('voucher_id', $voucher_id)
+            ->where('page_id', $page_id)
+            ->find_one();
+
+        $v = ORM::for_table('voucher_generated')->find_one($voucher_id);
+
+        $fs = ORM::for_table('voucher_customfields')->order_by_asc('id')->find_many();
+
+        $cf_value=array();
+        foreach ($fs as $f) {
+            $cf=ORM::for_table('voucher_customfieldsvalues')->where('relid',$transaction_data['id'])->where('fieldid',$f->id)->find_one();
+            $cf_value[$f->id]='';
+            if($cf){
+                $cf_value[$f->id]=$cf->fvalue;
+            }
+        }
+
+
+        $ui->assign('xheader', Asset::css(array('modal','dp/dist/datepicker.min','footable/css/footable.core.min','dropzone/dropzone','redactor/redactor','s2/css/select2.min')));
+        $ui->assign('xfooter', Asset::js(array('modal','dp/dist/datepicker.min','footable/js/footable.all.min','dropzone/dropzone','redactor/redactor.min','numeric','s2/js/select2.min',
+            's2/js/i18n/'.lan(),)));
+
+
+        view('app_wrapper',[
+            '_include' => 'voucher_redeem_page',
+            'page_setting' => $page_setting,
+            'transaction_data' => $transaction_data,
+            'fs' => $fs,
+            'cf_value' => $cf_value,
+            'baseUrl' => $baseUrl,
+            'voucher_id' => $voucher_id,
+            'page_id' => $page_id,
+            'vid' => $v['voucher_format_id'],
+            'type' => $type
+
+        ]);
+
+        break;
+
+    case 'post_redeem_page':
+
+        $tid = _post('tid');
+        $status = _post('status');
+
+        if($tid){
+            $transaction_data = ORM::for_table('voucher_page_transaction')
+                ->left_outer_join('sys_invoices', array('sys_invoices.id', '=', 'voucher_page_transaction.invoice_id'))
+                ->select_many('voucher_page_transaction.*')
+                ->select('sys_invoices.status', 'invoice_status')
+                ->find_one($tid);
+        }
+
+        $msg = '';
+
+        if(!$transaction_data){
+            $msg .= 'Invalid Transaction';
+        }
+
+        if($transaction_data['invoice_id'] != 0){
+            switch ($status){
+                case 'Redeem':
+                    if($transaction_data['invoice_status'] == 'Paid'){
+                        $msg .= 'This page is paid already <br>';
+                    }
+                    break;
+                case 'Processing':
+                    break;
+                case 'Confirm':
+                    if($transaction_data['invoice_status'] != 'Paid'){
+                        $msg .= 'This page is not paid <br>';
+                    }
+            }
+        }
+
+
+        if($msg == ''){
+            _msglog('s','Voucher Page Transaction Updated Successfully');
+            $transaction_data->status = $status;
+            $transaction_data->save();
+
+            echo $transaction_data->id();
+
+        }else{
+            echo $msg;
+        }
+
+        break;
 
 /*
  *  Files upload Logic

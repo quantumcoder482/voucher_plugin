@@ -18,7 +18,11 @@
                     <div class="row">
                     {foreach $country_list as $c}
                         <div class="col-md-2">
-                            <img src="{$baseUrl}/apps/voucher/public/flags/{$c['flag_img']}" id="cid{$c['id']}" class="country" style="border:1px solid darkgray" width="100%" >
+                            {if $c['id'] eq $country_id}
+                                <a href="#"><img src="{$baseUrl}/apps/voucher/public/flags/{$c['flag_img']}" id="cid{$c['id']}" class="country" style="border:1px solid darkgray" width="100%" ></a>
+                            {else}
+                                <a href="#"><img src="{$baseUrl}/apps/voucher/public/flags/{$c['flag_img']}" id="cid{$c['id']}" class="country" style="border:1px solid darkgray; opacity: 0.2;" width="100%" ></a>
+                            {/if}
                         </div>
                     {/foreach}
                     </div>
@@ -34,15 +38,19 @@
                     <div class="row">
                     {foreach $voucher_formats as $v}
                         <div class="col-md-2">
-                            <img src="{$baseUrl}/apps/voucher/public/voucher_imgs/{$v['voucher_img']}" id="vid{$v['id']}" class="voucher_format" style="border:1px solid darkgray" width="100%" >
-                            <div style="text-align: center; margin-top: 10px">
-                                <span class="amount" style="color:dimgray; text-decoration: line-through">{$v['cost_price']}</span>
-                                &nbsp;&nbsp;
-                                <span class="amount" style="color:black">{$v['sales_price']}</span>
-                            </div>
-                            <div style="text-align: center; margin-top: 10px">
-                                <button class="btn btn-primary" type="submit" id="submit"><i class="fa fa-shopping-cart"></i> Buy Now </button>
-                            </div>
+                            {if $v['id'] eq $voucher_id}
+                                <a href="#"><img src="{$baseUrl}/apps/voucher/public/voucher_imgs/{$v['voucher_img']}" id="vid{$v['id']}" class="voucher_format" style="border:1px solid darkgray" width="100%" ></a>
+                                <div style="text-align: center; margin-top: 10px">
+                                    <span class="amount" style="color:dimgray; text-decoration: line-through">{$v['cost_price']}</span>
+                                    &nbsp;&nbsp;
+                                    <span class="amount" style="color:black">{$v['sales_price']}</span>
+                                </div>
+                                <div style="text-align: center; margin-top: 10px">
+                                    <button class="btn btn-primary buy_now" type="submit" id="submit"><i class="fa fa-shopping-cart"></i> Buy Now </button>
+                                </div>
+                            {else}
+                                <a href="#"><img src="{$baseUrl}/apps/voucher/public/voucher_imgs/{$v['voucher_img']}" id="vid{$v['id']}" class="voucher_format" style="border:1px solid darkgray; opacity: 0.2" width="100%" ></a>
+                            {/if}
                         </div>
 
                     {/foreach}
@@ -61,7 +69,7 @@
                     <div class="row">
                     {foreach $voucher_pages as $p}
                         <div class="col-md-2">
-                            <img src="{$baseUrl}/apps/voucher/public/voucher_imgs/{$p['front_img']}" id="pid{$p['id']}" class="voucher_page" style="border:1px solid darkgray" width="100%" >
+                            <a href="#"><img src="{$baseUrl}/apps/voucher/public/voucher_imgs/{$p['front_img']}" id="pid{$p['id']}" class="voucher_page" style="border:1px solid darkgray" width="100%" ></a>
                         </div>
                     {/foreach}
                     </div>
@@ -125,6 +133,84 @@
                 });
 
             });
+
+            $modal.on('click', '.buy_now', function(e){
+                e.preventDefault();
+                cert_modal();
+            });
+
+
+            // buy voucher
+
+            $('.buy_now').on('click', function(e) {
+
+                e.preventDefault();
+
+                var vid = $('#voucher_id').val();
+
+                $('body').modalmanager('loading');
+
+                $modal.load(_url + 'voucher/client/buy_voucher/'+ vid, '', function () {
+
+                    $modal.modal();
+                    $modal.css("width", "800px");
+                    $modal.css("margin-left", "-349px");
+
+                });
+            });
+
+
+            $modal.on('click', '.checkout', function (e) {
+
+                if($('#template_id').val() == ''){
+                    toastr.error('Please select template <br>');
+                }else{
+                    $('#total_voucher').prop('disabled', false);
+
+                    e.preventDefault();
+
+                    $modal.modal('loading');
+
+                    $.post(_url + 'voucher/client/generate_voucher', $("#frm_voucher").serialize())
+                        .done(function (data) {
+
+                            redirect(data);
+                            // window.location.href = data;
+
+                            // if ($.isNumeric(data)) {
+                            //     var voucher_id = $('#voucher_id').val();
+                            //
+                            //     window.location = base_url + 'voucher/client/voucher_page/'+voucher_id;
+                            // }
+                            // else {
+                            //     toastr.error(data);
+                            //     window.location.reload();
+                            // }
+                        });
+                }
+
+            });
+
+            function redirect(data){
+                $modal.modal('hide');
+                window.location.href = data;
+            }
+
+
+            function cert_modal(){
+                var vid = $('#voucher_id').val();
+
+                // $modal.modal('hide')
+                // $('body').modalmanager('loading');
+
+                $modal.load(_url + 'voucher/client/buy_voucher/'+ vid, '', function () {
+
+                    $modal.modal();
+                    $modal.css("width", "800px");
+                    $modal.css("margin-left", "-349px");
+
+                });
+            }
 
         });
 

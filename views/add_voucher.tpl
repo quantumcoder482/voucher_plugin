@@ -1,6 +1,5 @@
 {extends file="$layouts_admin"}
 {block name="style"}
-<link rel="stylesheet" type="text/css" href="{$app_url}ui/lib/footable/css/footable.core.min.css" />
     <link rel="stylesheet" type="text/css" href="{$app_url}apps/voucher/views/css/global.css" />
 {/block}
 {block name="content"}
@@ -28,7 +27,7 @@
                                 <select id="country" name="country" class="form-control" style="width:100%">
                                     <option value="">Select Country</option>
                                     {foreach $country_list as $c}
-                                     <option value="{$c['id']}" >{$c['country_name']} ({$c['category']})</option>
+                                     <option value="{$c['id']}" >{$c['country_name']}</option>
                                     {/foreach}
                                 </select>
                                 <span class="help-block"><a href="#" class="add_country"><i class="fa fa-plus"></i>New Country</a>
@@ -37,9 +36,19 @@
                             </div>
                         </div>
 
-                        <div class="form-group"><label class="col-md-2 control-label" for="category">Prefix <small class="red">*</small></label>
+                        <div class="form-group">
+                            <label class="col-md-2 control-label" for="category">Category <small class="red">*</small></label>
 
-                            <div class="col-md-10"><input type="text" id="prefix" name="prefix" class="form-control" disabled autocomplete="off">
+                            <div class="col-md-10">
+
+                                <select id="category" name="category" class="form-control" style="width:100%">
+                                    <option value="">Select Category</option>
+                                    {foreach $category_list as $c}
+                                        <option value="{$c['id']}" >{$c['category_name']}</option>
+                                    {/foreach}
+                                </select>
+                                {*<span class="help-block"><a href="#" class="add_country"><i class="fa fa-plus"></i>New Country</a>*}
+                                {*</span>*}
 
                             </div>
                         </div>
@@ -150,16 +159,5 @@
     </div>
 {/block}
 {block name=script}
-
-    <script type="text/javascript" src="{$app_url}ui/lib/footable/js/footable.all.min.js"></script>
     <script type="text/javascript" src="{$app_url}apps/voucher/views/js/add_voucher.js"></script>
-
-    <script>
-
-        $(function() {
-            $('.footable').footable();
-        });
-
-    </script>
-
 {/block}

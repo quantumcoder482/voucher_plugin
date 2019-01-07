@@ -14,7 +14,7 @@
                             </div>
                             <div class="details">
                                 <div class="number">
-                                    2
+                                    {$total_expired}
                                 </div>
                                 <div class="desc text-right"> Total Expired </div>
                             </div>
@@ -27,7 +27,7 @@
                             </div>
                             <div class="details">
                                 <div class="number">
-                                    10
+                                   {$total_page_redeem}
                                 </div>
                                 <div class="desc text-right"> Total Page Redeem </div>
                             </div>
@@ -40,7 +40,7 @@
                             </div>
                             <div class="details">
                                 <div class="number">
-                                    3
+                                    {$total_voucher_redeem}
                                 </div>
                                 <div class="desc text-right"> Total Voucher Redeem </div>
                             </div>
@@ -53,7 +53,7 @@
                             </div>
                             <div class="details">
                                 <div class="number">
-                                    115
+                                    {$total_generated_voucher}
                                 </div>
                                 <div class="desc text-right"> Total Voucher Generated </div>
                             </div>
@@ -69,66 +69,6 @@
             <div class="ibox float-e-margins">
                 <div class="ibox-title">
                     <h3 style="font-weight: 600">Recent Redeem Voucher</h3>
-                </div>
-                <div class="ibox-content">
-                    <table class="table table-bordered table-hover sys_table footable" data-filter="#foo_filter" data-page-size="10">
-                        <thead>
-                        <tr>
-                            <th>#</th>
-                            <th>Date</th>
-                            <th>Customer</th>
-                            <th>Country</th>
-                            <th>Cat</th>
-                            <th>Page Title</th>
-                        </tr>
-                        </thead>
-                        <tbody>
-                        {foreach $redeem_voucher_pages as $p}
-                            <tr>
-                                <td data-value="{$p['id']}">
-                                    {$p['id']}
-                                </td>
-
-                                <td data-value="{strtotime($p['date'])}">
-                                    {date( $config['df'], strtotime($p['date']))}
-                                </td>
-
-                                <td data-value="{$p['customer']}">
-                                    {$p['customer']}
-                                </td>
-
-                                <td data-value="{$p['country_name']}" id="{$p['id']}">
-                                    <a href="#">{$p['country_name']}</a>
-                                </td>
-
-                                <td data-value="{$p['category']}">
-                                    {$p['category']}
-                                </td>
-
-                                <td data-value="{$p['title']}">
-                                    &nbsp;{$p['title']}
-                                </td>
-
-                            </tr>
-                        {/foreach}
-
-                        </tbody>
-                        <tfoot>
-                        <tr>
-                            <td style="text-align: right;" colspan="6">
-                                <ul class="pagination">
-                                </ul>
-                            </td>
-                        </tr>
-                        </tfoot>
-                    </table>
-                </div>
-            </div>
-        </div>
-        <div class="col-md-6">
-            <div class="ibox float-e-margins">
-                <div class="ibox-title">
-                    <h3 style="font-weight: 600">Recent Redeem Voucher Page</h3>
                 </div>
                 <div class="ibox-content">
                     <table class="table table-bordered table-hover sys_table footable" data-page-size="10">
@@ -162,11 +102,17 @@
                                 </td>
 
                                 <td data-value="{strtotime($v['expiry_date'])}">
-                                    {date( $config['df'], strtotime($v['expiry_date']))}
+                                    {if $voucher_status[$v['id']] eq 'Expired'}
+                                        <span style="color:red">{date( $config['df'], strtotime($v['expiry_date']))}</span>
+                                    {elseif $voucher_status[$v['id']] eq 'Limit'}
+                                        <span style="color:darkorange">{date( $config['df'], strtotime($v['expiry_date']))}</span>
+                                    {else}
+                                        {date( $config['df'], strtotime($v['expiry_date']))}
+                                    {/if}
                                 </td>
 
                                 <td data-value="{$v['serial_number']}">
-                                    &nbsp;{$v['prefix']} {$v['serial_number']}
+                                    &nbsp;{$v['prefix']}{$v['serial_number']}
                                 </td>
 
                             </tr>
@@ -175,7 +121,7 @@
                         </tbody>
                         <tfoot>
                         <tr>
-                            <td style="text-align: right;" colspan="6">
+                            <td style="text-align: left;" colspan="6">
                                 <ul class="pagination">
                                 </ul>
                             </td>
@@ -183,6 +129,68 @@
                         </tfoot>
                     </table>
                 </div>
+            </div>
+        </div>
+        <div class="col-md-6">
+            <div class="ibox float-e-margins">
+                <div class="ibox-title">
+                    <h3 style="font-weight: 600">Recent Redeem Voucher Page</h3>
+                </div>
+
+                <div class="ibox-content">
+                    <table class="table table-bordered table-hover sys_table footable" data-filter="#foo_filter" data-page-size="10">
+                        <thead>
+                        <tr>
+                            <th>#</th>
+                            <th>Date</th>
+                            <th>Customer</th>
+                            <th>Country</th>
+                            <th>Cat</th>
+                            <th>Page Title</th>
+                        </tr>
+                        </thead>
+                        <tbody>
+                        {foreach $redeem_voucher_pages as $p}
+                            <tr>
+                                <td data-value="{$p['id']}">
+                                    {$p['id']}
+                                </td>
+
+                                <td data-value="{strtotime($p['createdon'])}">
+                                    {date( $config['df'], strtotime($p['createdon']))}
+                                </td>
+
+                                <td data-value="{$p['customer_name']}">
+                                    {$p['customer_name']}
+                                </td>
+
+                                <td data-value="{$p['country_name']}" id="{$p['id']}">
+                                    <a href="#">{$p['country_name']}</a>
+                                </td>
+
+                                <td data-value="{$p['category']}">
+                                    {$p['category']}
+                                </td>
+
+                                <td data-value="{$p['page_title']}">
+                                    &nbsp;{$p['page_title']}
+                                </td>
+
+                            </tr>
+                        {/foreach}
+
+                        </tbody>
+                        <tfoot>
+                        <tr>
+                            <td style="text-align: left;" colspan="6">
+                                <ul class="pagination">
+                                </ul>
+                            </td>
+                        </tr>
+                        </tfoot>
+                    </table>
+                </div>
+
             </div>
         </div>
     </div>
@@ -202,31 +210,31 @@
                     <table class="table-bordered" width="100%">
                         <tr>
                             <td style="width:15%; height:40px; text-align: left;">
-                                &nbsp; &nbsp; Unpaid(1)
+                                &nbsp; &nbsp; Unpaid({$count['unpaid']})
                             </td>
                             <td>
                                 <div class="progress progress-small mt-10" style="margin-left: 10px; margin-right: 10px">
-                                    <div class="progress-bar progress-bar-danger" aria-valuenow="85" aria-valuemin="0" aria-valuemax="100" style="width: 30%" role="progressbar"> <span class="sr-only">30%</span> </div>
+                                    <div class="progress-bar progress-bar-danger" aria-valuenow="10" aria-valuemin="0" aria-valuemax="100" style="width: {$percent['unpaid']}%" role="progressbar"> <span class="sr-only">{$percent['unpaid']}%</span> </div>
                                 </div>
                             </td>
                         </tr>
                         <tr>
                             <td style="width:15%; height:40px; text-align: left;">
-                                &nbsp; &nbsp; Partially Unpaid(0)
+                                &nbsp; &nbsp; Partially Paid({$count['partially']})
                             </td>
                             <td>
                                 <div class="progress progress-small mt-10" style="margin-left: 10px; margin-right: 10px">
-                                    <div class="progress-bar progress-bar-inverse" aria-valuenow="85" aria-valuemin="0" aria-valuemax="100" style="width:15%" role="progressbar"> <span class="sr-only">15%</span> </div>
+                                    <div class="progress-bar progress-bar-inverse" aria-valuenow="10" aria-valuemin="0" aria-valuemax="100" style="width:{$percent['partially']}%" role="progressbar"> <span class="sr-only">{$percent['partially']}%</span> </div>
                                 </div>
                             </td>
                         </tr>
                         <tr>
                             <td style="width:15%; height:40px; text-align: left;">
-                                &nbsp; &nbsp; Paid(0)
+                                &nbsp; &nbsp; Paid({$count['paid']})
                             </td>
                             <td>
                                 <div class="progress progress-small mt-10" style="margin-left: 10px; margin-right: 10px">
-                                    <div class="progress-bar progress-bar-success" aria-valuenow="85" aria-valuemin="0" aria-valuemax="100" style="width:55%" role="progressbar"> <span class="sr-only">55%</span> </div>
+                                    <div class="progress-bar progress-bar-success" aria-valuenow="10" aria-valuemin="0" aria-valuemax="100" style="width:{$percent['paid']}%" role="progressbar"> <span class="sr-only">{$percent['paid']}%</span> </div>
                                 </div>
                             </td>
                         </tr>
@@ -257,20 +265,33 @@
                                     {$r['account']}
                                 </td>
 
-                                <td data-value="{$r['amount']}" class="amount" data-a-sign="{$config['currency_code']} ">
-                                    {$r['amount']}
-                                </td>
+                                <td data-value="{$r['amount']}" class="amount" data-a-sign="{$config['currency_code']} ">{$r['amount']}</td>
 
                                 <td data-value="{strtotime($r['expiry_date'])}">
-                                    {date( $config['df'], strtotime($r['expiry_date']))}
+                                    Actived from {date( $config['df'], strtotime($r['date']))} to {date( $config['df'], strtotime($r['expiry_date']))}
                                 </td>
 
-                                <td data-value="{$r['status']}">
-                                    &nbsp;{$r['status']}
+                                <td data-value="{$r['invoice_status']}">
+                                    {if $r['invoice_status'] eq 'Paid'}
+                                        <span class="btn btn-xs btn-success" style="width:85px">Paid</span>
+                                    {elseif $r['invoice_status'] eq 'Unpaid' || $r['invoice_id'] eq '-1' || $r['invoice_id'] eq '0'}
+                                        <span class="btn btn-xs btn-danger" style="width:85px">Unpaid</span>
+                                    {else}
+                                        <span class="btn btn-xs btn-warning" style="width:85px">Partially Paid</span>
+                                    {/if}
                                 </td>
 
                             </tr>
                         {/foreach}
+                        </tbody>
+                        <tfoot>
+                        <tr>
+                            <td style="text-align: left;" colspan="6">
+                                <ul class="pagination">
+                                </ul>
+                            </td>
+                        </tr>
+                        </tfoot>
                     </table>
                 </div>
             </div>

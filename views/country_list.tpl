@@ -46,19 +46,19 @@
                             </div>
                         </div>
 
-                        <div class="form-group">
-                            <label class="col-md-3 control-label" for="category">category <small class="red">*</small></label>
+                        {*<div class="form-group">*}
+                            {*<label class="col-md-3 control-label" for="category">category <small class="red">*</small></label>*}
 
-                            <div class="col-md-9">
+                            {*<div class="col-md-9">*}
 
-                                <select class="form-control" id="category" name="category" style="width:100%" >
-                                    <option value="" selected>Select Category</option>
-                                    <option value="Silver">Silver</option>
-                                    <option value="Gold">Gold</option>
-                                </select>
-                            </div>
+                                {*<select class="form-control" id="category" name="category" style="width:100%" >*}
+                                    {*<option value="" selected>Select Category</option>*}
+                                    {*<option value="Silver">Silver</option>*}
+                                    {*<option value="Gold">Gold</option>*}
+                                {*</select>*}
+                            {*</div>*}
 
-                        </div>
+                        {*</div>*}
 
                         <div class="form-group">
                             <label class="col-md-3 control-label" for="description">Description</label>
@@ -134,7 +134,7 @@
                             <th>#</th>
                             <th>Country</th>
                             <th>Prefix</th>
-                            <th>Category</th>
+                            {*<th>Category</th>*}
                             <th>Description</th>
                             <th>flag</th>
                             <th>manage</th>
@@ -147,7 +147,7 @@
                                 <td data-value="{$country['id']}">{$key+1}</td>
                                 <td data-value="{$country['country_name']}">{$country['country_name']}</td>
                                 <td data-value="{$country['prefix']}">{$country['prefix']}</td>
-                                <td data-value="{$country['category']}">{$country['category']}</td>
+                                {*<td data-value="{$country['category']}">{$country['category']}</td>*}
                                 <td data-value="{$country['description']}">{$country['description']}</td>
                                 <td data-value="{$country['flag_img']}">
                                     <img src="{$baseUrl}/apps/voucher/public/flags/{$country['flag_img']}" style="border:1px solid darkgray"  width="40px" />

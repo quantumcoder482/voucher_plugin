@@ -30,11 +30,22 @@
                                 </div>
 
                                 <div class="form-group">
+                                    <label class="control-label" for="agent_id">Agent</label>
+                                    <select id="agent_id" name="agent_id" class="form-control">
+                                        <option value="" selected>{$_L['All']}</option>
+                                        {foreach $agents as $agent}
+                                            <option value="{$agent['id']}">{$agent['account']}</option>
+                                        {/foreach}
+                                    </select>
+                                </div>
+
+                                <div class="form-group">
                                     <label for="category">Voucher Category</label>
                                     <select id="category" name="category" class="form-control">
                                         <option value="">{$_L['All']}</option>
-                                        <option value="Silver">Silver</option>
-                                        <option value="Gold">Gold</option>
+                                        {foreach $categories as $category}
+                                            <option value="{$category['id']}">{$category['category_name']}</option>
+                                        {/foreach}
                                     </select>
                                 </div>
 
@@ -75,11 +86,12 @@
                                             <thead>
                                             <tr class="heading">
                                                 <th> # </th>
-                                                <th>Date</th>
+                                                <th width="80px">Date</th>
                                                 <th>Customer</th>
+                                                <th>Agent</th>
                                                 <th>Country</th>
                                                 <th>Category</th>
-                                                <th>Expiry</th>
+                                                <th width="80px">Expiry</th>
                                                 <th>Serial No.</th>
                                                 <th>Status</th>
                                                 <th class="text-right" style="width: 80px;">Manage</th>
@@ -88,6 +100,7 @@
                                                 <td></td>
                                                 <td></td>
                                                 <td><input type="text" id="filter_customer" name="filter_customer" class="form-control"></td>
+                                                <td><input type="text" id="filter_agent" name="filter_agent" class="form-control"></td>
                                                 <td><input type="text" id="filter_country" name="filter_country" class="form-control"></td>
                                                 <td><input type="text" id="filter_category" name="filter_category" class="form-control"></td>
                                                 <td></td>

@@ -20,30 +20,19 @@
 
                 <div class="panel-body">
 
-                    <div id="ib_act_hidden" style="display: none;">
-                        {*<a href="#" id="send_group_serialnumber" class="btn btn-primary">{$_L['Send serialnumber']}</a>*}
-                        {*<a href="#" id="assign_to_group" class="btn btn-primary"><i class="fa fa-users"></i> {$_L['Assign to Group']}</a>*}
-                        {*<a href="#" id="send_group_sms" class="btn btn-primary">{$_L['Send SMS']}</a>*}
-                        {*<a href="#" id="delete_multiple_customers" class="btn btn-danger"><i class="fa fa-trash"></i> {$_L['Delete']}</a>*}
-
-                        {*<hr>*}
-                    </div>
-
                     <div class="table-responsive" id="ib_data_panel">
-
 
                         <table class="table table-bordered table-hover display" id="ib_dt">  <!--width="100%" -->
                             <thead>
                             <tr class="heading">
-                                {*<th><input id="d_select_all" type="checkbox" value="" name=""  class="i-checks"/></th>*}
                                 <th>#</th>
                                 <th>Image</th>
-                                <th>Date</th>
+                                <th style="width: 80px;">Date</th>
                                 <th>Prefix</th>
                                 <th>Serial No.</th>
                                 <th>Contact</th>
-                                <th>Partner</th>
-                                <th>Expiry</th>
+                                <th>Agent</th>
+                                <th style="width: 80px;">Expiry</th>
                                 <th>Redeem</th>
                                 <th>Description</th>
                                 <th>Status</th>
@@ -51,14 +40,13 @@
                             </tr>
 
                             <tr class="heading">
-                                {*<td></td>*}
                                 <td></td>
                                 <td></td>
                                 <td></td>
-                                <td><input type="text" id="filter_prefix" name="filter_prefix" class="form-control"></td>
+                                <td><input type="text" id="filter_prefix" name="filter_prefix" class="form-control" width="30px"></td>
                                 <td><input type="text" id="filter_serialnumber" name="filter_serialnumber" class="form-control"></td>
                                 <td><input type="text" id="filter_contact" name="filter_contact" class="form-control"></td>
-                                <td><input type="text" id="filter_partner" name="filter_partner" class="form-control"></td>
+                                <td><input type="text" id="filter_agent" name="filter_agent" class="form-control"></td>
                                 <td></td>
                                 <td></td>
                                 <td></td>
@@ -73,15 +61,41 @@
                 </div>
             </div>
         </div>
-
+        <input type="hidden" id="vid" name="vid" value="{$vid}">
     </div>
 {/block}
 
 {block name="script"}
     <script>
+        Dropzone.autoDiscover = false;
         $(function() {
 
             var _url = $("#_url").val();
+
+            $.fn.modal.defaults.width = '850px';
+            var $modal = $('#ajax-modal');
+            $('[data-toggle="tooltip"]').tooltip();
+
+            $modal.on('click', '.generate_modal_submit', function (e) {
+
+                $('#serial_number').prop('disabled', false);
+                $('#total_voucher').prop('disabled', false);
+
+                e.preventDefault();
+
+                $modal.modal('loading');
+
+                $.post(_url + 'voucher/app/post_generate_voucher', $("#mrform").serialize())
+                    .done(function (data) {
+                        if ($.isNumeric(data)) {
+                            window.location.reload();
+                        }
+                        else {
+                            $modal.modal('loading');
+                            toastr.error(data);
+                        }
+                    });
+            });
 
             var $ib_data_panel = $("#ib_data_panel");
 
@@ -101,12 +115,12 @@
                         d.prefix = $('#filter_prefix').val();
                         d.serial_number = $('#filter_serialnumber').val();
                         d.contact = $('#filter_contact').val();
-                        d.partner = $('#filter_partner').val();
+                        d.agent = $('#filter_agent').val();
 
                     }
                 },
                 "pageLength": 20,
-                responsive: true,
+                responsive: false,
                 dom: "<'row'<'col-sm-6'i><'col-sm-6'B>>" +
                 "<'row'<'col-sm-12'tr>>" +
                 "<'row'<'col-sm-5'><'col-sm-7'p>>",
@@ -154,18 +168,18 @@
                 ],
                 "orderCellsTop": true,
                 "columnDefs": [
-                    {
-                        "render": function ( data, type, row ) {
-                            return '<a href="' + _url +'voucher/app/list_voucher_page/'+ row[12] +'">'+ data +'</a>';
-                        },
-                        "targets": 1
-                    },
-                    {
-                        "render": function (data, type, row) {
-                            return '<a href="' + _url +'voucher/app/list_voucher_page/'+ row[12] +'">'+ data +'</a>';
-                        },
-                        "targets": 4
-                    },
+                    // {
+                    //     "render": function ( data, type, row ) {
+                    //         return '<a href="' + _url +'voucher/app/list_voucher_page/'+ row[12] +'/'+row[0]+'">'+ data +'</a>';
+                    //     },
+                    //     "targets": 1
+                    // },
+                    // {
+                    //     "render": function (data, type, row) {
+                    //         return '<a href="' + _url +'voucher/app/list_voucher_page/'+ row[12] +'/'+row[0]+'">'+ data +'</a>';
+                    //     },
+                    //     "targets": 4
+                    // },
                     { "orderable": false, "targets": 1 },
                     { "orderable": false, "targets": 3 },
                     { "orderable": false, "targets": 9 },
@@ -173,7 +187,7 @@
                     { className: "text-center", "targets": [ 1 ] },
                     { "type": "html-num", "targets": 1 }
                 ],
-                "order": [[ 1, 'desc' ]],
+                "order": [[ 0, 'desc' ]],
                 "scrollX": true,
                 "initComplete": function () {
                     $ib_data_panel.unblock();
@@ -202,8 +216,6 @@
 
             });
 
-
-
             $ib_data_panel.on('click', '.cdelete', function(e){
 
                 e.preventDefault();
@@ -228,6 +240,25 @@
                 });
 
             });
+
+            $ib_data_panel.on('click', '.cedit', function(e) {
+
+                e.preventDefault();
+                var id = this.id;
+                var vid = $('#vid').val();
+
+                e.preventDefault();
+
+                $('body').modalmanager('loading');
+
+                $modal.load(_url + 'voucher/app/modal_generate_voucher/'+vid+'/'+id, '', function () {
+
+                    $modal.modal();
+
+                });
+            });
+
+
 
 
         });

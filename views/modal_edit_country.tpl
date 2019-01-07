@@ -49,21 +49,21 @@
                             </div>
                         </div>
 
-                        <div class="form-group">
-                            <label class="col-md-4 control-label" for="md_category">Category <small class="red">*</small></label>
-    
-                            <div class="col-md-8">
-    
-                                <select class="form-control" style="width:100%" id="md_category" name="category">
-                                    <option value="{$val['category']}" selected>{$val['category']}</option>
-                                    <option value="Silver">Silver</option>
-                                    <option value="Gold">Gold</option>
-                                </select>
-                                <span class="help-block"> </span>
-                            </div>
-    
-                            
-                        </div>
+                        {*<div class="form-group">*}
+                            {*<label class="col-md-4 control-label" for="md_category">Category <small class="red">*</small></label>*}
+
+                            {*<div class="col-md-8">*}
+
+                                {*<select class="form-control" style="width:100%" id="md_category" name="category">*}
+                                    {*<option value="{$val['category']}" selected>{$val['category']}</option>*}
+                                    {*<option value="Silver">Silver</option>*}
+                                    {*<option value="Gold">Gold</option>*}
+                                {*</select>*}
+                                {*<span class="help-block"> </span>*}
+                            {*</div>*}
+
+                            {**}
+                        {*</div>*}
 
                         <div class="form-group">
                             <label class="col-md-4 control-label" for="md_description">{$_L['Description']}</label>
@@ -86,7 +86,7 @@
         <div class="col-md-5">
             <div class="ibox float-e-margins">
                 <div class="ibox-title">
-                    Uplolad Flag Image
+                    Upload Flag Image
                 </div>
                 <div class="ibox-content" id="ibox_form" style="height: 200px">
     
@@ -138,6 +138,7 @@
         $("#emsg").hide();
         $('#md_description').redactor(
             {
+                toolbar:false,
                 minHeight: 150 // pixels
             }
         );
@@ -146,11 +147,6 @@
             theme: "bootstrap"
         });
 
-        $('#md_category').select2({
-            theme:"bootstrap"
-        });
-
-        var _url = $("#_url").val();
 
         $('#md_country_name').on('change', function(e){
             e.preventDefault();

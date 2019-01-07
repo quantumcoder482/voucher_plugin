@@ -38,13 +38,10 @@
                             <div class="hr-line-dashed"></div>
 
                         <div class="form-group">
-                            <label class="col-md-2 control-label" for="product_fee">Product </label>
+                            <label class="col-md-2 control-label" for="activation_fee">Activation Fee </label>
+                            <div class="col-md-6">
+                                <input type="text" id="activation_fee" name="activation_fee" class="form-control amount" autocomplete="off" data-a-sign="{$config['currency_code']} "  data-a-dec="{$config['dec_point']}" data-a-sep="{$config['thousands_sep']}" data-d-group="2" value="{$setting['activation_fee']}">
 
-                            <div class="col-md-10">
-                                <select class="form-control" style="width:100%" id="product_fee" name="product_fee">
-                                    <option value="15" {if $setting['product_fee'] eq 15} selected {/if}> Activation Fees($15) </option>
-                                    <option value="20" {if $setting['product_fee'] eq 20} selected {/if}> Activation Fees($20) </option>
-                                </select>
                             </div>
                         </div>
                         <br>
@@ -186,7 +183,8 @@
         $("#emsg").hide();
         $('#agreement_text').redactor(
             {
-                minHeight: 200 // pixels
+                minHeight: 300, // pixels
+                maxHeight: 300
             }
         );
         $('#alert_message').redactor(
@@ -195,9 +193,6 @@
             }
         );
 
-        $('#product_fee').select2({
-            theme:"bootstrap"
-        });
 
 
         var _url = $("#_url").val();

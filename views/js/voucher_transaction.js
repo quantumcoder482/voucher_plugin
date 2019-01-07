@@ -6,12 +6,17 @@ $(document).ready(function() {
     $ib_data_panel.block({ message:block_msg });
 
     var $customer = $('#customer_id');
+    var $agent = $('#agent_id');
     var $category = $("#category");
     var $country=$("#country_id");
     var $status=$("#status");
 
     $customer.select2({
         theme: "bootstrap"
+    });
+
+    $agent.select2({
+        theme:"bootstrap"
     });
 
     $category.select2({
@@ -64,19 +69,21 @@ $(document).ready(function() {
             "type": "POST",
             "data": function ( d ) {
                 d.customer = $customer.val();
+                d.agent = $agent.val();
                 d.category = $category.val();
                 d.country = $country.val();
                 d.status = $status.val();
                 d.reportrange = $reportrange.val();
 
                 d.filter_customer = $('#filter_customer').val();
+                d.filter_agent = $('#filter_agent').val();
                 d.filter_category = $('#filter_category').val();
                 d.filter_country = $('#filter_country').val();
                 d.filter_serialnumber = $('#filter_serialnumber').val();
             }
         },
         "pageLength": 10,
-        responsive: true,
+        responsive: false,
         dom: "<'row'<'col-sm-6'i><'col-sm-6'B>>" +
             "<'row'<'col-sm-12'tr>>" +
             "<'row'<'col-sm-5'><'col-sm-7'p>>",
@@ -126,7 +133,7 @@ $(document).ready(function() {
         ],
         "orderCellsTop": true,
         "columnDefs": [
-            { "orderable": false, "targets":8 }
+            { "orderable": false, "targets":9 }
         ],
         "order": [[ 0, 'desc' ]],
         "scrollX": true,

@@ -29,6 +29,22 @@ tr,td{
     font-size: 10pt;
     width: 80px
 }
+
+.square-expire:hover {
+    color:#f8f8f8;
+}
+
+.square-expire:active {
+    color:#f8f8f8;
+}
+
+.square-expire:visited {
+    color:#f8f8f8;
+}
+
+.square-expire:link {
+    color:#f8f8f8;
+}
 .square-active {
     background-color:#39B54A;
     border-color:#39B54A;
@@ -36,6 +52,22 @@ tr,td{
     font-weight:600;
     font-size: 10pt;
     width: 80px
+}
+
+.square-expire:hover {
+    color:#f8f8f8;
+}
+
+.square-expire:active {
+    color:#f8f8f8;
+}
+
+.square-expire:visited {
+    color:#f8f8f8;
+}
+
+.square-expire:link {
+    color:#f8f8f8;
 }
 .square-redeem {
     background-color: #8c1371;
@@ -67,6 +99,23 @@ tr,td{
     font-size: 10pt;
     width: 80px
 }
+
+.square-expire:hover {
+    color:#f8f8f8;
+}
+
+.square-expire:visited {
+    color:#f8f8f8;
+}
+
+.square-expire:active {
+    color:#f8f8f8;
+}
+
+.square-expire:link {
+    color:#f8f8f8;
+}
+
 .round-alert {
     border-radius: 10px;
     background: #ff0000;

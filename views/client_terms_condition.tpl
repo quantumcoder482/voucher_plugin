@@ -15,14 +15,15 @@
                 </div>
             </div>
             <div class="form-group">
-                <div class="col-md-10">
+                <div class="col-md-1">
                     <div class="checkbox">
-                        <label>
-                            <input type="checkbox" class="i-checks" name="payment_req" value="1">
-                                I have read, understand, and fully agree to all term and conditions of this benefit offer and <br>
-                                I agree to the declaration and cancelling policy which will be forwarded to me at time of booking.
+                        <label style="float:left">
+                            <input type="checkbox" class="i-checks" id="modal_agree_check" name="modal_agree_check" value="1" checked>
                         </label>
                     </div>
+                </div>
+                <div class="col-md-10">
+                    <span>I have read, understand, and fully agree to all term and conditions of this benefit offer and I agree to the declaration and cancelling policy which will be forwarded to me at time of booking.</span>
                 </div>
             </div>
 
@@ -37,8 +38,7 @@
 
 <div class="modal-footer">
     <button type="button" data-dismiss="modal" class="btn btn-danger">{$_L['Close']}</button>
-    <button type="submit" class="btn btn-primary modal_submit" id="modal_submit">
-        <i class="fa fa-check"></i>Processed</button>
+    <button type="submit" class="btn btn-primary modal_submit" id="modal_submit">Proceed</button>
 
 </div>
 
@@ -46,21 +46,35 @@
 <script>
 
     $(document).ready(function () {
+        $('.i-checks').iCheck({
+            checkboxClass: 'icheckbox_square-blue',
+            radioClass: 'iradio_square-blue'
+        });
 
-        $(".progress").hide();
-        $("#emsg").hide();
-        $('#md_description').redactor(
+        // $('#modal_submit').prop('disabled', true);
+
+        $('#modal_agree_check').on('ifChanged', function(e) {
+            e.preventDefault();
+
+            var isChecked = e.currentTarget.checked;
+
+            if(isChecked == true){
+                $('#modal_submit').prop('disabled', false);
+                $('#modal_submit').removeClass('btn-secondary').addClass('btn-primary');
+            }else{
+                $('#modal_submit').prop('disabled', true);
+                $('#modal_submit').removeClass('btn-primary').addClass('btn-secondary');
+
+            }
+        });
+
+        $('#terms').redactor(
             {
-                minHeight: 150 // pixels
+                toolbar: false,
+                minHeight: 500,
+                maxHeight: 500
             }
         );
-
-
-
-        var _url = $("#_url").val();
-        var ib_submit = $("#submit");
-        var $md_flag_img= $("#md_flag_img");
-
 
     });
 </script>

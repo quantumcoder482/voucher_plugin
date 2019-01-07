@@ -25,7 +25,7 @@
 <div class="modal-footer">
     <span>{$page_data['country_name']} ({$page_data['category']}) Price: </span>
     <span class="amount" data-a-sign="{$config['currency_code']}">{$page_data['sales_price']} </span>&nbsp;&nbsp;
-    <button type="submit" class="btn btn-primary modal_submit" id="modal_submit"> <i class="fa fa-shopping-cart"></i> Buy now </button>
+    <button type="submit" class="btn btn-primary buy_now" id="modal_submit"> <i class="fa fa-shopping-cart"></i> Buy now </button>
     <button type="button" data-dismiss="modal" class="btn btn-danger">{$_L['Close']}</button>
 </div>
 

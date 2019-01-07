@@ -8,7 +8,8 @@ $(document).ready(function () {
     $("#emsg").hide();
     $('#description').redactor(
         {
-            minHeight: 200 // pixels
+            toolbar: false,
+            minHeight: 150 // pixels
         }
     );
 
@@ -19,15 +20,15 @@ $(document).ready(function () {
 
 
     var $country_name = $('#country_name');
-    var $category = $('#category');
+    // var $category = $('#category');
 
     $country_name.select2({
         theme: "bootstrap"
     });
 
-    $category.select2({
-        theme:"bootstrap"
-    });
+    // $category.select2({
+    //     theme:"bootstrap"
+    // });
 
 
     var _url = $("#_url").val();

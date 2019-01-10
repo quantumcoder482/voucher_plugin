@@ -59,13 +59,21 @@
                                         {if $v['front_img'] eq ''}
                                             <img src="{$baseUrl}/apps/voucher/views/img/item_placeholder.png" width="40px" />
                                         {else}
-                                            <img src="{$baseUrl}/apps/voucher/public/voucher_imgs/{$v['front_img']}" width="40px" />
+                                            {if $page_status[$v['id']] eq 'confirm'}
+                                                <a href="#" class="view_page" id="{$t_id[$v['id']]}"><img src="{$baseUrl}/apps/voucher/public/voucher_imgs/{$v['front_img']}" width="40px" /></a>
+                                            {else}
+                                                <img src="{$baseUrl}/apps/voucher/public/voucher_imgs/{$v['front_img']}" width="40px" />
+                                            {/if}
                                         {/if}
 
                                     </td>
 
                                     <td data-value="{$v['title']}" id="{$v['id']}">
-                                        <a href="#">{$v['title']}</a>
+                                        {if $page_status[$v['id']] eq 'confirm'}
+                                            <a href="#" class="view_page" id="{$t_id[$v['id']]}">{$v['title']}</a>
+                                        {else}
+                                            {$v['title']}
+                                        {/if}
                                     </td>
 
                                     <td data-value="{$v['description']}">
@@ -90,8 +98,11 @@
                                                 </a>
                                             {/if}
                                         {elseif $page_status[$v['id']] eq 'confirm'}
-                                            <a href="#" class="btn btn-xs square-active" id="{$v['id']}" data-toggle="tooltip" data-placement="top" title="Confirm">
-                                                Confirm
+                                            <a href="#" class="btn btn-primary btn-xs view_page" id="{$t_id[$v['id']]}" data-toggle="tooltip" data-placement="top" title="{$_L['View']}">
+                                                <i class="fa fa-file-text-o"></i>
+                                            </a>
+                                            <a href="#" class="btn btn-xs square-active" id="{$v['id']}" data-toggle="tooltip" data-placement="top" title="Confirmed">
+                                                Confirmed
                                             </a>
                                         {elseif $page_status[$v['id']] eq 'processing'}
                                             <a href="#" class="btn btn-xs square-deactive" id="{$v['id']}" data-toggle="tooltip" data-placement="top" title="Processing">
@@ -143,11 +154,11 @@
                             <thead>
                             <tr>
                                 <th>Invoice No.</th>
-                                <th>Invoice Date</th>
-                                <th>Product Name (Sub product)</th>
+                                <th>Redeem Date</th>
+                                <th>Page Title</th>
                                 <th>Account</th>
                                 <th>Amount</th>
-                                <th>Status</th>
+                                <th>Payment</th>
                             </tr>
                             </thead>
                             <tbody>
@@ -162,34 +173,35 @@
                                         {/if}
 
                                     </td>
-                                    <td data-value="{strtotime($t['invoice_date'])}">
-                                        {if $t['invoice_date'] eq '0' || $t['invoice_date'] eq ''}
-                                            -
-                                        {else}
-                                            {date( $config['df'], strtotime($t['invoice_date']))}
-                                        {/if}
-
+                                    <td data-value="{strtotime($t['createdon'])}">
+                                        {date( $config['df'], strtotime($t['createdon']))}
                                     </td>
-                                    <td data-value="{$t['product_name']}">
-                                        {if $t['product_name'] neq ''}
-                                            {$t['product_name']} {if $t['sub_product_req'] eq '1'}( {$t['sub_product_name']} ){/if}
-                                        {else}
-                                            -
-                                        {/if}
+                                    <td data-value="{$t['page_title']}">
+                                        {$t['page_title']}
                                     </td>
                                     <td data-value="{$t['customer_name']}">
                                         {$t['customer_name']}
                                     </td>
                                     <td data-value="{$t['invoice_amount']}" class="amount" data-a-sign="{$config['currency_code']} ">{$t['invoice_amount']}</td>
                                     <td data-value="{$t['invoice_status']}">
+
                                         {if $t['invoice_status'] eq 'Paid'}
-                                            <div class="label-success" style="margin:0 auto; font-size:85%; width:85px">Paid</div>
+                                            <a href="{$invoice_url[$t['id']]}" style="" class="btn btn-primary btn-xs view_invoice" id="{$v['id']}" data-toggle="tooltip" data-placement="top" title="{$_L['View']}">
+                                                <i class="fa fa-file-text-o"></i>
+                                            </a>
+                                            <div class="label-success" style="display:inline-block; margin:0 auto; font-size:100%; width:85px">Paid</div>
                                         {elseif $t['invoice_status'] eq 'Unpaid'}
-                                            <div class="label-danger" style="margin:0 auto; font-size:85%; width:85px">Unpaid</div>
+                                            <a href="{$invoice_url[$t['id']]}" style="" class="btn btn-primary btn-xs view_invoice" id="{$v['id']}" data-toggle="tooltip" data-placement="top" title="{$_L['View']}">
+                                                <i class="fa fa-file-text-o"></i>
+                                            </a>
+                                            <div class="label-danger" style="display:inline-block; margin:0 auto; font-size:100%; width:85px">Unpaid</div>
                                         {elseif $t['invoice_status'] eq 'Partially Paid'}
-                                            <div class="label-warning" style="margin:0 auto; font-size:85%; width:85px">Partially Paid</div>
+                                            <a href="{$invoice_url[$t['id']]}" style="" class="btn btn-primary btn-xs view_invoice" id="{$v['id']}" data-toggle="tooltip" data-placement="top" title="{$_L['View']}">
+                                                <i class="fa fa-file-text-o"></i>
+                                            </a>
+                                            <div class="label-warning" style="display:inline-block; margin:0 auto; font-size:100%; width:85px">Partially Paid</div>
                                         {else}
-                                            -
+                                            <div class="label-success" style="display:inline-block; margin:0 auto; font-size:100%; width:85px">Confirmed</div>
                                         {/if}
                                     </td>
 
@@ -247,6 +259,26 @@
                 });
             });
 
+            $('.view_page').on('click', function (e) {
+
+                var id = this.id;
+
+                e.preventDefault();
+
+                $('body').modalmanager('loading');
+
+                $modal.load(_url + 'voucher/client/modal_edit_redeem/'+id +'/view', '', function () {
+
+                    $modal.modal();
+                    $modal.css("width", "800px");
+                    $modal.css("margin-left", "-349px");
+
+                });
+            });
+
+
+
+
             $modal.on('click', '.modal_submit', function (e) {
 
                 $('#voucher_number').prop('disabled', false);
@@ -263,13 +295,11 @@
 
                 $.post(_url + 'voucher/client/post_redeem_page/'+tid, $("#frm_redeem").serialize())
                     .done(function (data) {
-                        if ($.isNumeric(data)) {
+                        if(data == 'page_list') {
                             var voucher_id = $('#voucher_id').val();
-
                             window.location = base_url + 'voucher/client/voucher_page/'+voucher_id;
-                        }
-                        else {
-                            toastr.error(data);
+
+                        }else if(data == 'reload') {
                             window.location.reload();
                         }
                     });

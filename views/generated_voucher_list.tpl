@@ -63,6 +63,98 @@
         </div>
         <input type="hidden" id="vid" name="vid" value="{$vid}">
     </div>
+
+    <div class="row">
+        <div class="col-md-12">
+            <div class="ibox float-e-margins">
+                <div class="ibox-title">
+                    <h3 style="font-weight: 600">Recent Redeem Voucher Page</h3>
+                </div>
+
+                <div class="ibox-content">
+                    <table class="table table-bordered table-hover sys_table footable" data-filter="#foo_filter" data-page-size="10">
+                        <thead>
+                        <tr>
+                            <th>#</th>
+                            <th>Date</th>
+                            <th>Customer</th>
+                            <th>Country</th>
+                            <th>Cat</th>
+                            <th>Page Title</th>
+                            <th>Serial No.</th>
+                            <th>Status</th>
+                        </tr>
+                        </thead>
+                        <tbody>
+                        {foreach $redeem_voucher_pages as $p}
+                            <tr>
+                                <td data-value="{$p['id']}">
+                                    {$p['id']}
+                                </td>
+
+                                <td data-value="{strtotime($p['createdon'])}">
+                                    {date( $config['df'], strtotime($p['createdon']))}
+                                </td>
+
+                                <td data-value="{$p['customer_name']}">
+                                    <a href="{$_url}contacts/view/{$p['contact_id']}/summary/">{$p['customer_name']}</a>
+                                </td>
+
+                                <td data-value="{$p['country_name']}" id="{$p['id']}">
+                                    <a href="#">{$p['country_name']}</a>
+                                </td>
+
+                                <td data-value="{$p['category']}">
+                                    {$p['category']}
+                                </td>
+
+                                <td data-value="{$p['page_title']}">
+                                    <a href="{$_url}voucher/app/view_redeem_page/{$p['voucher_id']}/{$p['page_id']}/view/">{$p['page_title']}</a>
+                                </td>
+
+                                <td data-value="{$p['voucher_number']}">
+                                    <a href="{$_url}voucher/app/list_voucher_page/{$p['voucher_format_id']}/{$p['voucher_id']}/">{$p['voucher_number']}</a>
+                                </td>
+
+                                <td data-value="{$p['invoice_status']}">
+                                    {if $p['invoice_status'] eq 'Paid'}
+                                        <a href="{$_url}invoices/view/{$p['invoice_id']}/" style="" class="btn btn-primary btn-xs view_invoice" id="{$p['id']}" data-toggle="tooltip" data-placement="top" title="{$_L['View']}">
+                                            <i class="fa fa-file-text-o"></i>
+                                        </a>
+                                        <div class="label-success" style="display:inline-block; margin:0 auto; font-size:100%; width:85px">Paid</div>
+                                    {elseif $p['invoice_status'] eq 'Unpaid'}
+                                        <a href="{$_url}invoices/view/{$p['invoice_id']}/" style="" class="btn btn-primary btn-xs view_invoice" id="{$p['id']}" data-toggle="tooltip" data-placement="top" title="{$_L['View']}">
+                                            <i class="fa fa-file-text-o"></i>
+                                        </a>
+                                        <div class="label-danger" style="display:inline-block; margin:0 auto; font-size:100%; width:85px">Unpaid</div>
+                                    {elseif $p['invoice_status'] eq 'Partially Paid'}
+                                        <a href="{$_url}invoices/view/{$p['invoice_id']}/" style="" class="btn btn-primary btn-xs view_invoice" id="{$p['id']}" data-toggle="tooltip" data-placement="top" title="{$_L['View']}">
+                                            <i class="fa fa-file-text-o"></i>
+                                        </a>
+                                        <div class="label-warning" style="display:inline-block; margin:0 auto; font-size:100%; width:85px">Partially Paid</div>
+                                    {else}
+                                        <div class="label-success" style="display:inline-block; margin:0 auto; font-size:100%; width:85px">Confirmed</div>
+                                    {/if}
+                                </td>
+
+                            </tr>
+                        {/foreach}
+
+                        </tbody>
+                        <tfoot>
+                        <tr>
+                            <td style="text-align: right;" colspan="8">
+                                <ul class="pagination">
+                                </ul>
+                            </td>
+                        </tr>
+                        </tfoot>
+                    </table>
+                </div>
+
+            </div>
+        </div>
+    </div>
 {/block}
 
 {block name="script"}
@@ -75,6 +167,8 @@
             $.fn.modal.defaults.width = '850px';
             var $modal = $('#ajax-modal');
             $('[data-toggle="tooltip"]').tooltip();
+
+            $('.footable').footable();
 
             $modal.on('click', '.generate_modal_submit', function (e) {
 
@@ -119,7 +213,7 @@
 
                     }
                 },
-                "pageLength": 20,
+                "pageLength": 10,
                 responsive: false,
                 dom: "<'row'<'col-sm-6'i><'col-sm-6'B>>" +
                 "<'row'<'col-sm-12'tr>>" +

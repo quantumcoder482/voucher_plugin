@@ -21,6 +21,7 @@ $(document).ready(function () {
 
     var $country = $('#country');
     var $category = $('#category');
+    var $template = $('#template');
     var $expiry_duration = $('#expiry_duration');
 
 
@@ -30,6 +31,10 @@ $(document).ready(function () {
 
     $category.select2({
         theme:"bootstrap"
+    });
+
+    $template.select2({
+       theme:"bootstrap"
     });
 
     $expiry_duration.select2({
@@ -48,7 +53,6 @@ $(document).ready(function () {
     var _url = $("#_url").val();
     var ib_submit = $("#submit");
     var $voucher_img = $("#voucher_img");
-    var upload_resp;
 
     $country.on('change', function(e){
         e.preventDefault();
@@ -62,6 +66,18 @@ $(document).ready(function () {
 
     });
 
+    $template.on('change', function(e){
+       e.preventDefault();
+       var t_id = $template.val();
+       $.post(_url + 'voucher/app/get_template_info', {'id':t_id})
+           .done(function(data){
+               console.log(data);
+               if(data){
+                   $voucher_img.val(data.cover_img);
+                   $("#voucher_image").attr("src",'apps/voucher/public/voucher_imgs/'+data.cover_img);
+               }
+           });
+    });
 
 
     $('.add_country').on('click', function (e) {
@@ -80,7 +96,6 @@ $(document).ready(function () {
 
         });
     });
-
 
     $modal.on('click', '.modal_submit', function (e) {
 
@@ -107,40 +122,39 @@ $(document).ready(function () {
     });
 
 
-
     // Voucher Image upload
 
-    var ib_file = new Dropzone("#upload_container",
-        {
-            url: _url + "voucher/app/voucher_image_upload/",
-            maxFiles: 1
-        }
-    );
-
-    ib_file.on("sending", function () {
-
-        ib_submit.prop('disabled', true);
-
-    });
-
-    ib_file.on("success", function (file, response) {
-
-        ib_submit.prop('disabled', false);
-
-        upload_resp = response;
-
-        if (upload_resp.success == 'Yes') {
-
-            toastr.success(upload_resp.msg);
-            $voucher_img.val(upload_resp.file);
-            $("#voucher_image").attr("src",upload_resp.fullpath);
-
-        }
-        else {
-            toastr.error(upload_resp.msg);
-        }
-
-    });
+    // var ib_file = new Dropzone("#upload_container",
+    //     {
+    //         url: _url + "voucher/app/voucher_image_upload/",
+    //         maxFiles: 1
+    //     }
+    // );
+    //
+    // ib_file.on("sending", function () {
+    //
+    //     ib_submit.prop('disabled', true);
+    //
+    // });
+    //
+    // ib_file.on("success", function (file, response) {
+    //
+    //     ib_submit.prop('disabled', false);
+    //
+    //     upload_resp = response;
+    //
+    //     if (upload_resp.success == 'Yes') {
+    //
+    //         toastr.success(upload_resp.msg);
+    //         $voucher_img.val(upload_resp.file);
+    //         $("#voucher_image").attr("src",upload_resp.fullpath);
+    //
+    //     }
+    //     else {
+    //         toastr.error(upload_resp.msg);
+    //     }
+    //
+    // });
 
 
     ib_submit.click(function (e) {

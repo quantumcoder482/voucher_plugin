@@ -35,7 +35,7 @@
                                 <div class="form-group">
                                     <label class="col-md-2 control-label" for="voucher_number">Voucher No.</label>
                                     <div class="col-md-10">
-                                        <input type="text" name="voucher_number" class="form-control" id="voucher_number" value="{$voucher_info['prefix']} {$voucher_info['serial_number']}" disabled>
+                                        <input type="text" name="voucher_number" class="form-control" id="voucher_number" value="{$voucher_info['prefix']}{$voucher_info['serial_number']}" disabled>
                                     </div>
                                 </div>
 
@@ -191,6 +191,7 @@
                                     </div>
                                 </div>
                                 {/if}
+
                                 {*<div class="form-group">*}
                                     {*<label class="col-md-2 control-label" for="status">Status</label>*}
 
@@ -397,15 +398,18 @@
                                 var voucher_id = $('#voucher_id').val();
 
                                 window.location = base_url + 'voucher/client/voucher_page/'+voucher_id;
+
                             }else if(data == 'reload'){
-                                toastr.error(data);
+                                // toastr.error(data);
                                 window.location.reload();
+
                                 $('#voucher_number').prop('disabled', true);
                                 $('#country_name').prop('disabled', true);
                                 $('#category').prop('disabled', true);
                                 $('#customer_name').prop('disabled', true);
                                 $('#customer_address').prop('disabled', true);
                                 $('#total_days').prop('disabled', true);
+
                             }else{
                                 window.location.href = data;
                             }

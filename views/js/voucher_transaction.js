@@ -34,6 +34,23 @@ $(document).ready(function() {
 
     var _url = $("#_url").val();
 
+    $(".cdelete").click(function (e) {
+
+        e.preventDefault();
+        id = this.id;
+        var sure_msg = $('#sure_msg').val();
+
+        bootbox.confirm(sure_msg, function (result) {
+
+            if (result) {
+
+                var _url = $("#_url").val();
+
+                window.location.href = _url + "voucher/app/delete_voucher/" + id;
+            }
+        });
+    });
+
     var start = moment().subtract(29, 'days');
     var end = moment();
 
@@ -186,6 +203,30 @@ $(document).ready(function() {
     });
 
 
+    $ib_data_panel.on('click', '.cdelete', function(e){
+
+        e.preventDefault();
+        var id = this.id;
+        bootbox.confirm(_L['are_you_sure'], function(result) {
+            if(result){
+
+                $.get( _url + "voucher/app/delete_voucher/"+id, function( data ) {
+                    $ib_data_panel.block({ message:block_msg });
+
+                    ib_dt.ajax.reload(
+                        function () {
+                            $ib_data_panel.unblock();
+                            // listen_change();
+                            // $('.i-checks').iCheck('uncheck');
+                        }
+                    );
+                });
+
+
+            }
+        });
+
+    });
 
 } );
 

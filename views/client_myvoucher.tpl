@@ -93,7 +93,7 @@
                         <th>Image</th>
                         <th>Type</th>
                         <th>Expiry</th>
-                        <th>Prefix + Serial No.</th>
+                        <th>Serial No.</th>
                         <th>Redeem(Balance)</th>
                         <th>Status</th>
                     </tr>
@@ -139,8 +139,12 @@
                                 </span>
                             </td>
 
-                            <td data-value="{$v['prefix']} {$v['serial_number']}">
-                                {$v['prefix']} {$v['serial_number']}
+                            <td data-value="{$v['prefix']}{$v['serial_number']}">
+                                {if $voucher_status[$v['id']] eq 'Active'}
+                                    <a href="{{$_url}}voucher/client/voucher_page/{$v['id']}" class="view_voucherpage">{$v['prefix']}{$v['serial_number']}</a>
+                                {else}
+                                    {$v['prefix']}{$v['serial_number']}
+                                {/if}
                             </td>   
 
                             <td>
@@ -176,6 +180,84 @@
                         </tfoot>
                 </table>
             </div>
+
+            <div class="ibox-title">
+                Recent Transaction
+            </div>
+            <div class="ibox-content">
+                <table class="table table-bordered table-hover sys-table footable" data-page-size="10">
+                    <thead>
+                    <tr>
+                        <th>Invoice #</th>
+                        <th>Activation Date</th>
+                        <th>Account</th>
+                        <th>Country (Type)</th>
+                        <th>Serial No.</th>
+                        <th>Amount</th>
+                        <th>Status</th>
+                    </tr>
+                    </thead>
+                    <tbody>
+                        {foreach $recent_transaction as $key=>$t}
+                            <tr>
+                                <td data-value="{$t['invoice_id']}">
+                                    {$t['invoice_id']}
+                                </td>
+
+                                <td data-value="{strtotime($t['date'])}">
+                                    {date( $config['df'], strtotime($t['date']))}
+                                </td>
+
+                                <td data-value="{$t['account']}">
+                                    {$t['account']}
+                                </td>
+
+                                <td data-value="{$t['country_name']}({$t['category']})">
+                                    {$t['country_name']} ({$t['category']})
+                                </td>
+
+                                <td data-value="{$t['prefix']}{$t['serial_number']}">
+                                    {if $t['invoice_status'] eq 'Paid'}
+                                        <a href="{{$_url}}voucher/client/voucher_page/{$t['id']}" class="view_voucherpage">{$t['prefix']}{$t['serial_number']}</a>
+                                    {else}
+                                        {$t['prefix']}{$t['serial_number']}
+                                    {/if}
+                                </td>
+
+                                <td data-value="{$t['invoice_amount']}" class="amount" data-a-sign="{$config['currency_code']} ">{$t['invoice_amount']}</td>
+
+                                <td class="text-center" data-value="{$t['invoice_status']}">
+                                    <a href="{$invoice_url[$t['id']]}" style="" class="btn btn-primary btn-xs view_invoice" id="{$v['id']}" data-toggle="tooltip" data-placement="top" title="{$_L['View']}">
+                                        <i class="fa fa-file-text-o"></i>
+                                    </a>
+                                    {if $t['invoice_status'] eq 'Paid'}
+                                        <div class="label-success" style="display:inline-block; margin:0 auto;font-size:100%;width:65px">
+                                            {$t['invoice_status']}
+                                        </div>
+                                    {elseif $t['invoice_status'] eq 'Unpaid'}
+                                        <div class="label-danger" style="display:inline-block;color:#ff2222;margin:0 auto; font-size:100%;width:65px">
+                                            {$t['invoice_status']}
+                                        </div>
+                                    {else}
+                                        <div class="label-warning" style="display:inline-block;margin:0 auto; font-size:85%;width:100px;">
+                                            {$t['invoice_status']}
+                                        </div>
+                                    {/if}
+                                </td>
+                            </tr>
+                        {/foreach}
+                    </tbody>
+                    <tfoot>
+                    <tr>
+                        <td style="text-align: right;" colspan="11">
+                            <ul class="pagination">
+                            </ul>
+                        </td>
+                    </tr>
+                    </tfoot>
+                </table>
+
+            </div>
         </div>
     </div>
 </div>
@@ -196,7 +278,6 @@
 
             var require_agree = $('#require_agree').val();
 
-            console.log(require_agree);
 
             $('.amount').autoNumeric('init', {
 

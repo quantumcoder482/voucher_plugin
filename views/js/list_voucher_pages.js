@@ -73,6 +73,13 @@ $(document).ready(function () {
 
     });
 
+    $('.redeem_page').on('click', function (e) {
+        var gid = $('#gid').val();
+        var id = this.id;
+        e.preventDefault();
+        window.location.href = _url + "voucher/app/view_redeem_page/" + gid +'/' + id + '/redeem';
+
+    });
 
     $modal.on('click', '.modal_submit', function (e) {
 

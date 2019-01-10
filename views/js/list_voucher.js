@@ -80,11 +80,8 @@ $(document).ready(function () {
             .done(function (data) {
 
                 if ($.isNumeric(data)) {
-
                     window.location = base_url + 'voucher/app/list_voucher';
-
                 }
-
                 else {
                     $modal.modal('loading');
                     toastr.error(data);

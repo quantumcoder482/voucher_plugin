@@ -4,26 +4,24 @@
 {/block}
 {block name="content"}
     <div class="row">
-
-        <div class="col-md-8">
-            <div class="ibox float-e-margins">
-                <div class="ibox-title">
-                    <h5>
-                        Add Voucher Form
-                    </h5>
-                </div>
-                <div class="ibox-content" id="ibox_form">
-                    <div class="alert alert-danger" id="emsg">
-                        <span id="emsgbody"></span>
+        <form class="form-horizontal" id="rform">
+            <div class="col-md-8">
+                <div class="ibox float-e-margins">
+                    <div class="ibox-title">
+                        <h5>
+                            Add Voucher Form
+                        </h5>
                     </div>
-
-                    <form class="form-horizontal" id="rform">
+                    <div class="ibox-content" id="ibox_form">
+                        <div class="alert alert-danger" id="emsg">
+                            <span id="emsgbody"></span>
+                        </div>
 
                         <div class="form-group">
                             <label class="col-md-2 control-label" for="country">{$_L['Country']} <small class="red">*</small></label>
-                        
+
                             <div class="col-md-10">
-                        
+
                                 <select id="country" name="country" class="form-control" style="width:100%">
                                     <option value="">Select Country</option>
                                     {foreach $country_list as $c}
@@ -32,7 +30,7 @@
                                 </select>
                                 <span class="help-block"><a href="#" class="add_country"><i class="fa fa-plus"></i>New Country</a>
                                 </span>
-                        
+
                             </div>
                         </div>
 
@@ -86,7 +84,7 @@
                                     <option value="annual"> Annual </option>
                                     <option value="monthly"> Monthly </option>
                                 </select>
-                           
+
                                 {*<span class="help-block"> {$_L['vehicle comment']}</span>*}
                             </div>
                         </div>
@@ -123,38 +121,56 @@
                                 <button class="btn btn-primary" type="submit" id="submit"><i class="fa fa-check"></i>{$_L['Submit']}</button>
                             </div>
                         </div>
-                    </form>
+
+                    </div>
                 </div>
             </div>
-        </div>
 
 
-        <div class="col-md-4">
-            <div class="ibox float-e-margins">
-                <div class="ibox-title">
-                    Upload Voucher Image
-                </div>
-                <div class="ibox-content" id="ibox_form">
-
-                    <form action="" class="dropzone" id="upload_container">
-
-                        <div class="dz-message">
-                            <h3> <i class="fa fa-cloud-upload"></i>  {$_L['Drop File Here']}</h3>
-                            <br />
-                            <span class="note">{$_L['Click to Upload']}</span>
+            <div class="col-md-4">
+                <div class="ibox float-e-margins">
+                    <div class="ibox-title">
+                        Select Voucher Template <small class="red">*</small>
+                    </div>
+                    <div class="ibox-content">
+                        <div class="form-group">
+                            <div class="col-md-offset-1 col-md-10">
+                                <select class="form-control" style="width:100%" id="template" name="template">
+                                    <option value="" >Select Template</option>
+                                    {foreach $template_list as $t}
+                                        <option value="{$t['id']}">{$t['template_name']}</option>
+                                    {/foreach}
+                                </select>
+                            </div>
                         </div>
+                    </div>
+                </div>
+                <div class="ibox float-e-margins">
+                    <div class="ibox-title">
+                        Voucher Image
+                    </div>
+                    {*<div class="ibox-content" id="ibox_form">*}
 
-                    </form>
+                        {*<form action="" class="dropzone" id="upload_container">*}
 
+                            {*<div class="dz-message">*}
+                                {*<h3> <i class="fa fa-cloud-upload"></i>  {$_L['Drop File Here']}</h3>*}
+                                {*<br />*}
+                                {*<span class="note">{$_L['Click to Upload']}</span>*}
+                            {*</div>*}
+
+                        {*</form>*}
+
+                    {*</div>*}
+
+                    <div class="ibox-content" id="ibox_form" style="text-align: center;">
+                        <img id="voucher_image" src=""  width="100%" >
+                    </div>
                 </div>
 
-                <div class="ibox-content" id="ibox_form" style="text-align: center;">
-                    <img id="voucher_image" src=""  width="100%" >
-                </div>
             </div>
 
-        </div>
-
+        </form>
 
     </div>
 {/block}

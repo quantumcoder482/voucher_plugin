@@ -90,7 +90,7 @@
                                 </td>
 
                                 <td data-value="{$v['customer']}">
-                                    {$v['customer']}
+                                    <a href="{$_url}contacts/view/{$v['contact_id']}/summary/">{$v['customer']}</a>
                                 </td>
 
                                 <td data-value="{$v['country_name']}" id="{$v['id']}">
@@ -112,7 +112,7 @@
                                 </td>
 
                                 <td data-value="{$v['serial_number']}">
-                                    &nbsp;{$v['prefix']}{$v['serial_number']}
+                                    &nbsp;<a href="{$_url}voucher/app/list_voucher_page/{$v['voucher_format_id']}/{$v['id']}/">{$v['prefix']}{$v['serial_number']}</a>
                                 </td>
 
                             </tr>
@@ -161,7 +161,7 @@
                                 </td>
 
                                 <td data-value="{$p['customer_name']}">
-                                    {$p['customer_name']}
+                                    <a href="{$_url}contacts/view/{$p['contact_id']}/summary/">{$p['customer_name']}</a>
                                 </td>
 
                                 <td data-value="{$p['country_name']}" id="{$p['id']}">
@@ -173,7 +173,7 @@
                                 </td>
 
                                 <td data-value="{$p['page_title']}">
-                                    &nbsp;{$p['page_title']}
+                                    &nbsp;<a href="{$_url}voucher/app/view_redeem_page/{$p['voucher_id']}/{$p['page_id']}/view/">{$p['page_title']}</a>
                                 </td>
 
                             </tr>
@@ -262,7 +262,11 @@
                                 </td>
 
                                 <td data-value="{$r['account']}">
-                                    {$r['account']}
+                                    {if $r['account']}
+                                        {$r['account']}
+                                    {else}
+                                        -
+                                    {/if}
                                 </td>
 
                                 <td data-value="{$r['amount']}" class="amount" data-a-sign="{$config['currency_code']} ">{$r['amount']}</td>
@@ -273,11 +277,15 @@
 
                                 <td data-value="{$r['invoice_status']}">
                                     {if $r['invoice_status'] eq 'Paid'}
-                                        <span class="btn btn-xs btn-success" style="width:85px">Paid</span>
+                                        <a href="{$_url}invoices/view/{$r['invoice_id']}/"><span class="btn btn-xs btn-success" style="width:85px">Paid</span></a>
                                     {elseif $r['invoice_status'] eq 'Unpaid' || $r['invoice_id'] eq '-1' || $r['invoice_id'] eq '0'}
-                                        <span class="btn btn-xs btn-danger" style="width:85px">Unpaid</span>
+                                        {if $r['invoice_id']}
+                                            <a href="{$_url}invoices/view/{$r['invoice_id']}/"><span class="btn btn-xs btn-danger" style="width:85px">Unpaid</span></a>
+                                        {else}
+                                            <span class="btn btn-xs btn-danger" style="width:85px">Unpaid</span>
+                                        {/if}
                                     {else}
-                                        <span class="btn btn-xs btn-warning" style="width:85px">Partially Paid</span>
+                                        <a href="{$_url}invoices/view/{$r['invoice_id']}/"><span class="btn btn-xs btn-warning" style="width:85px">Partially Paid</span></a>
                                     {/if}
                                 </td>
 

@@ -29,15 +29,6 @@
                         <tr>
                             <td>
                                 <img class="img-responsive" src="{$baseUrl}/apps/voucher/public/voucher_imgs/{$voucher['voucher_img']}">
-                                <br>
-                                <div class="form-group">
-                                    <select class="form-control" style="width:150px" id="template_id" name="template_id">
-                                        <option value="">Select Template</option>
-                                        {foreach $templates as $t}
-                                            <option value="{$t['id']}" >{$t['template_name']}</option>
-                                        {/foreach}
-                                    </select>
-                                </div>
                             </td>
                             <td>
                                <textarea id="description" name="description" rows="5" style="width: 100%; border-style: none; border-color: Transparent; overflow: auto;outline: none;"></textarea>
@@ -77,6 +68,7 @@
                 <input type="hidden" id="vid" name="vid" value="{$voucher['id']}">
                 <input type="hidden" id="sales_price" name="sales_price" value="{$voucher['sales_price']}">
                 <input type="hidden" id="currency_code" name="currency_code" value="{$config['currency_code']}">
+                <input type="hidden" id="template_id" name="template_id" value="{$voucher['template_id']}">
 
             </form>
 
@@ -115,10 +107,6 @@
                 vMax: '9999999999999999.00',
                 vMin: '-9999999999999999.00'
 
-            });
-
-            $('#template').select2({
-               theme:"bootstrap"
             });
 
 

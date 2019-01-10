@@ -31,6 +31,8 @@ switch ($action){
         $active_invoice_url = '';
 
 
+
+        // Setting
         $redeem = ORM::for_table('voucher_setting')->where_equal('setting','able_redeem_voucher_code')->select('value')->find_one();
         $show_alert = ORM::for_table('voucher_setting')->where_equal('setting','show_alert_message')->select('value')->find_one();
         $alert_msg = ORM::for_table('voucher_setting')->where_equal('setting','alert_message')->select('value')->find_one();
@@ -51,13 +53,13 @@ switch ($action){
         );
 
 
+        // Activation Fee
         $activation = ORM::for_table('voucher_trans_active')
             ->inner_join('sys_invoices', array('sys_invoices.id', '=', 'voucher_trans_active.invoice_id'))
             ->select('voucher_trans_active.*')
             ->select('sys_invoices.status', 'invoice_status')
             ->where_equal('customer_id', $account_id)
             ->find_one();
-
 
         if($activation && $activation['invoice_status'] == 'Paid'){
             $active_status = 'Yes';
@@ -93,15 +95,14 @@ switch ($action){
             ->left_outer_join('voucher_category', array('voucher_category.id','=','f.category_id'))
             ->inner_join('voucher_country',array('f.country_id','=','c.id'),'c')
             ->select('voucher_generated.*')
-            ->select('s.status', 'invoice_status')
             ->select('c.country_name')
             ->select('voucher_category.category_name', 'category')
             ->select('f.id', 'format_id')
             ->select('f.billing_cycle')
             ->select('f.expiry_day')
             ->select('f.voucher_img')
+            ->select('s.status', 'invoice_status')
             ->where_equal('voucher_generated.contact_id',$account_id)
-//            ->where_equal('voucher_generated.status', 'Redeem')
             ->order_by_desc('id')
             ->find_array();
 
@@ -123,13 +124,14 @@ switch ($action){
             if($date2 < $date1){
                 $voucher_status[$v['id']] = 'Expired';
             } elseif( $rest < intval($v['expiry_day'])) {
-                $voucher_status[$v['id']] = 'Limit';
+                $voucher_status[$v['id']] = $rest. 'Days Left';
             } else {
-                if($v['invoice_status'] == 'Paid' && $v['redeem_status'] == 'Redeem'){
-                    $voucher_status[$v['id']] = 'Active';
-                }else {
-                    $voucher_status[$v['id']] = 'Inactive';
-                }
+                $voucher_status[$v['id']] = $v['status'];
+//                if($v['invoice_status'] == 'Paid' && $v['redeem_status'] == 'Redeem'){
+//                    $voucher_status[$v['id']] = 'Active';
+//                }else {
+//                    $voucher_status[$v['id']] = 'Inactive';
+//                }
 
             }
 
@@ -143,6 +145,36 @@ switch ($action){
         }
 
 
+
+        // Recent transactions
+
+        $recent_transaction = ORM::for_table('voucher_generated')
+            ->left_outer_join('sys_invoices', array('voucher_generated.invoice_id', '=', 's.id'), 's')
+            ->left_outer_join('voucher_format',array('voucher_generated.voucher_format_id','=','f.id'),'f')
+            ->left_outer_join('crm_accounts', array('crm_accounts.id', '=', 'voucher_generated.contact_id'))
+            ->left_outer_join('voucher_category', array('voucher_category.id','=','f.category_id'))
+            ->inner_join('voucher_country',array('f.country_id','=','c.id'),'c')
+            ->select('voucher_generated.*')
+            ->select('s.id', 'invoice_id')
+            ->select('s.status', 'invoice_status')
+            ->select('s.vtoken', 'invoice_token')
+            ->select('s.total', 'invoice_amount')
+            ->select('c.country_name')
+            ->select('voucher_category.category_name', 'category')
+            ->select('crm_accounts.account')
+            ->where_equal('voucher_generated.contact_id',$account_id)
+            ->where_equal('voucher_generated.redeem_status', 'Redeem')
+            ->order_by_desc('id')
+            ->find_array();
+
+        $total_transactions = 0;
+        $invoice_url = array();
+        foreach($recent_transaction as $r){
+            $invoice_url[$r['id']] = U.'client/iview/'.$r['invoice_id'].'/token_'.$r['invoice_token'].'/';
+            $total_transactions++;
+        }
+
+
         view('client_wrapper',[
             '_include' => 'client_myvoucher',
             'voucher_data' => $voucher_data,
@@ -152,11 +184,13 @@ switch ($action){
             'total_vouchers' => $total_vouchers,
             'active_status' => $active_status,
             'active_invoice_url' => $active_invoice_url,
+            'recent_transaction' => $recent_transaction,
+            'total_transactions' => $total_transactions,
+            'invoice_url' => $invoice_url,
             'setting' => $setting,
             'baseUrl' => $baseUrl,
             'user' => $c
         ]);
-
 
         break;
 
@@ -216,7 +250,7 @@ switch ($action){
             $invoice_id = null;
             $invoice_url = "";
             if($voucher_data['create_invoice'] == '1'){
-                $invoice = Invoice::forSingleItem($account_id, 'Redeem voucher '.$serial_number_str, $voucher_data['sales_price']);
+                $invoice = Invoice::forSingleItem($account_id, 'Redeem Voucher '.$prefix.$serial_number, $voucher_data['sales_price']);
                 $invoice_id = $invoice['id'];
                 $invoice_vtoken = $invoice['vtoken'];
                 $invoice_url = U.'client/iview/'.$invoice_id.'/token_'.$invoice_vtoken.'/';
@@ -343,13 +377,23 @@ switch ($action){
         $voucher_info =ORM::for_table('voucher_country')
             ->inner_join('voucher_format',array('voucher_country.id','=','voucher_format.country_id'))
             ->inner_join('voucher_generated',array('voucher_format.id', '=', 'voucher_generated.voucher_format_id'))
+            ->left_outer_join('sys_invoices', array('sys_invoices.id', '=', 'voucher_generated.invoice_id'))
             ->left_outer_join('voucher_category', array('voucher_category.id', '=', 'voucher_format.category_id'))
             ->select('voucher_country.country_name','country_name')
             ->select('voucher_category.category_name', 'category')
             ->select('voucher_format.voucher_img', 'voucher_img')
-            ->select_many('voucher_generated.prefix', 'voucher_generated.serial_number')
+            ->select('sys_invoices.status', 'invoice_status')
+            ->select_many('voucher_generated.prefix', 'voucher_generated.serial_number', 'voucher_generated.status', 'voucher_generated.redeem_status')
             ->where_equal('voucher_generated.id',$voucher_id)
             ->find_one();
+
+        if($voucher_info['redeem_status'] != 'Redeem'){
+            r2(U.'voucher/client/myvoucher','e','This voucher is not redeemed');
+        }else if($voucher_info['status'] != 'Active'){
+            r2(U.'voucher/client/myvoucher','e','This voucher is not Active');
+        }else if($voucher_info['invoice_status'] != 'Paid'){
+            r2(U.'voucher/client/myvoucher','e','This voucher is not Paid');
+        }
 
 
         $voucher_pages = ORM::for_table('voucher_pages')
@@ -443,7 +487,7 @@ switch ($action){
             '_include' => 'client_voucher_page',
             'voucher_pages' => $voucher_pages,
             'voucher_img' => $voucher_info['voucher_img'],
-            'serial_number' => $voucher_info['prefix']." ".$voucher_info['serial_number'],
+            'serial_number' => $voucher_info['prefix'].$voucher_info['serial_number'],
             'page_status' => $page_status,
             't_id' => $transaction_id,
             'recent_transaction' => $recent_transaction,
@@ -597,12 +641,22 @@ switch ($action){
                 }else {
                     $product_amount = round((float)$product_price,2);
                 }
+                $product = ($sub_product_name != '' && $sub_product_req == 1)?'Voucher page redeem ('.$product_name.' + '.$sub_product_name.')':'Voucher page redeem ('.$product_name.')';
 
                 $invoice_data = ORM::for_table('sys_invoices')->find_one($invoice_id);
+
                 if($invoice_data['status'] != 'Paid'){
                     $invoice_data->total = $product_amount;
                     $invoice_data->subtotal = $product_amount;
                     $invoice_data->save();
+
+                    $invoice_item = ORM::for_table('sys_invoiceitems')->where('sys_invoiceitems.invoiceid', $invoice_data['id'])->find_one();
+                    $invoice_item->amount = $product_amount;
+                    $invoice_item->total = $product_amount;
+                    $invoice_item->description = $product;
+                    $invoice_item->save();
+
+
                 }else{
                     _msglog('r','This page paid already');
                     echo "page_list";
@@ -693,6 +747,7 @@ switch ($action){
     case 'modal_edit_redeem':
 
         $transaction_id = route(3);
+        $view_type = route(4);
 
         $baseUrl = APP_URL;
         $c = Contacts::details();
@@ -740,7 +795,8 @@ switch ($action){
             'baseUrl' => $baseUrl,
             't_data' => $transaction_data,
             'page_setting' => $page_setting,
-            't_id' => $transaction_id
+            't_id' => $transaction_id,
+            'view_type' => $view_type
 
         ]);
 
@@ -871,13 +927,11 @@ switch ($action){
             ->order_by_asc('voucher_format.id')
             ->find_one($id);
 
-        $templates = ORM::for_table('voucher_template')->order_by_asc('template_name')->find_array();
 
         view('wrapper_modal',[
             '_include' => 'client_modal_cert',
             'baseUrl' => $baseUrl,
-            'voucher' => $voucher,
-            'templates' => $templates
+            'voucher' => $voucher
         ]);
 
         break;
@@ -923,18 +977,6 @@ switch ($action){
         }
 
 
-
-        // Create Invoice
-
-        $invoice_id = null;
-
-        $amount = $total_voucher * $voucher_info['sales_price'];
-        $item_name = $voucher_info['country_name'].' '.$voucher_info['category_name'].' Voucher';
-        $invoice = Invoice::forSingleItem($contact_id, $item_name, $amount);
-        $invoice_id = $invoice['id'];
-        $invoice_vtoken = $invoice['vtoken'];
-
-
         // Generate vouchers
 
         $voucher_numbers = explode(',',$serial_numbers);
@@ -960,6 +1002,16 @@ switch ($action){
 //                $voucher_pdf = $serial_number.'.pdf';
 //            }
 
+            // Create Invoice
+
+            $invoice_id = null;
+
+            $amount = $voucher_info['sales_price'];
+            $item_name = $voucher_info['prefix'].$serial_number;
+            $invoice = Invoice::forSingleItem($contact_id, $item_name, $amount);
+            $invoice_id = $invoice['id'];
+            $invoice_vtoken = $invoice['vtoken'];
+
 
             // insert into database
 
@@ -983,7 +1035,7 @@ switch ($action){
 
 //        r2(U.'client/iview/'.$invoice_id.'/token_'.$invoice_vtoken.'/','s');
 
-        $str = U.'client/iview/'.$invoice_id.'/token_'.$invoice_vtoken.'/';
+        $str = U.'client/invoices/';
         echo $str;
 
         break;

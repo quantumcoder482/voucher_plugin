@@ -70,7 +70,7 @@
                                     </select>
                                 </div>
 
-
+                                <input type="hidden" id="sure_msg" value="{$_L['are_you_sure']}" />
                                 <button type="submit" id="ib_filter" class="btn btn-primary">Filter</button>
 
                                 <br>

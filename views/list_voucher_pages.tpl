@@ -128,7 +128,7 @@
                                     {if $gid neq ''}
                                     <td data-value="{$page_status[$v['id']]}">
                                         {if $page_status[$v['id']] eq 'redeem' || $page_status[$v['id']] eq ''}
-                                        <a href="#" class="btn btn-xs square-redeem" id="{$v['id']}" data-toggle="tooltip" data-placement="top" title="Redeem">
+                                        <a href="#" class="btn btn-xs square-redeem redeem_page" id="{$v['id']}" data-toggle="tooltip" data-placement="top" title="Redeem">
                                             Redeem
                                         </a>
                                         {elseif $page_status[$v['id']] eq 'confirm'}
@@ -144,14 +144,18 @@
                                     {/if}
 
                                     {if $gid neq ''}
+                                        {if $page_status[$v['id']] neq 'redeem'}
                                         <td class="text-center">
-                                            <a href="#" class="btn btn-primary btn-xs {if $page_status[$v['id']] neq 'redeem'}view_redeem_page{/if}" id="{$v['id']}" data-toggle="tooltip" data-placement="top" title="{$_L['View']}">
+                                            <a href="#" class="btn btn-primary btn-xs view_redeem_page" id="{$v['id']}" data-toggle="tooltip" data-placement="top" title="{$_L['View']}">
                                                 <i class="fa fa-file-text-o"></i>
                                             </a>
-                                            <a href="#" class="btn btn-info btn-xs {if $page_status[$v['id']] neq 'redeem'}edit_redeem_page{/if}" id="{$v['id']}" data-toggle="tooltip" data-placement="top" title="{$_L['Edit']}">
+                                            <a href="#" class="btn btn-info btn-xs edit_redeem_page" id="{$v['id']}" data-toggle="tooltip" data-placement="top" title="{$_L['Edit']}">
                                                 <i class="fa fa-pencil"></i>
                                             </a>
                                         </td>
+                                        {else}
+                                            <td></td>
+                                        {/if}
                                     {else}
                                         <td class="text-center">
                                             <a href="#" class="btn btn-primary btn-xs view_page" id="{$v['id']}" data-toggle="tooltip" data-placement="top" title="{$_L['View']}">
@@ -207,7 +211,7 @@
                                 <thead>
                                 <tr>
                                     <th>Invoice No.</th>
-                                    <th>Invoice Date</th>
+                                    <th>Redeem Date</th>
                                     <th>Product Name (Sub product)</th>
                                     <th>Account</th>
                                     <th>Amount</th>
@@ -226,13 +230,8 @@
                                             {/if}
 
                                         </td>
-                                        <td data-value="{strtotime($t['invoice_date'])}">
-                                            {if $t['invoice_date'] eq '0' || $t['invoice_date'] eq ''}
-                                                -
-                                            {else}
-                                                {date( $config['df'], strtotime($t['invoice_date']))}
-                                            {/if}
-
+                                        <td data-value="{strtotime($t['createdon'])}">
+                                            {date( $config['df'], strtotime($t['createdon']))}
                                         </td>
                                         <td data-value="{$t['product_name']}">
                                             {if $t['product_name'] neq ''}

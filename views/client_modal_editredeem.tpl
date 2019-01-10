@@ -200,9 +200,10 @@
 <div class="modal-footer">
     <button type="button" data-dismiss="modal" class="btn btn-danger">{$_L['Close']}</button>
 
+    {if $view_type neq 'view'}
     <button type="submit" class="btn btn-primary modal_submit" id="modal_submit">
         <i class="fa fa-check"></i> {$_L['Update']}</button>
-
+    {/if}
 </div>
 
 

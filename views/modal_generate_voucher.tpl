@@ -75,7 +75,7 @@
                             <label class="col-md-4 control-label" for=date">Date</label>
 
                             <div class="col-md-8">
-                                <input type="text" class="form-control datepicker" value="{$voucher['created_date']}" name="date" id="date" datepicker data-date-format="yyyy-mm-dd" data-auto-close="true">
+                                <input type="text" class="form-control datepicker" value="" name="date" id="date" datepicker data-date-format="yyyy-mm-dd" data-auto-close="true" autocomplete="off">
                             </div>
                         </div>
 
@@ -144,7 +144,7 @@
                         <input type="hidden" name="vid" id="vid" value="{$voucher['id']}">
                         <input type="hidden" name="gid" id="gid" value="{$val['id']}">
                         <input type="hidden" name="invoice_id" id="invoice_id" value="{$val['invoice_id']}">
-                        {*<input type="hidden" name="voucher_template" id="voucher_template" value="{$val['voucher_template']}">*}
+                        <input type="hidden" name="template_id" id="template_id" value="{$voucher['template_id']}">
 
                     </div>
                 </div>
@@ -153,28 +153,10 @@
             <div class="col-md-5">
                 <div class="ibox float-e-margins">
                     <div class="ibox-title">
-                        Select PDF Template <small class="red">*</small>
+                        Voucher Image
                     </div>
-                    <div class="ibox-content" id="ibox_form" >
-                        <div class="form-group">
-                            <div class="col-md-12">
-                                <select class="form-control" style="width:100%" id="template" name="template_id">
-                                    <option value="">Select Template</option>
-                                    {foreach $voucher_templates as $v}
-                                        <option value="{$v['id']}" {if $v['id'] eq $val['template_id']} selected {/if}>{$v['template_name']}</option>
-                                    {/foreach}
-                                </select>
-
-                            </div>
-                        </div>
-                    </div>
-
                     <div class="ibox-content" id="ibox_form" style="text-align: center;">
-                        {if $val['cover_img'] eq ''}
-                            <img id="cover_img" src="" width="100%">
-                        {else}
-                            <img id="cover_img" src="{$baseUrl}/apps/voucher/public/voucher_imgs/{$val['cover_img']}" width="100%">
-                        {/if}
+                        <img id="voucher_img" src="{$baseUrl}/apps/voucher/public/voucher_imgs/{$voucher['voucher_img']}" width="100%">
                     </div>
                 </div>
 
@@ -213,7 +195,7 @@
         var $contact = $('#contact');
         var $prefix = $('#prefix');
         var $agent = $('#agent')
-        var $template = $('#template');
+
         var $status = $('#status');
 
         $contact.select2({
@@ -225,10 +207,6 @@
         });
 
         $agent.select2({
-            theme:"bootstrap"
-        });
-
-        $template.select2({
             theme:"bootstrap"
         });
 
@@ -244,21 +222,6 @@
         $('.i-checks').iCheck({
             checkboxClass: 'icheckbox_square-blue',
             radioClass: 'iradio_square-blue'
-        });
-
-
-        $template.on('change', function(e){
-            e.preventDefault();
-            var t_id = {
-                'id':$template.val()
-            };
-
-            $.post(_url + 'voucher/app/get_template_info', t_id)
-                .done(function(data){
-                    if(data){
-                        $("#cover_img").attr("src",'{$app_url}apps/voucher/public/voucher_imgs/'+data.cover_img);
-                    }
-                });
         });
 
 
@@ -291,23 +254,6 @@
             }
 
         });
-
-        //
-        // if($contact.val() == ''){
-        //     $('.i-checks').iCheck('disable');
-        // }
-        //
-        // $contact.on('change', function(e){
-        //     e.preventDefault();
-        //     if($contact.val() == ''){
-        //         $('.i-checks').iCheck('disable');
-        //         $('.i-checks').iCheck('uncheck');
-        //     }else{
-        //         $('.i-checks').iCheck('enable');
-        //
-        //     }
-        // });
-
 
 
     });

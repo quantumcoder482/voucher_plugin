@@ -8,30 +8,26 @@
 <div class="modal-body">
 
     <div class="row">
-    
-        <div class="col-md-7">
-            <div class="ibox float-e-margins">
-
-                <div class="ibox-content" id="ib_modal_form">
-                    
-                    <form class="form-horizontal" id="mrform">
-    
+        <form class="form-horizontal" id="mrform">
+            <div class="col-md-7">
+                <div class="ibox float-e-margins">
+                    <div class="ibox-content" id="ib_modal_form">
                         <div class="form-group">
                             <label class="col-md-4 control-label" for="country">{$_L['Country']} <small class="red">*</small></label>
-    
+
                             <div class="col-md-8">
                                 <select id="country" name="country" style="width:100%" class="form-control">
                                     {foreach $country_list as $c}
                                         <option value="{$c['id']}" {if $c['id'] eq $voucher['country_id']} selected {/if}> {$c['country_name']}</option>
                                     {/foreach}
                                 </select>
-                                
+
                             </div>
                         </div>
 
                         <div class="form-group">
                             <label class="col-md-4 control-label" for="category">Category <small class="red">*</small></label>
-    
+
                             <div class="col-md-8">
                                 <select class="form-control" style="width:100%" id="category" name="category">
                                     {foreach $category_list as $c}
@@ -96,49 +92,53 @@
 
                         <div class="form-group">
                             <label class="col-md-4 control-label" for="description">{$_L['Description']}</label>
-    
+
                             <div class="col-md-8">
                                 <textarea id="description" name="description" class="form-control" rows="3">{$voucher['description']}</textarea>
-    
+
                             </div>
                         </div>
 
                         <input type="hidden" name="vid" id="vid" value="{$voucher['id']}">
                         <input type="hidden" name="voucher_img" id="voucher_img" value="{$voucher['voucher_img']}">
-
-                    </form>
+                    </div>
                 </div>
             </div>
-        </div>
-    
-    
-        <div class="col-md-5">
-            <div class="ibox float-e-margins">
-                <div class="ibox-title">
-                    Upload Voucher Image
-                </div>
-                <div class="ibox-content" id="ibox_form" >
-    
-                    <form action="" class="dropzone" id="upload_container">
-    
-                        <div class="dz-message">
-                            <h3>
-                                <i class="fa fa-cloud-upload"></i> {$_L['Drop File Here']}</h3>
-                            <br />
-                            <span class="note">{$_L['Click to Upload']}</span>
+
+
+            <div class="col-md-5">
+                <div class="ibox float-e-margins">
+                    <div class="ibox-title">
+                        Select Voucher Template <small class="red">*</small>
+                    </div>
+                    <div class="ibox-content" id="ibox_form" >
+                        <div class="ibox-content">
+                            <div class="form-group">
+                                <div class="col-md-12">
+                                    <select class="form-control" style="width:100%" id="template" name="template">
+                                        <option value="" >Select Template</option>
+                                        {foreach $template_list as $t}
+                                            <option value="{$t['id']}" {if $voucher['template_id'] eq $t['id']} selected {/if}>{$t['template_name']}</option>
+                                        {/foreach}
+                                    </select>
+                                </div>
+                            </div>
                         </div>
-    
-                    </form>
-    
+                    </div>
                 </div>
 
-                <div class="ibox-content" id="ibox_form" style="text-align: center;">
-                    <img id="voucher_image" src="{$baseUrl}/apps/voucher/public/voucher_imgs/{$voucher['voucher_img']}" width="100%">
+                <div class="ibox float-e-margins">
+                    <div class="ibox-title">
+                        Voucher Image
+                    </div>
+                    <div class="ibox-content" id="ibox_form" style="text-align: center;">
+                        <img id="voucher_image" src="{$baseUrl}/apps/voucher/public/voucher_imgs/{$voucher['voucher_img']}" width="100%">
+                    </div>
+
                 </div>
+
             </div>
-    
-        </div>
-    
+        </form>
     </div>
 </div>
 
@@ -165,6 +165,7 @@
 
         var $country = $('#country');
         var $category = $('#category');
+        var $template = $('#template');
         var $billing_cycle = $('#billing_cycle')
         var $expiry_day = $('#expiry_day');
 
@@ -173,6 +174,10 @@
         });
 
         $category.select2({
+            theme:"bootstrap"
+        });
+
+        $template.select2({
             theme:"bootstrap"
         });
 
@@ -188,44 +193,60 @@
 
 
         var _url = $("#_url").val();
-        var ib_submit = $("#submit");
         var $voucher_img= $("#voucher_img");
 
 
-        var upload_resp;
-
-        // Flag Image upload
-
-        var ib_file = new Dropzone("#upload_container",
-            {
-                url: _url + "voucher/app/voucher_image_upload/",
-                maxFiles: 1
-            }
-        );
-
-        ib_file.on("sending", function () {
-
-            ib_submit.prop('disabled', true);
-
+        $template.on('change', function(e){
+            e.preventDefault();
+            var t_id = {
+                'id':$template.val()
+            };
+            $.post(_url + 'voucher/app/get_template_info', t_id)
+                .done(function(data){
+                    console.log(data);
+                    if(data){
+                        $voucher_img.val(data.cover_img);
+                        $("#voucher_image").attr("src",'{$app_url}apps/voucher/public/voucher_imgs/'+data.cover_img);
+                    }
+                });
         });
 
-        ib_file.on("success", function (file, response) {
 
-            ib_submit.prop('disabled', false);
 
-            upload_resp = response;
-
-            if (upload_resp.success == 'Yes') {
-
-                toastr.success(upload_resp.msg);
-                $voucher_img.val(upload_resp.file);
-                $("#voucher_image").attr("src",upload_resp.fullpath);
-            }
-            else {
-                toastr.error(upload_resp.msg);
-            }
-
-        });
+        // var upload_resp;
+        //
+        // // Flag Image upload
+        //
+        // var ib_file = new Dropzone("#upload_container",
+        //     {
+        //         url: _url + "voucher/app/voucher_image_upload/",
+        //         maxFiles: 1
+        //     }
+        // );
+        //
+        // ib_file.on("sending", function () {
+        //
+        //     ib_submit.prop('disabled', true);
+        //
+        // });
+        //
+        // ib_file.on("success", function (file, response) {
+        //
+        //     ib_submit.prop('disabled', false);
+        //
+        //     upload_resp = response;
+        //
+        //     if (upload_resp.success == 'Yes') {
+        //
+        //         toastr.success(upload_resp.msg);
+        //         $voucher_img.val(upload_resp.file);
+        //         $("#voucher_image").attr("src",upload_resp.fullpath);
+        //     }
+        //     else {
+        //         toastr.error(upload_resp.msg);
+        //     }
+        //
+        // });
 
 
         var $amount = $("#amount");

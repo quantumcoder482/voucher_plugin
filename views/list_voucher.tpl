@@ -41,7 +41,7 @@
                         <th>Description</th>
                         <th>Generated</th>
                         <th>Pages</th>
-                        <th class="text-center" width="210px">Manage</th>
+                        <th class="text-center" width="230px">Manage</th>
                     </tr>
                     </thead>
                     <tbody>
@@ -93,7 +93,7 @@
 
                             <td class="text-center">
                                 <a href="{$_url}voucher/app/list_voucher_page/{$v['id']}" class="btn btn-primary btn-xs add_page" id="{$v['id']}" data-toggle="tooltip" data-placement="top" title="Add Page">
-                                    <i class="fa fa-plus"></i>
+                                    + Page
                                 </a>
                                 {*{if $v['pay_status'] neq 0 && $v['expired'] neq 1}*}
                                     <a href="#" class="btn btn-xs generate" id="{$v['id']}" style="background-color:#4B0082; border-color:#4B0082; color:#f8f8f8"
@@ -124,6 +124,89 @@
                     <tfoot>
                     <tr>
                         <td style="text-align: right;" colspan="11">
+                            <ul class="pagination">
+                            </ul>
+                        </td>
+                    </tr>
+                    </tfoot>
+                </table>
+            </div>
+        </div>
+    </div>
+</div>
+<div class="row">
+    <div class="col-md-12">
+        <div class="ibox float-e-margins">
+            <div class="ibox-title">
+                <h3 style="font-weight: 600">Recent Redeem Voucher</h3>
+            </div>
+            <div class="ibox-content">
+                <table class="table table-bordered table-hover sys_table footable" data-page-size="10">
+                    <thead>
+                    <tr>
+                        <th>#</th>
+                        <th>Customer</th>
+                        <th>Country</th>
+                        <th>Cat</th>
+                        <th>Expiry</th>
+                        <th>Serial No.</th>
+                        <th>Status</th>
+                    </tr>
+                    </thead>
+                    <tbody>
+                    {foreach $redeem_vouchers as $v}
+                        <tr>
+                            <td data-value="{$v['id']}">
+                                {$v['id']}
+                            </td>
+
+                            <td data-value="{$v['customer']}">
+                                <a href="{$_url}contacts/view/{$v['contact_id']}/summary/">{$v['customer']}</a>
+                            </td>
+
+                            <td data-value="{$v['country_name']}" id="{$v['id']}">
+                                <a href="#">{$v['country_name']}</a>
+                            </td>
+
+                            <td data-value="{$v['category']}">
+                                {$v['category']}
+                            </td>
+
+                            <td data-value="{strtotime($v['expiry_date'])}">
+                                {if $voucher_status[$v['id']] eq 'Expired'}
+                                    <span style="color:red">{date( $config['df'], strtotime($v['expiry_date']))}</span>
+                                {elseif $voucher_status[$v['id']] eq 'Limit'}
+                                    <span style="color:darkorange">{date( $config['df'], strtotime($v['expiry_date']))}</span>
+                                {else}
+                                    {date( $config['df'], strtotime($v['expiry_date']))}
+                                {/if}
+                            </td>
+
+                            <td data-value="{$v['serial_number']}">
+                                &nbsp;<a href="{$_url}voucher/app/list_voucher_page/{$v['voucher_format_id']}/{$v['id']}/">{$v['prefix']}{$v['serial_number']}</a>
+                            </td>
+                            <td data-value="{$v['invoice_status']}">
+                                <a href="{$_url}invoices/view/{$v['invoice_id']}/" class="btn btn-primary btn-xs view_invoice" id="{$v['id']}" data-toggle="tooltip" data-placement="top" title="{$_L['View']}">
+                                    <i class="fa fa-file-text-o"></i>
+                                </a>
+                                {if $v['invoice_status'] eq 'Paid'}
+                                    <div class="label-success" style="display:inline-block; margin:0 auto; font-size:85%; width:85px">Paid</div>
+                                {elseif $v['invoice_status'] eq 'Unpaid'}
+                                    <div class="label-danger" style="display:inline-block; margin:0 auto; font-size:85%; width:85px">Unpaid</div>
+                                {elseif $v['invoice_status'] eq 'Partially Paid'}
+                                    <div class="label-warning" style="display:inline-block; margin:0 auto; font-size:85%; width:85px">Partially Paid</div>
+                                {else}
+                                    -
+                                {/if}
+                            </td>
+
+                        </tr>
+                    {/foreach}
+
+                    </tbody>
+                    <tfoot>
+                    <tr>
+                        <td style="text-align: right;" colspan="7">
                             <ul class="pagination">
                             </ul>
                         </td>

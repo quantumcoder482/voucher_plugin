@@ -272,7 +272,11 @@
                                 <td data-value="{$r['amount']}" class="amount" data-a-sign="{$config['currency_code']} ">{$r['amount']}</td>
 
                                 <td data-value="{strtotime($r['expiry_date'])}">
-                                    Actived from {date( $config['df'], strtotime($r['date']))} to {date( $config['df'], strtotime($r['expiry_date']))}
+                                    {if $r['expiry_date'] neq '0000-00-00'}
+                                        Actived from {date( $config['df'], strtotime($r['date']))} to {date( $config['df'], strtotime($r['expiry_date']))}
+                                    {else}
+                                        -
+                                    {/if}
                                 </td>
 
                                 <td data-value="{$r['invoice_status']}">

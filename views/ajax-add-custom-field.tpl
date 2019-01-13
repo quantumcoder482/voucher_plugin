@@ -38,6 +38,8 @@
                         <input type="text" class="form-control" id="options" name="options">
                         <span class="help-block">{$_L['Comma Separated List']}</span>
                     </div>
+                    <input type="hidden" id="vid" name="vid" value="{$vid}">
+                    <input type="hidden" id="pid" name="pid" value="{$pid}">
 
                 </form>
             </div>

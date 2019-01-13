@@ -4,6 +4,10 @@ $(document).ready(function () {
     var $modal = $('#ajax-modal');
     var sysrender = $('#application_ajaxrender');
 
+    var vid = $('#vid').val();
+    var pid = $('#pid').val();
+
+
     sysrender.on('click', '.cdelete', function(e){
         e.preventDefault();
         var id = this.id;
@@ -28,7 +32,7 @@ $(document).ready(function () {
         e.preventDefault();
         $('body').modalmanager('loading');
         var _url = $("#_url").val();
-        $modal.load(_url + 'voucher/app/customfields-ajax-add/','', function(){
+        $modal.load(_url + 'voucher/app/customfields-ajax-add/'+vid+'/'+pid+'/','', function(){
             $modal.modal(
                 {
                     width: '600'
@@ -68,10 +72,10 @@ $(document).ready(function () {
         e.preventDefault();
         $('body').modalmanager('loading');
         var _url = $("#_url").val();
-        var vid = this.id;
-        var id = vid.replace("f", "");
-        id = vid.replace("d", "");
-        $modal.load(_url + 'voucher/app/customfields-ajax-edit/' + id,'', function(){
+        var fid = this.id;
+        var id = fid.replace("f", "");
+
+        $modal.load(_url + 'voucher/app/customfields-ajax-edit/' + id + '/' + vid+ '/'+ pid,'', function(){
             $modal.modal(
                 {
 

@@ -150,15 +150,21 @@
                                     </div>
                                 {/foreach}
 
-                                {if $page_setting['product_id'] neq '0'}
+                                {if $page_setting['payment_req'] eq '1' && $page_setting['product_id'] neq '0'}
                                 <div class="hr-line-dashed"></div>
 
                                 <div class="form-group">
-                                    <div class="col-md-offset-2 col-md-2" style="text-align:left">
-                                        <span style="font-size: 12pt; font-weight: 600">{$product_data['name']}</span>
+                                    <div class="col-md-offset-2 col-md-6" style="text-align:left">
+                                        {$product_data['name']}
                                     </div>
-                                    <div class="col-md-8" style="text-align: right">
-                                        <span class="amount" style="font-weight: 600" autocomplete="off" data-a-sign="{$config['currency_code']} " data-a-dec="{$config['dec_point']}" data-a-sep="{$config['thousands_sep']}" data-d-group="2">{$product_data['sales_price']}</span>
+                                    <div class="col-md-2">
+                                        <input type="number" min="1" id="product_quantity" name="product_quantity" class="form-control" value="{$page_setting['product_quantity']}">
+                                        <span class="help-block">
+                                            &nbsp;&nbsp;&nbsp;&nbsp;Quantity
+                                        </span>
+                                    </div>
+                                    <div class="col-md-2" style="text-align: right">
+                                        <span class="amount product_price" style="font-weight: 600" autocomplete="off" data-a-sign="{$config['currency_code']} " data-a-dec="{$config['dec_point']}" data-a-sep="{$config['thousands_sep']}" data-d-group="2">{$product_data['sales_price']}</span>
                                     </div>
                                 </div>
                                 {/if}
@@ -170,16 +176,22 @@
                                     <div class="col-md-2" style="text-align:right">
                                         <input type="checkbox" class="i-checks" id="sub_product_req" name="sub_product_req" value="1" checked>
                                     </div>
-                                    <div class="col-md-2" style="text-align: left">
-                                        <span style="font-size: 12pt; font-weight: 600">{$sub_product_data['name']}</span>
+                                    <div class="col-md-6" style="text-align: left">
+                                        {$sub_product_data['name']}
                                     </div>
-                                    <div class="col-md-8" style="text-align: right">
-                                        <span class="amount" style="font-weight: 600" autocomplete="off" data-a-sign="{$config['currency_code']} " data-a-dec="{$config['dec_point']}" data-a-sep="{$config['thousands_sep']}" data-d-group="2">{$sub_product_data['sales_price']}</span>
+                                    <div class="col-md-2">
+                                        <input type="number" min="1" id="sub_product_quantity" name="sub_product_quantity" class="form-control" value="{$page_setting['sub_product_quantity']}" >
+                                        <span class="help-block">
+                                            &nbsp;&nbsp;&nbsp;&nbsp;Quantity
+                                        </span>
+                                    </div>
+                                    <div class="col-md-2" style="text-align: right">
+                                        <span class="amount sub_product_price" style="font-weight: 600" autocomplete="off" data-a-sign="{$config['currency_code']} " data-a-dec="{$config['dec_point']}" data-a-sep="{$config['thousands_sep']}" data-d-group="2">{$sub_product_data['sales_price']}</span>
                                     </div>
                                 </div>
                                 {/if}
 
-                                {if $page_setting['product_id'] neq '0'}
+                                {if $page_setting['payment_req'] eq '1' && $page_setting['product_id'] neq '0'}
                                 <div class="hr-line-dashed"></div>
 
                                 <div class="form-group">
@@ -268,8 +280,41 @@
             });
 
 
-            var product_price = parseFloat($('#product_price').val());
-            var sub_product_price = parseFloat($('#sub_product_price').val());
+            var product_price;
+            var sub_product_price;
+
+            var change_prices = function(){
+                product_price = parseFloat($('#product_price').val()* $('#product_quantity').val()+0.00);
+                sub_product_price = parseFloat($('#sub_product_price').val() * $('#sub_product_quantity').val()+0.00);
+
+                $('.product_price').html($('#currency_code').val() + ' ' + product_price);
+                $('.sub_product_price').html($('#currency_code').val() + ' ' + sub_product_price);
+
+                var isChecked = $("#sub_product_req").prop("checked");
+
+                if(isChecked == true){
+                    var total_price = product_price + sub_product_price;
+                }else{
+                    var total_price = product_price;
+                }
+
+                // total_price = total_price.toLocaleString();
+
+                var total_price = $('#currency_code').val() + ' ' + total_price;
+                $('.total_price').html(total_price);
+
+            };
+
+            change_prices();
+
+            $('#product_quantity').on('change', function(){
+                change_prices();
+            });
+
+            $('#sub_product_quantity').on('change', function(){
+                change_prices();
+            });
+
 
             $('#sub_product_req').on('ifChanged', function(e) {
                 e.preventDefault();
@@ -282,7 +327,7 @@
                     var total_price = product_price;
                 }
 
-                total_price = total_price.toLocaleString();
+                // total_price = total_price.toLocaleString();
                 var total_price = $('#currency_code').val() + ' ' + total_price;
                 $('.total_price').html(total_price);
 
@@ -313,7 +358,7 @@
                     $('#total_days').val(total_days);
                 }
 
-            }
+            };
 
             $('#departure_date').on('change', function(e) {
                 e.preventDefault();

@@ -40,7 +40,9 @@
                 </div>
 
 
-<input type="hidden" name="id" value="{$d['id']}">
+                <input type="hidden" name="id" value="{$d['id']}">
+                <input type="hidden" id="vid" name="vid" value="{$vid}">
+                <input type="hidden" id="pid" name="pid" value="{$pid}">
             </form>
         </div>
     </div>

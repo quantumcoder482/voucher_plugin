@@ -42,6 +42,7 @@ switch ($action){
         $active_fee = ORM::for_table('voucher_setting')->where_equal('setting', 'activation_fee')->select('value')->find_one();
         $auto_create_active_invoice = ORM::for_table('voucher_setting')->where_equal('setting', 'user_require_make_payment') ->select('value')->find_one();
         $require_agree = ORM::for_table('voucher_setting')->where_equal('setting', 'require_agree')->select('value')->find_one();
+        $require_admin_approval = ORM::for_table('voucher_setting')->where_equal('setting', 'require_admin_approval_redeem_voucher')->select('value')->find_one();
 
         $setting = array(
             'active_fee' => $active_fee['value'],
@@ -49,7 +50,8 @@ switch ($action){
             'redeem' => $redeem['value'],
             'show_alert' => $show_alert['value'],
             'alert_msg' => $alert_msg,
-            'require_agree' => $require_agree['value']
+            'require_agree' => $require_agree['value'],
+            'require_admin_approval' => $require_admin_approval['value']
         );
 
 
@@ -121,7 +123,7 @@ switch ($action){
             $rest = date_diff($date1, $date2);
             $rest = intval($rest->format("%a"));
 
-            if($date2 < $date1){
+            if($date2 < $date1 && $v['expiry_date'] != '0000-00-00'){
                 $voucher_status[$v['id']] = 'Expired';
             } elseif( $rest < intval($v['expiry_day'])) {
                 $voucher_status[$v['id']] = $rest. 'Days Left';
@@ -218,6 +220,7 @@ switch ($action){
 
         $voucher_data = ORM::for_table('voucher_generated')
             ->inner_join('voucher_format', array('voucher_format.id', '=', 'voucher_generated.voucher_format_id'))
+            ->left_outer_join('voucher_category', array('voucher_category.id', '=', 'voucher_format.category_id'))
             ->left_outer_join('sys_invoices', array('sys_invoices.id', '=', 'voucher_generated.invoice_id'))
             ->select('voucher_generated.*')
             ->select('voucher_format.sales_price', 'sales_price')
@@ -225,6 +228,7 @@ switch ($action){
             ->select('sys_invoices.id', 'invoice_id')
             ->select('sys_invoices.status', 'invoice_status')
             ->select('sys_invoices.vtoken', 'invoice_vtoken')
+            ->select('voucher_category.category_name')
             ->where('serial_number', $serial_number)
             ->find_one();
 
@@ -250,7 +254,7 @@ switch ($action){
             $invoice_id = null;
             $invoice_url = "";
             if($voucher_data['create_invoice'] == '1'){
-                $invoice = Invoice::forSingleItem($account_id, 'Redeem Voucher '.$prefix.$serial_number, $voucher_data['sales_price']);
+                $invoice = Invoice::forSingleItem($account_id, $voucher_data['category_name'].' '.$prefix.$serial_number, $voucher_data['sales_price']);
                 $invoice_id = $invoice['id'];
                 $invoice_vtoken = $invoice['vtoken'];
                 $invoice_url = U.'client/iview/'.$invoice_id.'/token_'.$invoice_vtoken.'/';
@@ -383,7 +387,7 @@ switch ($action){
             ->select('voucher_category.category_name', 'category')
             ->select('voucher_format.voucher_img', 'voucher_img')
             ->select('sys_invoices.status', 'invoice_status')
-            ->select_many('voucher_generated.prefix', 'voucher_generated.serial_number', 'voucher_generated.status', 'voucher_generated.redeem_status')
+            ->select_many('voucher_generated.*')
             ->where_equal('voucher_generated.id',$voucher_id)
             ->find_one();
 
@@ -414,23 +418,43 @@ switch ($action){
 
         foreach($voucher_pages as $vp) {
             $page_status[$vp['id']] = 'redeem';
+            if($vp['void_days']){
+                $now_date = date('Y-m-d');
+                $date1 = date_create($now_date);
+                $date2 = date_create($voucher_info['date']);
+                $rest = date_diff($date1, $date2);
+                $rest = intval($rest->format("%a"));
+
+                if($vp['void_days'] <= $rest){
+                    $page_status[$vp['id']] = 'void';
+                }else {
+                    $page_status[$vp['id']] = ($vp['void_days'] - $rest).' Day';
+                }
+
+            }
+
             $redeem_page = ORM::for_table('voucher_page_transaction')
                 ->where('voucher_id', $voucher_id)
                 ->where('page_id', $vp['id'])
                 ->find_one();
+
             if($redeem_page){
                 if($redeem_page['status'] == 'Confirm'){
                     $page_status[$vp['id']] = 'confirm';
-                }elseif($redeem_page['status'] == 'Processing' && $redeem_page['return_date']<$today){
-                    $redeem_page->status = 'Confirm';
-                    $page_status[$vp['id']] = 'confirm';
-                    $redeem_page->save();
-                }else{
-                    $page_status[$vp['id']] = 'processing';
+                }elseif($redeem_page['status'] == 'Processing'){
+//                    if($redeem_page['return_date']<$today){
+//                        $redeem_page->status = 'Confirm';
+//                        $page_status[$vp['id']] = 'confirm';
+//                        $redeem_page->save();
+//                    }else{
+                        $page_status[$vp['id']] = 'processing';
+//                    }
                 }
 
                 $transaction_id[$vp['id']] = $redeem_page['id'];
             }
+
+
         }
 
 
@@ -486,6 +510,7 @@ switch ($action){
         view('client_wrapper',[
             '_include' => 'client_voucher_page',
             'voucher_pages' => $voucher_pages,
+            'voucher_info' => $voucher_info,
             'voucher_img' => $voucher_info['voucher_img'],
             'serial_number' => $voucher_info['prefix'].$voucher_info['serial_number'],
             'page_status' => $page_status,
@@ -526,10 +551,14 @@ switch ($action){
             ->select('voucher_category.category_name', 'category')
             ->select('voucher_format.voucher_img', 'voucher_img')
             ->select('voucher_generated.serial_number', 'serial_number')
+            ->select('voucher_generated.voucher_format_id')
             ->where_equal('voucher_generated.id',$voucher_id)
             ->find_one();
 
-        $fs = ORM::for_table('voucher_customfields')->order_by_asc('id')->find_many();
+        $fs = ORM::for_table('voucher_customfields')
+            ->where('voucher_customfields.voucher_id', $voucher_info['voucher_format_id'])
+            ->where('voucher_customfields.page_id', $page_id)
+            ->order_by_asc('id')->find_many();
 
 
         $voucher_edit_enable = ORM::for_table('voucher_setting')->where_equal('setting','cant_edit_submit_voucher')->select('value')->find_one();
@@ -541,7 +570,9 @@ switch ($action){
         );
 
 
-
+        $ui->assign('_application_menu', 'My Voucher');
+        $ui->assign('_st', $voucher_info['category'].' '.$voucher_info['prefix'].$voucher_info['serial_number']);
+        $ui->assign('_title', $config['CompanyName']);
         $ui->assign('xheader', Asset::css(array('modal','dp/dist/datepicker.min','footable/css/footable.core.min','dropzone/dropzone','redactor/redactor','s2/css/select2.min')));
         $ui->assign('xfooter', Asset::js(array('modal','dp/dist/datepicker.min','footable/js/footable.all.min','dropzone/dropzone','redactor/redactor.min','numeric','s2/js/select2.min',
             's2/js/i18n/'.lan(),)));
@@ -581,8 +612,10 @@ switch ($action){
         $page_title = _post('page_title');
         $product_name = _post('product_name');
         $product_price = _post('product_price');
+        $product_quantity = _post('product_quantity');
         $sub_product_name = _post('sub_product_name');
         $sub_product_price = _post('sub_product_price');
+        $sub_product_quantity = _post('sub_product_quantity');
         $voucher_number = _post('voucher_number');
         $country_name = _post('country_name');
         $category = _post('category');
@@ -627,25 +660,26 @@ switch ($action){
                 _msglog('s','Page Redeem updated Successfully');
             }
 
-            if($page_setting['date_range'] == 1){
-                $status = 'Processing';
-            }else {
-                $status = 'Confirm';
-            }
+//            if($page_setting['date_range'] == 1){
+//                $status = 'Processing';
+//            }else {
+//                $status = 'Confirm';
+//            }
+            $status = 'Processing';
 
             $invoice_url = "";
 
             if($invoice_id){
                 if($sub_product_req == 1){
-                    $product_amount = round((float)$product_price + (float)$sub_product_price,2);
+                    $product_amount = round((float)$product_price*$product_quantity + (float)$sub_product_price*$sub_product_quantity,2);
                 }else {
-                    $product_amount = round((float)$product_price,2);
+                    $product_amount = round((float)$product_price*$product_quantity,2);
                 }
                 $product = ($sub_product_name != '' && $sub_product_req == 1)?'Voucher page redeem ('.$product_name.' + '.$sub_product_name.')':'Voucher page redeem ('.$product_name.')';
 
                 $invoice_data = ORM::for_table('sys_invoices')->find_one($invoice_id);
 
-                if($invoice_data['status'] != 'Paid'){
+//                if($invoice_data['status'] != 'Paid'){
                     $invoice_data->total = $product_amount;
                     $invoice_data->subtotal = $product_amount;
                     $invoice_data->save();
@@ -657,19 +691,19 @@ switch ($action){
                     $invoice_item->save();
 
 
-                }else{
-                    _msglog('r','This page paid already');
-                    echo "page_list";
-                    exit;
-                }
+//                }else{
+//                    _msglog('r','This page paid already');
+//                    echo "page_list";
+//                    exit;
+//                }
 
             }
 
             if($page_setting['payment_req'] == 1 && $tid == ''){
                 if($sub_product_req == 1){
-                    $product_amount = round((float)$product_price + (float)$sub_product_price,2);
+                    $product_amount = round((float)$product_price*$product_quantity + (float)$sub_product_price*$sub_product_quantity,2);
                 }else {
-                    $product_amount = round((float)$product_price,2);
+                    $product_amount = round((float)$product_price*$product_quantity,2);
                 }
                 $product = ($sub_product_name != '' && $sub_product_req == 1)?'Voucher page redeem ('.$product_name.' + '.$sub_product_name.')':'Voucher page redeem ('.$product_name.')';
                 $invoice = Invoice::forSingleItem($account_id, $product, $product_amount);
@@ -684,8 +718,10 @@ switch ($action){
             $d->page_title = $page_title;
             $d->product_name = $product_name;
             $d->product_price = $product_price;
+            $d->product_quantity = $product_quantity;
             $d->sub_product_name = $sub_product_name;
             $d->sub_product_price = $sub_product_price;
+            $d->sub_product_quantity = $sub_product_quantity;
             $d->voucher_number = $voucher_number;
             $d->country_name = $country_name;
             $d->category = $category;
@@ -704,7 +740,13 @@ switch ($action){
 
             // Custom Fields
 
-            $fs = ORM::for_table('voucher_customfields')->order_by_asc('id')->find_many();
+            $voucher_info = ORM::for_table('voucher_generated')
+                ->find_one($voucher_id);
+
+            $fs = ORM::for_table('voucher_customfields')
+                ->where('voucher_customfields.voucher_id', $voucher_info['voucher_format_id'])
+                ->where('voucher_customfields.page_id', $page_id)
+                ->order_by_asc('id')->find_many();
 
             foreach($fs as $f){
                 $fvalue = _post('cf'.$f['id']);
@@ -753,11 +795,19 @@ switch ($action){
         $c = Contacts::details();
         $account_id = $c['id'];
 
-        $transaction_data = ORM::for_table('voucher_page_transaction')->find_one($transaction_id);
+        $transaction_data = ORM::for_table('voucher_page_transaction')
+            ->left_outer_join('voucher_generated', array('voucher_generated.id', '=', 'voucher_page_transaction.voucher_id'))
+            ->select_many('voucher_page_transaction.*', 'voucher_generated.voucher_format_id')
+            ->find_one($transaction_id);
 
         // Custom fields
 
-        $fs = ORM::for_table('voucher_customfields')->order_by_asc('id')->find_many();
+
+        $fs = ORM::for_table('voucher_customfields')
+            ->where('voucher_customfields.voucher_id', $transaction_data['voucher_format_id'])
+            ->where('voucher_customfields.page_id', $transaction_data['page_id'])
+            ->order_by_asc('id')->find_many();
+
         $ui->assign('fs',$fs);
         $cf_value=array();
         foreach ($fs as $f) {
@@ -786,7 +836,7 @@ switch ($action){
             ->where_equal('voucher_generated.id',$transaction_data['voucher_id'])
             ->find_one();
 
-        $fs = ORM::for_table('voucher_customfields')->order_by_asc('id')->find_many();
+//        $fs = ORM::for_table('voucher_customfields')->order_by_asc('id')->find_many();
 
 
 
@@ -1007,7 +1057,7 @@ switch ($action){
             $invoice_id = null;
 
             $amount = $voucher_info['sales_price'];
-            $item_name = $voucher_info['prefix'].$serial_number;
+            $item_name = $voucher_info['category_name'].' '.$voucher_info['prefix'].$serial_number;
             $invoice = Invoice::forSingleItem($contact_id, $item_name, $amount);
             $invoice_id = $invoice['id'];
             $invoice_vtoken = $invoice['vtoken'];

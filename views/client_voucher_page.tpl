@@ -18,6 +18,44 @@
                 <div class="row">
                     <div class="col-md-4">
                         <img src="{$baseUrl}/apps/voucher/public/voucher_imgs/{$voucher_img}" width="100%" />
+                        <br>
+
+                            <div class="ibox-title">
+                                <h5>Voucher Details</h5>
+                            </div>
+                            <div class="ibox-content">
+                                <table style="text-align: left" width="100%">
+                                    <tr>
+                                        <td width="40%" style="text-align: left">Date Activated:</td>
+                                        <td style="text-align: left">{$voucher_info['date']}</td>
+                                    </tr>
+                                    <tr>
+                                        <td width="40%" style="text-align: left">Expire Date:</td>
+                                        <td style="text-align: left">{$voucher_info['expiry_date']}</td>
+                                    </tr>
+                                    <tr>
+                                        <td width="40%" style="text-align: left">Type:</td>
+                                        <td style="text-align: left">{$voucher_info['category']}</td>
+                                    </tr>
+                                    <tr>
+                                        <td width="40%" style="text-align: left">Country:</td>
+                                        <td style="text-align: left">{$voucher_info['country_name']}</td>
+                                    </tr>
+                                    <tr>
+                                        <td width="40%" style="text-align: left">Description:</td>
+                                        <td style="text-align: left">{$voucher_info['description']}</td>
+                                    </tr>
+                                    <tr>
+                                        <td width="40%" style="text-align: left">Voucher Number:</td>
+                                        <td style="text-align: left">{$voucher_info['prefix']}{$voucher_info['serial_number']}</td>
+                                    </tr>
+                                    <tr>
+                                        <td width="40%" style="text-align: left">Status:</td>
+                                        <td style="text-align: left">{if $voucher_info['status'] neq ''}{$voucher_info['status']}{else}Inactive{/if}</td>
+                                    </tr>
+                                </table>
+                            </div>
+
                     </div>
                     <div class="col-md-8">
                         <form class="form-horizontal" method="post" action="">
@@ -81,13 +119,25 @@
                                     </td>
 
                                     <td data-value="{$page_status[$v['id']]}">
-                                        {if $page_status[$v['id']] neq 'redeem'}
-                                            <span style="color: #2bb673;"><i class="fa fa-check"></i> </span>
+                                        {if $v['void_days']}
+                                            {if $page_status[$v['id']] eq 'processing' || $page_status[$v['id']] eq 'confirm'}
+                                                <span style="color: #2bb673;"><i class="fa fa-check"></i> </span>
+                                            {elseif $page_status[$v['id']] eq 'void'}
+                                                <button class="btn btn-xs btn-danger" style="width:85px;color:white">Void</button>
+                                            {else}
+                                                <button class="btn btn-xs" style="background-color: #FBB040; width:85px; color:white">{$page_status[$v['id']]}</button>
+                                            {/if}
+                                        {else}
+                                            {if $page_status[$v['id']] neq 'redeem'}
+                                                <span style="color: #2bb673;"><i class="fa fa-check"></i> </span>
+                                            {/if}
                                         {/if}
                                     </td>
 
                                     <td class="text-center">
-                                        {if $page_status[$v['id']] eq 'redeem' || $page_status[$v['id']] eq ''}
+                                        {if $page_status[$v['id']] eq 'void'}
+                                            <button class="btn btn-xs square-deactive">Redeem</button>
+                                        {elseif $page_status[$v['id']] eq 'redeem' || $page_status[$v['id']] eq ''}
                                             {if $view_type eq 'view'}
                                                 <a href="#" class="btn btn-xs square-redeem" id="{$v['id']}" data-toggle="tooltip" data-placement="top" title="Redeem">
                                                     Redeem
@@ -113,6 +163,10 @@
                                                     <i class="fa fa-pencil"></i>
                                                 </a>
                                             {/if}
+                                        {else}
+                                            <a href="{$_url}voucher/client/redeem_voucher_page/{$voucher_id}/{$v['id']}" class="btn btn-xs square-redeem" id="{$v['id']}" data-toggle="tooltip" data-placement="top" title="Redeem">
+                                                Redeem
+                                            </a>
                                         {/if}
                                     </td>
 

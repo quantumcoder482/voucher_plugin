@@ -13,7 +13,7 @@
             <p style="text-align:center">
                 <span style="color:#ffff00;font-size:15pt"><i class="glyphicon glyphicon-warning-sign"></i></span>
                 <span style="color:white;">{$setting['alert_msg']}</span>
-                <span class="alert"><a href="{$active_invoice_url}">[Click Here]</a></span>
+                <span class="alert"><a href="{$active_invoice_url}"><button class="btn btn-xs btn-warning" style="background-color:#f1c40f; width: 85px ">Activate</button></a></span>
             </p>
         </div>
     </div>
@@ -107,7 +107,11 @@
                             </td>
 
                             <td data-value="{strtotime($v['date'])}">
-                                {date( $config['df'], strtotime($v['date']))}
+                                {if $v['date'] neq '0000-00-00'}
+                                    {date( $config['df'], strtotime($v['date']))}
+                                {else}
+                                    -
+                                {/if}
                             </td>
 
                             <td data-value="{$v['country_name']}" id="{$v['id']}">
@@ -134,16 +138,28 @@
                             </td>
 
                             <td data-value="{strtotime($v['expiry_date'])}" >
-                                <span {if $voucher_status[$v['id']] eq 'Expired'} style="color:red" {elseif $voucher_status[$v['id']] eq 'Limit' } style = "color:orange"{/if}> 
-                                    {date( $config['df'], strtotime($v['expiry_date']))}
-                                </span>
+                                {if $v['expiry_date'] neq '0000-00-00'}
+                                    <span {if $voucher_status[$v['id']] eq 'Expired'} style="color:red" {elseif $voucher_status[$v['id']] eq 'Limit' } style = "color:orange"{/if}>
+                                        {date( $config['df'], strtotime($v['expiry_date']))}
+                                    </span>
+                                {else}
+                                    -
+                                {/if}
                             </td>
 
                             <td data-value="{$v['prefix']}{$v['serial_number']}">
-                                {if $voucher_status[$v['id']] eq 'Active'}
-                                    <a href="{{$_url}}voucher/client/voucher_page/{$v['id']}" class="view_voucherpage">{$v['prefix']}{$v['serial_number']}</a>
+                                {if $setting['require_admin_approval'] eq '1'}
+                                    {if $voucher_status[$v['id']] eq 'Active' && $v['invoice_status'] eq 'Paid'}
+                                        <a href="{{$_url}}voucher/client/voucher_page/{$v['id']}" class="view_voucherpage">{$v['prefix']}{$v['serial_number']}</a>
+                                    {else}
+                                        {$v['prefix']}{$v['serial_number']}
+                                    {/if}
                                 {else}
-                                    {$v['prefix']}{$v['serial_number']}
+                                    {if $voucher_status[$v['id']] eq 'Active'}
+                                        <a href="{{$_url}}voucher/client/voucher_page/{$v['id']}" class="view_voucherpage">{$v['prefix']}{$v['serial_number']}</a>
+                                    {else}
+                                        {$v['prefix']}{$v['serial_number']}
+                                    {/if}
                                 {/if}
                             </td>   
 

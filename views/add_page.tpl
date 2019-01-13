@@ -50,7 +50,7 @@
                         <div class="form-group" id="block_product">
                             <label class="col-md-2 control-label" for="product">Product <small class="red">*</small></label>
 
-                            <div class="col-md-10">
+                            <div class="col-md-8">
 
                                 <select id="product" name="product_id" class="form-control" style="width:100%">
                                     <option value="">Select Product</option>
@@ -62,13 +62,18 @@
                                     Select existing created product
                                 </span>
                             </div>
+                            <div class="col-md-2">
+                                <input type="text" id="product_quantity" name="product_quantity" class="form-control" value="{$val['product_quantity']}">
+                                <span class="help-block">
+                                    &nbsp;&nbsp;&nbsp;&nbsp;Quantity
+                                </span>
+                            </div>
                         </div>
 
                         <div class="form-group" id="block_sub_product">
                             <label class="col-md-2 control-label" for="sub_product">Sub-Product </label>
 
-                            <div class="col-md-10">
-
+                            <div class="col-md-8">
                                 <select id="sub_product" name="sub_product_id" class="form-control" style="width:100%">
                                     <option value="">Select Product</option>
                                     {foreach $product_list as $p}
@@ -76,6 +81,12 @@
                                     {/foreach}
                                 </select>
                                 <br>
+                            </div>
+                            <div class="col-md-2">
+                                <input type="text" id="sub_product_quantity" name="sub_product_quantity" class="form-control" value="{$val['sub_product_quantity']}">
+                                <span class="help-block">
+                                    &nbsp;&nbsp;&nbsp;&nbsp;Quantity
+                                </span>
                             </div>
                         </div>
 
@@ -128,6 +139,21 @@
                             </div>
                         </div>
 
+                        <div class="form-group">
+                            <label class="col-md-2 control-label" for="days_to_void"> Days to Void</label>
+
+                            <div class="col-md-1">
+                                <div class="checkbox">
+                                    <label>
+                                        <input type="checkbox" class="i-checks" id="void_days_req" name="void_days_req" value="1" {if $val['void_days']}checked{/if} {if $type eq 'view'} disabled {/if}>
+                                    </label>
+                                </div>
+                            </div>
+                            <div class="col-md-2" style="display: inline-block;">
+                                <input type="number" class="form-control" style="display: inline-block;" name="void_days" id="void_days" value="{$val['void_days']}" disabled>
+                            </div>
+                            <label class="col-md-2 control-label" style="text-align: left"> Days</label>
+                        </div>
 
                         <input type="hidden" name="pid" id="pid" value="{$pid}">
                         <input type="hidden" name="vid" id="vid" value="{$vid}">

@@ -57,6 +57,14 @@ $(document).ready(function () {
         $block_sub_product.hide();
     }
 
+    var isChecked1 = $("#void_days_req").prop("checked");
+    if(isChecked1){
+        $('#void_days').prop('disabled', false);
+    }else{
+        $('#void_days').val('');
+        $('#void_days').prop('disabled', true);
+    }
+
     $('#payment_req').on('ifChanged', function(e){
         e.preventDefault();
 
@@ -79,7 +87,30 @@ $(document).ready(function () {
         }
     });
 
+    $('#void_days_req').on('ifChanged', function(e){
+        e.preventDefault();
 
+        var isChecked = e.currentTarget.checked;
+
+        if(isChecked == true){
+            $('#void_days').prop('disabled', false);
+        }else{
+            $('#void_days').val('');
+            $('#void_days').prop('disabled', true);
+        }
+    });
+
+    $('#product').on('change', function(){
+        if($('#product').val() != '' && ($('#product_quantity').val() == '' || $('#product_quantity').val() == '0')){
+            $('#product_quantity').val('1');
+        }
+    });
+
+    $('#sub_product').on('change', function(){
+        if($('#sub_product').val() != '' && ($('#sub_product_quantity').val() == '' || $('#sub_product_quantity').val() == '0')){
+            $('#sub_product_quantity').val('1');
+        }
+    });
 
     // Front Image upload
 

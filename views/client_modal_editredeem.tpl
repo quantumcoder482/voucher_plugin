@@ -41,33 +41,36 @@
                     </div>
                 </div>
 
-                <div class="form-group">
-                    <label class="col-md-2 control-label" for="customer_address">Address</label>
-                    <div class="col-md-10">
-                        <textarea id="customer_address" name="customer_address" class="form-control" rows="3" disabled>{$t_data['customer_address']}</textarea>
+                {if $page_setting['address'] eq '1'}
+                    <div class="form-group">
+                        <label class="col-md-2 control-label" for="customer_address">Address</label>
+                        <div class="col-md-10">
+                            <textarea id="customer_address" name="customer_address" class="form-control" rows="3" disabled>{$t_data['customer_address']}</textarea>
+                        </div>
+                        <span class="col-md-offset-3 help-block">    Your address is editable from your profile page.</span>
                     </div>
-                    <span class="col-md-offset-3 help-block">    Your address is editable from your profile page.</span>
-                </div>
+                {/if}
 
-                <div class="form-group">
-                    <label class="col-md-2 control-label" for="departure_date">Departure Date</label>
-                    <div class="col-md-4">
-                        <input type="text" class="form-control datepicker" value="{$t_data['departure_date']}" name="departure_date" id="departure_date" datepicker data-date-format="yyyy-mm-dd" data-auto-close="true">
+                {if $page_setting['date_range'] eq '1'}
+                    <div class="form-group">
+                        <label class="col-md-2 control-label" for="departure_date">Departure Date</label>
+                        <div class="col-md-4">
+                            <input type="text" class="form-control datepicker" value="{$t_data['departure_date']}" name="departure_date" id="departure_date" datepicker data-date-format="yyyy-mm-dd" data-auto-close="true">
+                        </div>
+
+                        <label class="col-md-2 control-label" for="category">Return Date</label>
+                        <div class="col-md-4">
+                            <input type="text" class="form-control datepicker" value="{$t_data['return_date']}" name="return_date" id="return_date" datepicker data-date-format="yyyy-mm-dd" data-auto-close="true">
+                        </div>
                     </div>
 
-                    <label class="col-md-2 control-label" for="category">Return Date</label>
-                    <div class="col-md-4">
-                        <input type="text" class="form-control datepicker" value="{$t_data['return_date']}" name="return_date" id="return_date" datepicker data-date-format="yyyy-mm-dd" data-auto-close="true">
+                    <div class="form-group">
+                        <label class="col-md-2 control-label" for="total_days">Total Days</label>
+                        <div class="col-md-4">
+                            <input type="text" name="total_days" class="form-control" id="total_days" value="{$t_data['total_days']}" disabled>
+                        </div>
                     </div>
-                </div>
-
-                <div class="form-group">
-                    <label class="col-md-2 control-label" for="total_days">Total Days</label>
-                    <div class="col-md-4">
-                        <input type="text" name="total_days" class="form-control" id="total_days" value="{$t_data['total_days']}" disabled>
-                    </div>
-                </div>
-
+                {/if}
                 <div class="form-group">
                     <label class="col-md-2 control-label" for="remark">Remark</label>
                     <div class="col-md-10">

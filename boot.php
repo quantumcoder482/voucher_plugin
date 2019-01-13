@@ -30,6 +30,10 @@ $admin_voucher_sub_menus = [
    'link' => U.'voucher/app/voucher_transaction/'
   ],
   [
+   'name' => 'Page Transaction',
+   'link' => U.'voucher/app/voucher_page_transaction/'
+  ],
+  [
    'name' => 'Voucher Setting',
    'link' => U.'voucher/app/voucher_setting/'
   ]

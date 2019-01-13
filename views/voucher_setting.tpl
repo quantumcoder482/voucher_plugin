@@ -38,13 +38,30 @@
                             <div class="hr-line-dashed"></div>
 
                         <div class="form-group">
-                            <label class="col-md-2 control-label" for="activation_fee">Activation Fee </label>
+                            <label class="col-md-3 control-label" for="activation_fee">Activation Fee </label>
                             <div class="col-md-6">
-                                <input type="text" id="activation_fee" name="activation_fee" class="form-control amount" autocomplete="off" data-a-sign="{$config['currency_code']} "  data-a-dec="{$config['dec_point']}" data-a-sep="{$config['thousands_sep']}" data-d-group="2" value="{$setting['activation_fee']}">
-
+                                <select class="form-control" id="activation_fee" name="activation_fee">
+                                    <option value="" >Select Activation Fee</option>
+                                    {foreach $products as $p}
+                                        <option value="{$p['sales_price']}" {if $p['sales_price'] eq $setting['activation_fee']} selected {/if}>{$p['name']}</option>
+                                    {/foreach}
+                                </select>
                             </div>
                         </div>
                         <br>
+
+                        <div class="form-group">
+                            <div class="col-md-10">
+                                <span style="font-weight: 600;">Require admin approval before user can redeem voucher</span>
+                                <br>
+                            </div>
+
+                            <div class="col-md-2">
+                                <input type="checkbox" data-toggle="toggle" data-size="small" {if $setting['require_admin_approval_redeem_voucher'] eq 1} checked {/if}
+                                       data-on="{$_L['Yes']}" data-off="{$_L['No']}" id="require_admin_approval">
+
+                            </div>
+                        </div>
                     </div>
 
                     <div class="ibox-title">
@@ -193,7 +210,9 @@
             }
         );
 
-
+        $('#activation_fee').select2({
+            theme:"bootstrap"
+        });
 
         var _url = $("#_url").val();
         var ib_submit1 = $("#submit1");
@@ -223,6 +242,30 @@
                     });
             }
         });
+
+        $('#require_admin_approval').change(function() {
+
+            $('#ibox_form').block({ message: null });
+
+
+            if($(this).prop('checked')){
+
+                $.post( _url+'voucher/app/update_settings/', { opt: "require_admin_approval_redeem_voucher", val: "1" })
+                    .done(function( data ) {
+                        $('#ibox_form').unblock();
+                        location.reload();
+                    });
+
+            }
+            else{
+                $.post( _url+'voucher/app/update_settings', { opt: "require_admin_approval_redeem_voucher", val: "0" })
+                    .done(function( data ) {
+                        $('#ibox_form').unblock();
+                        location.reload();
+                    });
+            }
+        });
+
 
 
 

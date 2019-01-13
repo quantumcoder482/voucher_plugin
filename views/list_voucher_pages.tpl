@@ -47,6 +47,10 @@
                                     <td style="text-align: left">{$voucher_info['category_name']}</td>
                                 </tr>
                                 <tr>
+                                    <td width="40%" style="text-align: left">Country:</td>
+                                    <td style="text-align: left">{$voucher_info['country_name']}</td>
+                                </tr>
+                                <tr>
                                     <td width="40%" style="text-align: left">Description:</td>
                                     <td style="text-align: left">{$voucher_info['description']}</td>
                                 </tr>
@@ -212,7 +216,7 @@
                                 <tr>
                                     <th>Invoice No.</th>
                                     <th>Redeem Date</th>
-                                    <th>Product Name (Sub product)</th>
+                                    <th>Page Title</th>
                                     <th>Account</th>
                                     <th>Amount</th>
                                     <th>Status</th>
@@ -233,12 +237,8 @@
                                         <td data-value="{strtotime($t['createdon'])}">
                                             {date( $config['df'], strtotime($t['createdon']))}
                                         </td>
-                                        <td data-value="{$t['product_name']}">
-                                            {if $t['product_name'] neq ''}
-                                                {$t['product_name']} {if $t['sub_product_req'] eq '1'}( {$t['sub_product_name']} ){/if}
-                                            {else}
-                                                -
-                                            {/if}
+                                        <td data-value="{$t['page_title']}">
+                                           {$t['page_title']}
                                         </td>
                                         <td data-value="{$t['customer_name']}">
                                             <a href="{$account_url[$t['id']]}">{$t['customer_name']}</a>

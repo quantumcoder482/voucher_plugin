@@ -9,6 +9,11 @@
     <div class="row">
         <div class="col-md-12">
             <div class="panel panel-default">
+                <div class="ibox-title">
+                    <h5>
+                        {$voucher_info['category']}  {$voucher_info['prefix']}{$voucher_info['serial_number']}
+                    </h5>
+                </div>
 
                 <div class="panel-body">
 
@@ -62,9 +67,9 @@
                                 <div class="form-group">
                                     <label class="col-md-2 control-label" for="customer_address">Address</label>
                                     <div class="col-md-10">
-                                        <textarea id="customer_address" name="customer_address" class="form-control" rows="3" disabled>{$customer_addr}</textarea>
+                                        <textarea id="customer_address" name="customer_address" class="form-control" rows="3" disabled>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;{$customer_addr}</textarea>
                                     </div>
-                                    <span class="col-md-offset-3 help-block">    Your address is editable from your profile page.</span>
+                                    <span class="col-md-offset-3 help-block">&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;Your address is editable from your profile page.</span>
                                 </div>
                                 {/if}
 
@@ -155,15 +160,21 @@
                                     </div>
                                 {/foreach}
 
-                                {if $page_setting['product_id']}
+                                {if $page_setting['payment_req'] eq '1' && $page_setting['product_id']}
                                 <div class="hr-line-dashed"></div>
 
                                 <div class="form-group">
-                                    <div class="col-md-offset-2 col-md-2" style="text-align: left">
-                                        <span style="font-size: 12pt; font-weight: 600">{$product_data['name']}</span>
+                                    <div class="col-md-offset-2 col-md-6" style="text-align: left">
+                                      {$product_data['name']}
                                     </div>
-                                    <div class="col-md-8" style="text-align: right">
-                                        <span class="amount" style="font-weight: 600" autocomplete="off" data-a-sign="{$config['currency_code']} " data-a-dec="{$config['dec_point']}" data-a-sep="{$config['thousands_sep']}" data-d-group="2">{$product_data['sales_price']}</span>
+                                    <div class="col-md-2">
+                                        <input type="number" min="1" id="product_quantity" name="product_quantity" class="form-control" {if $type eq 'redeem'}value="{$page_setting['product_quantity']}" {else} value="{$transaction_data['product_quantity']}" {/if}>
+                                        <span class="help-block">
+                                            &nbsp;&nbsp;&nbsp;&nbsp;Quantity
+                                        </span>
+                                    </div>
+                                    <div class="col-md-2" style="text-align: right">
+                                        <span class="amount product_price" style="font-weight: 600" autocomplete="off" data-a-sign="{$config['currency_code']} " data-a-dec="{$config['dec_point']}" data-a-sep="{$config['thousands_sep']}" data-d-group="2">{$product_data['sales_price']}</span>
                                     </div>
                                 </div>
                                 {/if}
@@ -175,16 +186,22 @@
                                     <div class="col-md-2" style="text-align:right">
                                         <input type="checkbox" class="i-checks" id="sub_product_req" name="sub_product_req" value="1" {if $transaction_data['sub_product_req'] eq '1' || $type eq 'redeem'}checked{/if} {if $type eq 'view'} disabled {/if}>
                                     </div>
-                                    <div class="col-md-2" style="text-align: left">
-                                        <span style="font-size: 12pt; font-weight: 600">{$sub_product_data['name']}</span>
+                                    <div class="col-md-6" style="text-align: left">
+                                        {$sub_product_data['name']}
                                     </div>
-                                    <div class="col-md-8" style="text-align: right">
-                                        <span class="amount" style="font-weight: 600" autocomplete="off" data-a-sign="{$config['currency_code']} " data-a-dec="{$config['dec_point']}" data-a-sep="{$config['thousands_sep']}" data-d-group="2">{$sub_product_data['sales_price']}</span>
+                                    <div class="col-md-2">
+                                        <input type="number" min="1" id="sub_product_quantity" name="sub_product_quantity" class="form-control" {if $type eq 'redeem'} value="{$page_setting['sub_product_quantity']}" {else} value="{$transaction_data['sub_product_quantity']}" {/if}>
+                                        <span class="help-block">
+                                            &nbsp;&nbsp;&nbsp;&nbsp;Quantity
+                                        </span>
+                                    </div>
+                                    <div class="col-md-2" style="text-align: right">
+                                        <span class="amount sub_product_price" style="font-weight: 600" autocomplete="off" data-a-sign="{$config['currency_code']} " data-a-dec="{$config['dec_point']}" data-a-sep="{$config['thousands_sep']}" data-d-group="2">{$sub_product_data['sales_price']}</span>
                                     </div>
                                 </div>
                                 {/if}
 
-                                {if $page_setting['product_id']}
+                                {if $page_setting['payment_req'] eq '1' && $page_setting['product_id']}
                                 <div class="hr-line-dashed"></div>
 
                                 <div class="form-group">
@@ -288,8 +305,40 @@
                 radioClass: 'iradio_square-blue'
             });
 
-            var product_price = parseFloat($('#product_price').val());
-            var sub_product_price = parseFloat($('#sub_product_price').val());
+            var product_price;
+            var sub_product_price;
+
+            var change_prices = function(){
+                product_price = parseFloat($('#product_price').val()* $('#product_quantity').val()+0.00);
+                sub_product_price = parseFloat($('#sub_product_price').val() * $('#sub_product_quantity').val()+0.00);
+
+                $('.product_price').html($('#currency_code').val() + ' ' + product_price);
+                $('.sub_product_price').html($('#currency_code').val() + ' ' + sub_product_price);
+
+                var isChecked = $("#sub_product_req").prop("checked");
+
+                if(isChecked == true){
+                    var total_price = product_price + sub_product_price;
+                }else{
+                    var total_price = product_price;
+                }
+
+                // total_price = total_price.toLocaleString();
+                var total_price = $('#currency_code').val() + ' ' + total_price;
+                $('.total_price').html(total_price);
+
+            };
+            change_prices();
+
+
+            $('#product_quantity').on('change', function(){
+                change_prices();
+            });
+
+            $('#sub_product_quantity').on('change', function(){
+                change_prices();
+            });
+
 
             $('#sub_product_req').on('ifChanged', function(e) {
                 e.preventDefault();
@@ -302,7 +351,7 @@
                     var total_price = product_price;
                 }
 
-                total_price = total_price.toLocaleString();
+                // total_price = total_price.toLocaleString();
                 var total_price = $('#currency_code').val() + ' ' + total_price;
                 $('.total_price').html(total_price);
 
@@ -359,8 +408,9 @@
                 $.post(_url + 'voucher/app/post_redeem_page', $("#frm_redeem").serialize())
                     .done(function (data) {
                         if (data == 'page_list') {
-
-                            window.location = base_url + 'voucher/app/list_voucher_page/' + vid + '/' + gid;
+                            // console.log(data);
+                            // console.log(_url + 'voucher/app/list_voucher_page/' + vid + '/' + gid);
+                            window.location = _url + 'voucher/app/list_voucher_page/' + vid + '/' + gid;
 
                         }else if(data == 'reload'){
                             // toastr.error(data);

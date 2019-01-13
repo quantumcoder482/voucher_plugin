@@ -6,11 +6,12 @@ $(document).ready(function () {
 
     $(".progress").hide();
     $("#emsg").hide();
-    // $('#remark').redactor(
-    //     {
-    //         minHeight: 200 // pixels
-    //     }
-    // );
+    $('#remark').redactor(
+        {
+            toolbar: false,
+            minHeight: 150 // pixels
+        }
+    );
 
 
     $.fn.modal.defaults.width = '800px';

@@ -59,7 +59,7 @@
                         </div>
 
 
-                        <div class="form-group"><label class="col-md-2 control-label" for="cost_price">Cost Price <small class="red">*</small></label>
+                        <div class="form-group"><label class="col-md-2 control-label" for="cost_price">Cost Price</label>
 
                             <div class="col-md-10"><input type="text" id="cost_price" name="cost_price" class="form-control amount" autocomplete="off" data-a-sign="{$config['currency_code']} "  data-a-dec="{$config['dec_point']}" data-a-sep="{$config['thousands_sep']}" data-d-group="2">
 

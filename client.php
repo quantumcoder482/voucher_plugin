@@ -1066,7 +1066,7 @@ switch ($action){
             // insert into database
 
             $d->voucher_format_id = $id;
-            $d->template_id = $template_id;
+//            $d->template_id = $template_id;
             $d->contact_id = $contact_id;
             $d->serial_number = $serial_number;
             $d->create_invoice = 1;
@@ -1092,85 +1092,243 @@ switch ($action){
 
     case 'clientvoucher':
 
+        Event::trigger('voucher/client/client_voucher/');
+
+
         $ui->assign('_application_menu', 'Client Voucher');
         $ui->assign('_st', 'Client Voucher');
         $ui->assign('_title', $config['CompanyName']);
-        $ui->assign('xheader', Asset::css(array('modal','dp/dist/datepicker.min','footable/css/footable.core.min','dropzone/dropzone','redactor/redactor','s2/css/select2.min')));
-        $ui->assign('xfooter', Asset::js(array('modal','dp/dist/datepicker.min','footable/js/footable.all.min','dropzone/dropzone','redactor/redactor.min','numeric','s2/js/select2.min',
+        $ui->assign('xheader', Asset::css(array('modal','dp/dist/datepicker.min','dt/dt','footable/css/footable.core.min','dropzone/dropzone','redactor/redactor','s2/css/select2.min')));
+        $ui->assign('xfooter', Asset::js(array('modal','dp/dist/datepicker.min','dt/dt','footable/js/footable.all.min','dropzone/dropzone','redactor/redactor.min','numeric','s2/js/select2.min',
             's2/js/i18n/'.lan(),)));
 
         $baseUrl = APP_URL;
         $c = Contacts::details();
         $account_id = $c['id'];
-        $active_status = '';
-        $active_invoice_url = '';
+
+        view('client_wrapper',[
+            '_include' => 'client_clientvoucher',
+            'baseUrl' => $baseUrl,
+            'user' => $c
+        ]);
+
+        break;
+
+    case 'json_voucher_list':
 
 
-        $voucher_data = ORM::for_table('voucher_generated')
-            ->left_outer_join('crm_accounts', array('crm_accounts.id', '=', 'voucher_generated.contact_id'))
-            ->left_outer_join('voucher_format',array('voucher_format.id', '=', 'voucher_generated.voucher_format_id'))
-            ->left_outer_join('voucher_category', array('voucher_category.id','=','voucher_format.category_id'))
-            ->inner_join('voucher_country',array('voucher_country.id','=','voucher_format.country_id'))
-            ->select('voucher_generated.*')
-            ->select('voucher_country.country_name')
-            ->select('voucher_category.category_name', 'category')
-            ->select('voucher_format.id', 'format_id')
-            ->select_many('voucher_format.billing_cycle','voucher_format.expiry_day','voucher_format.voucher_img')
-            ->select('crm_accounts.account', 'customer')
-            ->where_equal('voucher_generated.agent_id',$account_id)
-            ->order_by_desc('id')
-            ->find_array();
+        $baseUrl = APP_URL;
+        $c = Contacts::details();
+        $account_id = $c['id'];
 
 
-        $voucher_status = array();
-        $voucher_pages = array();
-        $redeem_pages = array();
-        $total_vouchers = 0;
+        $columns = array();
 
-        foreach($voucher_data as $v){
+        $columns[] = 'id';
+        $columns[] = 'voucher_img';
+        $columns[] = 'date';
+        $columns[] = 'serial_number';
+        $columns[] = 'contact_name';
+        $columns[] = 'date';
+        $columns[] = 'redeem';
+        $columns[] = 'description';
+        $columns[] = 'status';
+        $columns[] = '';
 
-            // Voucher status
 
-            $now_date = date('Y-m-d');
-            $date1 = date_create($now_date);
-            $date2 = date_create($v['expiry_date']);
-            $rest = date_diff($date1, $date2);
-            $rest = intval($rest->format("%a"));
+        $order_by = $_POST['order'];
 
-            if($date2 < $date1){
-                $voucher_status[$v['id']] = 'Expired';
-            } elseif( $rest < intval($v['expiry_day'])) {
-                $voucher_status[$v['id']] = 'Limit';
-            } else {
-                if($v['status'] == 'Redeem'){
-                    $voucher_status[$v['id']] = 'Redeem';
-                }else {
-                    $voucher_status[$v['id']] = 'UnRedeem';
-                }
+        $o_c_id = $order_by[0]['column'];
+        $o_type = $order_by[0]['dir'];
 
-            }
+        $a_order_by = $columns[$o_c_id];
 
-            // Voucher Balance
 
-            $voucher_pages[$v['id']] = ORM::for_table('voucher_pages')->where_equal('voucher_format_id',$v['format_id'])->count();
-            $redeem_pages[$v['id']] = ORM::for_table('voucher_page_transaction')->where_equal('voucher_page_transaction.voucher_id', $v['id'])->count();
 
-            $total_vouchers++;
+        $d = ORM::for_table('voucher_generated')
+            ->left_outer_join('crm_accounts',array('voucher_generated.contact_id','=','contact.id'),'contact')
+            ->left_outer_join('crm_accounts',array('voucher_generated.agent_id','=','agent.id'), 'agent')
+            ->left_outer_join('voucher_format',array('voucher_format.id','=','voucher_generated.voucher_format_id'));
+
+        $d->select('voucher_generated.id','id');
+        $d->select('voucher_generated.date', 'date');
+        $d->select('voucher_generated.expiry_date', 'expiry_date');
+        $d->select('voucher_generated.prefix','prefix');
+        $d->select('voucher_generated.contact_id', 'contact_id');
+        $d->select('voucher_generated.agent_id', 'agent_id');
+        $d->select('voucher_generated.serial_number', 'serial_number');
+        $d->select('voucher_generated.description', 'description');
+        $d->select('voucher_generated.voucher_format_id', 'voucher_format_id');
+        $d->select('voucher_generated.invoice_id', 'invoice_id');
+        $d->select('voucher_generated.status', 'status');
+        $d->select('voucher_format.voucher_img', 'img');
+        $d->select('voucher_format.billing_cycle', 'billing_cycle');
+        $d->select('voucher_format.expiry_day', 'expiry_day');
+        $d->select('contact.account', 'contact_name');
+        $d->select('agent.account', 'agent_name');
+
+        $d->where_equal('agent_id', $account_id);
+
+
+
+        $serial_number = _post('serial_number');
+
+        if($serial_number != ''){
+
+            $d->where_like('serial_number',"%$serial_number%");
+
+        }
+
+        $contact_name = _post('contact');
+
+        if($contact_name != ''){
+
+            $d->where_like('contact.account',"%$contact_name%");
 
         }
 
 
-        view('client_wrapper',[
-            '_include' => 'client_clientvoucher',
-            'voucher_data' => $voucher_data,
-            'voucher_status' => $voucher_status,
-            'voucher_pages' => $voucher_pages,
-            'redeem_pages' => $redeem_pages,
-            'total_vouchers' => $total_vouchers,
-            'baseUrl' => $baseUrl,
-            'user' => $c
-        ]);
+        $iTotalRecords =  $d->count();
+
+        $iDisplayLength = intval($_REQUEST['length']);
+        $iDisplayLength = $iDisplayLength < 0 ? $iTotalRecords : $iDisplayLength;
+        $iDisplayStart = intval($_REQUEST['start']);
+        $sEcho = intval($_REQUEST['draw']);
+
+        $records = array();
+        $records["data"] = array();
+
+        $end = $iDisplayStart + $iDisplayLength;
+        $end = $end > $iTotalRecords ? $iTotalRecords : $end;
+
+
+        if($o_type == 'desc'){
+            $d->order_by_desc($a_order_by);
+        }
+        else{
+            $d->order_by_asc($a_order_by);
+        }
+
+        $d->limit($iDisplayLength);
+        $d->offset($iDisplayStart);
+        $x = $d->find_array();
+
+        $i = $iDisplayStart;
+        $colors = Colors::colorNames();
+
+        foreach ($x as $xs) {
+
+            $img = '<img src="' . APP_URL . '/apps/voucher/public/voucher_imgs/' . $xs['img'] . '" width="42px" alt="">';
+
+            if($xs['contact_name'] == ''){
+                $xs['contact_name'] = '-';
+            }
+
+
+            $page_count = ORM::for_table('voucher_pages')->where('voucher_format_id', $xs['voucher_format_id'])->count();
+            $redeem_count = ORM::for_table('voucher_page_transaction')->where('voucher_id', $xs['id'])->count();
+            $voucher_invoice = ORM::for_table('sys_invoices')->where_equal('id', $xs['invoice_id'])->find_one();
+
+
+            if($xs['status'] == 'Inactive' || $xs['status'] == ''){
+                $voucher_status = "<a href='#' class='btn btn-xs square-deactive' id='".$xs['id']."' data-toggle='tooltip' data-placement='top' title='Inactive'>Inactive</a>";
+
+                if($xs['date'] != '0000-00-00' && $xs['expiry_date'] < date('Y-m-d')){
+                    $voucher_status = "<a href='#' class='btn btn-xs square-expire' id='".$xs['id']."' data-toggle='tooltip' data-placement='top' title='Expired'>Expired</a>";
+                }
+
+                $xs['date'] = '-';
+                $xs['expiry_date'] = '-';
+            }
+
+            if($xs['status'] == 'Active'){
+                $voucher_status = "<a href='#' class='btn btn-xs square-active' id='".$xs['id']."' data-toggle='tooltip' data-placement='top' title='Active'>Active</a>";
+
+                if($xs['date'] != '0000-00-00' && $xs['expiry_date'] < date('Y-m-d')){
+                    $voucher_status = "<a href='#' class='btn btn-xs square-expire' id='".$xs['id']."' data-toggle='tooltip' data-placement='top' title='Expired'>Expired</a>";
+                }
+
+                if($xs['date'] == '0000-00-00'){
+                    $xs['date'] = '-';
+                    $xs['expiry_date'] = '-';
+                }
+
+            }
+
+
+            $records["data"][] = array(
+                0 => $xs['id'],
+                1 => $img,
+                2 => $xs['date'],
+                3 => $xs['prefix'].$xs['serial_number'],
+                4 => $xs['contact_name'],
+                5 => $xs['expiry_date'],
+                6 => $page_count. '<span style="color:#CAA931">('.$redeem_count.')</span>',
+                7 => htmlentities($xs['description']),
+                8 => $voucher_status,
+                9 => '
+                <a href="' . U . 'voucher/client/download_generated_voucher/' . $xs['id'] . '" class="btn btn-primary btn-xs cview" id="vid' . $xs['id'] . '"><i class="fa fa-download"></i> </a>
+                ',
+
+                "DT_RowId" => 'dtr_' . $xs['id']
+
+
+            );
+        }
+
+
+        $records["draw"] = $sEcho;
+        $records["recordsTotal"] = $iTotalRecords;
+        $records["recordsFiltered"] = $iTotalRecords;
+
+        api_response($records);
+
         break;
+
+    case 'download_generated_voucher':
+
+        $id = route(3);
+
+        $voucher_data = ORM::for_table('voucher_generated')
+            ->left_outer_join('voucher_format', array('voucher_format.id', '=', 'voucher_generated.voucher_format_id'))
+            ->left_outer_join('voucher_template', array('voucher_template.id', '=', 'voucher_format.template_id'))
+            ->select_many('voucher_generated.*', 'voucher_template.cover_img', 'voucher_template.voucher_template', 'voucher_template.voucher_pgnum')
+            ->find_one($id);
+
+        $template_file = 'apps/voucher/public/template/'.$voucher_data['voucher_template'];
+        $newfile = $voucher_data['serial_number'].'.pdf';
+
+        $pdf = new \Mpdf\Mpdf(['format' => [250, 148]]);
+        $pdf->SetImportUse();
+        $pagecount = $pdf->SetSourceFile($template_file);
+
+        for ($i=1; $i<=$pagecount; $i++) {
+            $import_page = $pdf->ImportPage($i);
+            $pdf->SetPageTemplate($import_page);
+
+            if($i == 8){
+                $pdf->SetFont('Arial','B',16);
+                $pdf->SetXY(140,109);
+                $pdf->cell(0,0,$voucher_data['prefix'].$voucher_data['serial_number']);
+            }
+
+            if($i == $voucher_data['voucher_pgnum']+1 ){
+                $pdf->SetFont('Arial','B',16);
+                $pdf->SetXY(109,74);
+                $pdf->cell(0,0,$voucher_data['prefix'].$voucher_data['serial_number']);
+            }
+            $pdf->AddPage();
+
+        }
+
+        $pdf->Output($newfile, 'D');
+
+        r2(U . 'voucher/app/generated_voucher_list/'.$voucher_data['voucher_format_id'], 's', $_L['Voucher Downloaded Successfully']);
+
+
+        break;
+
+
 
     default:
         echo 'action not defined';

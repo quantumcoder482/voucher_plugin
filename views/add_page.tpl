@@ -134,7 +134,7 @@
 
                         <div class="form-group"><label class="col-md-2 control-label" for="remark">Remark</label>
 
-                            <div class="col-md-10"><textarea id="remark" name="remark" class="form-control" rows="4"></textarea>
+                            <div class="col-md-10"><textarea id="remark" name="remark" class="form-control" rows="4">{$val['remark']}</textarea>
 
                             </div>
                         </div>

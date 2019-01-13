@@ -148,7 +148,7 @@
                             </td>
 
                             <td data-value="{$v['prefix']}{$v['serial_number']}">
-                                {if $setting['require_admin_approval'] eq '1'}
+                                {if $setting['require_admin_approval'] eq '0'}
                                     {if $voucher_status[$v['id']] eq 'Active' && $v['invoice_status'] eq 'Paid'}
                                         <a href="{{$_url}}voucher/client/voucher_page/{$v['id']}" class="view_voucherpage">{$v['prefix']}{$v['serial_number']}</a>
                                     {else}

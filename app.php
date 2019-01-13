@@ -643,9 +643,9 @@ switch ($action){
         if(!$created_date){
             $msg .= 'Date is required <br>';
         }
-        if(!$cost_price){
-            $msg .= 'Cost Pirce is required <br>';
-        }
+//        if(!$cost_price){
+//            $msg .= 'Cost Pirce is required <br>';
+//        }
         if(!$sales_price){
             $msg .= 'Sales Price is required <br>';
         }
@@ -861,7 +861,8 @@ switch ($action){
         if($g_id){
             $g_id = str_replace('eid', '', $g_id);
             $val = ORM::for_table('voucher_generated')
-                ->left_outer_join('voucher_template', array('voucher_template.id', '=', 'voucher_generated.template_id'))
+                ->left_outer_join('voucher_format', array('voucher_format.id', '=', 'voucher_generated.voucher_format_id'))
+                ->left_outer_join('voucher_template', array('voucher_template.id', '=', 'voucher_format.template_id'))
                 ->select_many('voucher_generated.*', 'voucher_template.cover_img', 'voucher_template.voucher_template', 'voucher_template.voucher_pgnum')
                 ->find_one($g_id);
         }else{
@@ -1102,7 +1103,7 @@ switch ($action){
                     $d->prefix = $prefix;
                     $d->description = $description;
                     $d->invoice_id = $invoice_id;
-                    $d->template_id = $template_id;
+//                    $d->template_id = $template_id;
                     $d->voucher_pdf = $voucher_pdf;
                     $d->status = $status;
                     $d->save();
@@ -1409,13 +1410,13 @@ switch ($action){
             if($i == 8){
                 $pdf->SetFont('Arial','B',16);
                 $pdf->SetXY(140,109);
-                $pdf->cell(0,0,$voucher_data['prefix'].' '.$voucher_data['serial_number']);
+                $pdf->cell(0,0,$voucher_data['prefix'].$voucher_data['serial_number']);
             }
 
             if($i == $voucher_data['voucher_pgnum']+1 ){
                 $pdf->SetFont('Arial','B',16);
                 $pdf->SetXY(109,74);
-                $pdf->cell(0,0,$voucher_data['prefix'].' '.$voucher_data['serial_number']);
+                $pdf->cell(0,0,$voucher_data['prefix'].$voucher_data['serial_number']);
             }
             $pdf->AddPage();
 
@@ -1924,8 +1925,8 @@ switch ($action){
 
 
 /*
-     *  Voucher Settings
-     */
+ *  Voucher Settings
+ */
 
     case 'voucher_setting':
 
@@ -2294,6 +2295,7 @@ switch ($action){
         if($sub_product_id != '' && $sub_product_quantity == ''){
             $msg .= 'Sub Product Quantity is required';
         }
+
 
 
         if($msg ==''){

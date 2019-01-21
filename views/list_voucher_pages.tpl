@@ -36,11 +36,11 @@
                             <table style="text-align: left" width="100%">
                                 <tr>
                                     <td width="40%" style="text-align: left">Date Activated:</td>
-                                    <td style="text-align: left">{$voucher_info['date']}</td>
+                                    <td style="text-align: left">{if $voucher_info['date'] neq '0000-00-00'}{$voucher_info['date']}{/if}</td>
                                 </tr>
                                 <tr>
                                     <td width="40%" style="text-align: left">Expire Date:</td>
-                                    <td style="text-align: left">{$voucher_info['expiry_date']}</td>
+                                    <td style="text-align: left">{if $voucher_info['expiry_date'] neq '0000-00-00'}{$voucher_info['expiry_date']}{/if}</td>
                                 </tr>
                                 <tr>
                                     <td width="40%" style="text-align: left">Type:</td>
@@ -131,24 +131,28 @@
 
                                     {if $gid neq ''}
                                     <td data-value="{$page_status[$v['id']]}">
-                                        {if $page_status[$v['id']] eq 'redeem' || $page_status[$v['id']] eq ''}
+                                        {if $page_status[$v['id']] eq 'Redeem' || $page_status[$v['id']] eq ''}
                                         <a href="#" class="btn btn-xs square-redeem redeem_page" id="{$v['id']}" data-toggle="tooltip" data-placement="top" title="Redeem">
                                             Redeem
                                         </a>
-                                        {elseif $page_status[$v['id']] eq 'confirm'}
-                                        <a href="#" class="btn btn-xs square-active" id="{$v['id']}" data-toggle="tooltip" data-placement="top" title="Confirm">
-                                            Confirm
+                                        {elseif $page_status[$v['id']] eq 'Confirmed'}
+                                        <a href="#" class="btn btn-xs square-active" id="{$v['id']}" data-toggle="tooltip" data-placement="top" title="Confirmed">
+                                            Confirmed
                                         </a>
-                                        {elseif $page_status[$v['id']] eq 'processing'}
+                                        {elseif $page_status[$v['id']] eq 'Processing'}
                                         <a href="#" class="btn btn-xs square-deactive" id="{$v['id']}" data-toggle="tooltip" data-placement="top" title="Processing">
                                             Processing
+                                        </a>
+                                        {elseif $page_status[$v['id']] eq 'Cancelled'}
+                                        <a href="#" class="btn btn-xs square-deactive" id="{$v['id']}" data-toggle="tooltip" data-placement="top" title="Cancelled">
+                                            Cancelled
                                         </a>
                                         {/if}
                                     </td>
                                     {/if}
 
                                     {if $gid neq ''}
-                                        {if $page_status[$v['id']] neq 'redeem'}
+                                        {if $page_status[$v['id']] neq 'Redeem'}
                                         <td class="text-center">
                                             <a href="#" class="btn btn-primary btn-xs view_redeem_page" id="{$v['id']}" data-toggle="tooltip" data-placement="top" title="{$_L['View']}">
                                                 <i class="fa fa-file-text-o"></i>
@@ -245,12 +249,15 @@
                                         </td>
                                         <td data-value="{$t['invoice_amount']}" class="amount" data-a-sign="{$config['currency_code']} ">{$t['invoice_amount']}</td>
                                         <td data-value="{$t['invoice_status']}">
+                                            <a href="{$invoice_url[$t['id']]}" class="btn btn-primary btn-xs view_invoice" id="{$v['id']}" data-toggle="tooltip" data-placement="top" title="{$_L['View']}">
+                                                <i class="fa fa-file-text-o"></i>
+                                            </a>
                                             {if $t['invoice_status'] eq 'Paid'}
-                                                <div class="label-success" style="margin:0 auto; font-size:85%; width:85px">Paid</div>
+                                                <div class="label-success" style="display:inline-block; margin:0 auto; font-size:85%; width:85px">Paid</div>
                                             {elseif $t['invoice_status'] eq 'Unpaid'}
-                                                <div class="label-danger" style="margin:0 auto; font-size:85%; width:85px">Unpaid</div>
+                                                <div class="label-danger" style="display:inline-block; margin:0 auto; font-size:85%; width:85px">Unpaid</div>
                                             {elseif $t['invoice_status'] eq 'Partially Paid'}
-                                                <div class="label-warning" style="margin:0 auto; font-size:85%; width:85px">Partially Paid</div>
+                                                <div class="label-warning" style="display:inline-block; margin:0 auto; font-size:85%; width:85px">Partially Paid</div>
                                             {else}
                                                 -
                                             {/if}

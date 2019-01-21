@@ -20,8 +20,8 @@ switch ($action){
         $ui->assign('_application_menu', 'My Voucher');
         $ui->assign('_st', 'My Voucher');
         $ui->assign('_title', $config['CompanyName']);
-        $ui->assign('xheader', Asset::css(array('modal','dp/dist/datepicker.min','footable/css/footable.core.min','dropzone/dropzone','redactor/redactor','s2/css/select2.min')));
-        $ui->assign('xfooter', Asset::js(array('modal','dp/dist/datepicker.min','footable/js/footable.all.min','dropzone/dropzone','redactor/redactor.min','numeric','s2/js/select2.min',
+        $ui->assign('xheader', Asset::css(array('modal','dp/dist/datepicker.min','dt/dt','footable/css/footable.core.min','dropzone/dropzone','redactor/redactor','s2/css/select2.min')));
+        $ui->assign('xfooter', Asset::js(array('modal','dp/dist/datepicker.min','dt/dt','footable/js/footable.all.min','dropzone/dropzone','redactor/redactor.min','numeric','s2/js/select2.min',
             's2/js/i18n/'.lan(),)));
 
         $baseUrl = APP_URL;
@@ -42,7 +42,19 @@ switch ($action){
         $active_fee = ORM::for_table('voucher_setting')->where_equal('setting', 'activation_fee')->select('value')->find_one();
         $auto_create_active_invoice = ORM::for_table('voucher_setting')->where_equal('setting', 'user_require_make_payment') ->select('value')->find_one();
         $require_agree = ORM::for_table('voucher_setting')->where_equal('setting', 'require_agree')->select('value')->find_one();
-        $require_admin_approval = ORM::for_table('voucher_setting')->where_equal('setting', 'require_admin_approval_redeem_voucher')->select('value')->find_one();
+        $set_status_manually = ORM::for_table('voucher_setting')->where_equal('setting', 'set_status_manually')->select('value')->find_one();
+
+        // mail setting
+
+        $set_status_manually = ORM::for_table('voucher_setting')->where('setting', 'set_status_manually')->find_one();
+        $voucher_status_processing = ORM::for_table('voucher_setting')->where('setting', 'voucher_status_processing')->find_one();
+        $voucher_status_active = ORM::for_table('voucher_setting')->where('setting', 'voucher_status_active')->find_one();
+        $voucher_status_expired = ORM::for_table('voucher_setting')->where('setting', 'voucher_status_expired')->find_one();
+        $voucher_status_cancelled = ORM::for_table('voucher_setting')->where('setting', 'voucher_status_cancelled')->find_one();
+        $page_status_processing = ORM::for_table('voucher_setting')->where('setting', 'page_status_processing')->find_one();
+        $page_status_confirmed = ORM::for_table('voucher_setting')->where('setting', 'page_status_confirmed')->find_one();
+        $page_status_cancelled = ORM::for_table('voucher_setting')->where('setting', 'page_status_cancelled')->find_one();
+
 
         $setting = array(
             'active_fee' => $active_fee['value'],
@@ -51,7 +63,14 @@ switch ($action){
             'show_alert' => $show_alert['value'],
             'alert_msg' => $alert_msg,
             'require_agree' => $require_agree['value'],
-            'require_admin_approval' => $require_admin_approval['value']
+            'set_status_manually' => $set_status_manually['value'],
+            'voucher_status_processing' => $voucher_status_processing['value'],
+            'voucher_status_active' => $voucher_status_active['value'],
+            'voucher_status_expired' => $voucher_status_expired['value'],
+            'voucher_status_cancelled' => $voucher_status_cancelled['value'],
+            'page_status_processing' => $page_status_processing['value'],
+            'page_status_confirmed' => $page_status_confirmed['value'],
+            'page_status_cancelled' => $page_status_cancelled['value']
         );
 
 
@@ -117,23 +136,112 @@ switch ($action){
 
             // Voucher status
 
-            $now_date = date('Y-m-d');
-            $date1 = date_create($now_date);
-            $date2 = date_create($v['expiry_date']);
-            $rest = date_diff($date1, $date2);
-            $rest = intval($rest->format("%a"));
-
-            if($date2 < $date1 && $v['expiry_date'] != '0000-00-00'){
-                $voucher_status[$v['id']] = 'Expired';
-            } elseif( $rest < intval($v['expiry_day'])) {
-                $voucher_status[$v['id']] = $rest. 'Days Left';
-            } else {
+            if($setting['set_status_manually'] == '1'){
                 $voucher_status[$v['id']] = $v['status'];
-//                if($v['invoice_status'] == 'Paid' && $v['redeem_status'] == 'Redeem'){
-//                    $voucher_status[$v['id']] = 'Active';
-//                }else {
-//                    $voucher_status[$v['id']] = 'Inactive';
-//                }
+            }else {
+                $voucher_status[$v['id']] = $v['status'];
+
+                $d = ORM::for_table('voucher_generated')
+                    ->left_outer_join('crm_accounts', array('crm_accounts.id', '=', 'voucher_generated.contact_id'))
+                    ->left_outer_join('voucher_format', array('voucher_format.id', '=', 'voucher_generated.voucher_format_id'))
+                    ->left_outer_join('sys_invoices', array('sys_invoices.id', '=', 'voucher_generated.invoice_id'))
+                    ->left_outer_join('voucher_category', array('voucher_category.id', '=', 'voucher_format.category_id'))
+                    ->select_many('voucher_generated.*')
+                    ->select('voucher_category.category_name')
+                    ->select_many('crm_accounts.account', 'crm_accounts.email')
+                    ->select('sys_invoices.id', 'invoice_id')
+                    ->select('sys_invoices.total', 'invoice_amount')
+                    ->select('sys_invoices.duedate', 'invoice_due_date')
+                    ->select('sys_invoices.vtoken', 'invoice_vtoken')
+                    ->select('sys_invoices.status', 'invoice_status')
+                    ->find_one($v['id']);
+
+                $now_date = date('Y-m-d');
+                $date1 = date_create($now_date);
+                $date2 = date_create($v['expiry_date']);
+                $rest = date_diff($date1, $date2);
+                $rest = intval($rest->format("%a"));
+
+
+                if($v['status'] != 'Expired' && $v['status'] != 'Cancelled'){
+
+                    if ($date2 < $date1 && $v['expiry_date'] != '0000-00-00') {
+                        $voucher_status[$v['id']] = 'Expired';
+                        if($setting['voucher_status_expired']){
+                            $e = ORM::for_table('sys_email_templates')->find_one($setting['voucher_status_expired']);
+                        }else{
+                            $e = null;
+                        }
+                    }else{
+                        if ($v['invoice_status'] == 'Paid' && $v['redeem_status'] == 'Redeem' && $v['status'] == 'Processing') {
+                            $voucher_status[$v['id']] = 'Active';
+                            if ($setting['voucher_status_active']) {
+                                $e = ORM::for_table('sys_email_templates')->find_one($setting['voucher_status_active']);
+                            } else {
+                                $e = null;
+                            }
+                        }
+//                        }elseif ($v['invoice_status'] != 'Paid' && $v['redeem_status'] == 'Redeem') {
+//                            $voucher_status[$v['id']] = 'Processing';
+//                            if($setting['voucher_status_processing']){
+//                                $e = ORM::for_table('sys_email_templates')->find_one($setting['voucher_status_processing']);
+//                            }else{
+//                                $e = null;
+//                            }
+//
+//                        }
+                    }
+                }
+
+                if( $voucher_status[$v['id']] && $d['status'] != $voucher_status[$v['id']]){
+                    $d->status = $voucher_status[$v['id']];
+                    $d->save();
+
+                    if($e){
+                        $subject = new Template($e['subject']);
+                        $subject->set('contact_name', $d['account']);
+                        $subject->set('business_name', $config['CompanyName']);
+                        $subject->set('login_url', U.'login/');
+//                                $subject->set('password_reset_link', U.'login/');
+                        $subject->set('client_login_url', U.'client/login');
+                        $subject->set('client_email', $d['email']);
+                        $subject->set('voucher_category', $d['category']);
+                        $subject->set('voucher_number', $d['prefix'].$d['serial_number']);
+                        $subject->set('date_activated',date($config['df'], strtotime($d['date'])));
+                        $subject->set('date_expire', date($config['df'], strtotime($d['expiry_date'])));
+                        $subject->set('invoice_url', U . 'client/iview/' . $d['invoice_id'] . '/token_' . $d['invoice_vtoken']);
+                        $subject->set('invoice_id', $d['invoice_id']);
+                        $subject->set('invoice_due_date', date($config['df'], strtotime($d['invoice_due_date'])));
+                        $subject->set('invoice_amount', number_format($d['invoice_amount'],2, $config['dec_point'], $config['thousands_sep']));
+                        $subject->set('status', $d['status']);
+                        $subj = $subject->output();
+
+                        $message = new Template($e['message']);
+                        $message->set('contact_name', $d['account']);
+                        $message->set('business_name', $config['CompanyName']);
+                        $message->set('login_url', U.'login/');
+//                                $message->set('password_reset_link', U.'login/');
+                        $message->set('client_login_url', U.'client/login');
+                        $message->set('client_email', $d['email']);
+                        $message->set('voucher_category', $d['category_name']);
+                        $message->set('voucher_number', $d['prefix'].$d['serial_number']);
+                        $message->set('date_activated',date($config['df'], strtotime($d['date'])));
+                        $message->set('date_expire', date($config['df'], strtotime($d['expiry_date'])));
+                        $message->set('invoice_url', U . 'client/iview/' . $d['invoice_id'] . '/token_' . $d['invoice_vtoken']);
+                        $message->set('invoice_id', $d['invoice_id']);
+                        $message->set('invoice_due_date', date($config['df'], strtotime($d['invoice_due_date'])));
+                        $message->set('invoice_amount', number_format($d['invoice_amount'],2, $config['dec_point'], $config['thousands_sep']));
+                        $message->set('status', $d['status']);
+                        $message_o = $message->output();
+
+                        Notify_Email::_send($d['account'], $d['email'], $subj, $message_o);
+                    }
+                }
+
+                if ($rest < intval($v['expiry_day']) && $date2>$date1) {
+                    $voucher_status[$v['id']] = $rest . ' Days Left';
+                }
+
 
             }
 
@@ -216,6 +324,32 @@ switch ($action){
 //        $prefix = $serial_arr[0];
 //        $serial_number = @$serial_arr[1];
 
+
+
+        // mail setting
+
+        $set_status_manually = ORM::for_table('voucher_setting')->where('setting', 'set_status_manually')->find_one();
+        $voucher_status_processing = ORM::for_table('voucher_setting')->where('setting', 'voucher_status_processing')->find_one();
+        $voucher_status_active = ORM::for_table('voucher_setting')->where('setting', 'voucher_status_active')->find_one();
+        $voucher_status_expired = ORM::for_table('voucher_setting')->where('setting', 'voucher_status_expired')->find_one();
+        $voucher_status_cancelled = ORM::for_table('voucher_setting')->where('setting', 'voucher_status_cancelled')->find_one();
+        $page_status_processing = ORM::for_table('voucher_setting')->where('setting', 'page_status_processing')->find_one();
+        $page_status_confirmed = ORM::for_table('voucher_setting')->where('setting', 'page_status_confirmed')->find_one();
+        $page_status_cancelled = ORM::for_table('voucher_setting')->where('setting', 'page_status_cancelled')->find_one();
+
+
+        $setting = array(
+            'set_status_manually' => $set_status_manually['value'],
+            'voucher_status_processing' => $voucher_status_processing['value'],
+            'voucher_status_active' => $voucher_status_active['value'],
+            'voucher_status_expired' => $voucher_status_expired['value'],
+            'voucher_status_cancelled' => $voucher_status_cancelled['value'],
+            'page_status_processing' => $page_status_processing['value'],
+            'page_status_confirmed' => $page_status_confirmed['value'],
+            'page_status_cancelled' => $page_status_cancelled['value']
+        );
+
+
         $msg = '';
 
         $voucher_data = ORM::for_table('voucher_generated')
@@ -234,18 +368,24 @@ switch ($action){
 
         if(!$voucher_data){
             $msg .= "Voucher Serial Number invalid <br>";
-        }elseif($voucher_data['redeem_status'] == 'Redeem'){
-            if($voucher_data['invoice_status'] == 'Paid'){
+        }
+
+        switch($voucher_data['status']){
+            case 'Cancelled':
+                $msg .= "This Voucher is Cancelled <br>";
+                break;
+            case 'Expired':
+                $msg .= "This Voucher is Expired <br>";
+                break;
+            case 'Active':
                 $msg .= "Voucher Serial Number already redeemed <br>";
-            }else{
-                _msglog('r','You have to pay for voucher redeem');
+            case 'Processing':
+                if($voucher_data['redeem_status'] == 'Redeem' && $voucher_data['invoice_status'] != 'Paid'){
+                _msglog('r','You have to pay for redeem voucher');
                 $invoice_url = U.'client/iview/'.$voucher_data['invoice_id'].'/token_'.$voucher_data['invoice_vtoken'].'/';
                 echo $invoice_url;
                 exit;
             }
-
-        }elseif($voucher_data['status'] != 'Active'){
-            $msg .= "Voucher Status is not Active <br>";
         }
 
 
@@ -258,68 +398,18 @@ switch ($action){
                 $invoice_id = $invoice['id'];
                 $invoice_vtoken = $invoice['vtoken'];
                 $invoice_url = U.'client/iview/'.$invoice_id.'/token_'.$invoice_vtoken.'/';
+
+                $invoice_data = ORM::for_table('sys_invoices')->find_one($invoice_id);
+                $invoice_data->title = $voucher_data['category_name'].' '.$prefix.$serial_number;
+                $invoice_data->save();
+
             }
 
-            if($voucher_data['add_payment'] == '1') {
-                $invoice_info = ORM::for_table('sys_invoices')->find_one($invoice_id);
-                $total_price = $invoice_info['total'];
-                if ($invoice_info) {
-
-                    // Customer balance chanage
-
-                    $customer_info = ORM::for_table('crm_accounts')->find_one($account_id);
-                    if ($customer_info) {
-                        if ($customer_info['balance'] < $total_price) {
-                            _msglog('r',"Customer's credit balance is not enough");
-                            echo "reload";
-                            break;
-                        }
-                        $customer_info->balance = $customer_info['balance'] - $total_price;
-                        $customer_info->save();
-                    }
-
-                    $invoice_info->status = 'Paid';
-                    $invoice_info->credit = $total_price;
-                    $invoice_info->save();
-
-                    // Transaction change
-
-                    $account = 'Credit';
-                    $type = 'Income';
-                    $amount = $total_price;
-                    $payer_id = $account_id;
-                    $method = 'Credit';
-                    $ref = 'Client Paid with Account Credit';
-                    $des = 'Invoice: ' . $invoice_info->id() . ' Payment from Credit';
-                    $date = date('Y-m-d');
-                    $cr = $total_price;
-                    $iid = $invoice_info->id();
-                    $updated_at = date('Y-m-d H:i:s');
-
-                    $transaction = ORM::for_table('sys_transactions')->create();
-                    $transaction->account = $account;
-                    $transaction->type = $type;
-                    $transaction->amount = $amount;
-                    $transaction->payerid = $payer_id;
-                    $transaction->method = $method;
-                    $transaction->ref = $ref;
-                    $transaction->description = $des;
-                    $transaction->date = $date;
-                    $transaction->cr = $cr;
-                    $transaction->iid = $iid;
-                    $transaction->updated_at = $updated_at;
-                    $transaction->save();
-
-
-                }
-            }
+            // Expiry date calculation
 
             $today = date('Y-m-d');
-
             $d = ORM::for_table('voucher_generated')->find_one($voucher_data['id']);
             _msglog('s','Redeem Voucher Successfully');
-
-
             switch ($voucher_data['billing_cycle']){
                 case 'annual':
                     $interval = new DateInterval('P1Y');
@@ -334,34 +424,229 @@ switch ($action){
                     break;
             }
 
-
-            // insert into database
-
-//            $d->voucher_format_id = $voucher_data['voucher_format_id'];
-//            $d->contact_id = $voucher_data['contact_id'];
             $d->contact_id = $account_id;
             $d->agent_id = $voucher_data['agent_id'];
-//            $d->serial_number = $voucher_data['serial_number'];
-//            $d->serial_pgnum = $voucher_data['serial_pgnum'];
             $d->create_invoice = 1;
             $d->date = $today;
             $d->expiry_date = $expiry_date;
-//            $d->prefix = $voucher_data['prefix'];
-//            $d->description = $voucher_data['description'];
             $d->invoice_id = $invoice_id;
-//            $d->voucher_template = $voucher_data['voucher_template'];
-//            $d->voucher_pdf = $voucher_data['voucher_pdf'];
             $d->redeem_status = "Redeem";
             $d->save();
 
-//            echo $d->id();
+            $vid = $d->id();
 
-            if($voucher_data['add_payment'] != '1' && $invoice_id != null){
-                echo $invoice_url;
-            }else{
-                echo "reload";
+
+            if($vid) {
+                $redeemed_voucher = ORM::for_table('voucher_generated')
+                    ->left_outer_join('crm_accounts', array('crm_accounts.id', '=', 'voucher_generated.contact_id'))
+                    ->left_outer_join('voucher_format', array('voucher_format.id', '=', 'voucher_generated.voucher_format_id'))
+                    ->left_outer_join('sys_invoices', array('sys_invoices.id', '=', 'voucher_generated.invoice_id'))
+                    ->left_outer_join('voucher_category', array('voucher_category.id', '=', 'voucher_format.category_id'))
+                    ->select_many('voucher_generated.*')
+                    ->select('voucher_category.category_name')
+                    ->select_many('crm_accounts.account', 'crm_accounts.email')
+                    ->select('sys_invoices.id', 'invoice_id')
+                    ->select('sys_invoices.total', 'invoice_amount')
+                    ->select('sys_invoices.duedate', 'invoice_due_date')
+                    ->select('sys_invoices.vtoken', 'invoice_vtoken')
+                    ->select('sys_invoices.status', 'invoice_status')
+                    ->find_one($vid);
+
+                if($setting['voucher_status_processing']){
+                    $e = ORM::for_table('sys_email_templates')->find_one($setting['voucher_status_processing']);
+                }
+
+                if ($voucher_data['add_payment'] == '1') {
+                    $invoice_info = ORM::for_table('sys_invoices')->find_one($invoice_id);
+                    $total_price = $invoice_info['total'];
+                    if ($invoice_info) {
+
+                        // Customer balance chanage
+
+                        $customer_info = ORM::for_table('crm_accounts')->find_one($account_id);
+                        if ($customer_info) {
+                            if ($customer_info['balance'] < $total_price) {
+                                if($e){
+                                    $subject = new Template($e['subject']);
+                                    $subject->set('contact_name', $redeemed_voucher['account']);
+                                    $subject->set('business_name', $config['CompanyName']);
+                                    $subject->set('login_url', U.'login/');
+//                                $subject->set('password_reset_link', U.'login/');
+                                    $subject->set('client_login_url', U.'client/login');
+                                    $subject->set('client_email', $redeemed_voucher['email']);
+                                    $subject->set('voucher_category', $redeemed_voucher['category']);
+                                    $subject->set('voucher_number', $redeemed_voucher['prefix'].$redeemed_voucher['serial_number']);
+                                    $subject->set('date_activated',date($config['df'], strtotime($redeemed_voucher['date'])));
+                                    $subject->set('date_expire', date($config['df'], strtotime($redeemed_voucher['expiry_date'])));
+                                    $subject->set('invoice_url', U . 'client/iview/' . $redeemed_voucher['invoice_id'] . '/token_' . $redeemed_voucher['invoice_vtoken']);
+                                    $subject->set('invoice_id', $redeemed_voucher['invoice_id']);
+                                    $subject->set('invoice_due_date', date($config['df'], strtotime($redeemed_voucher['invoice_due_date'])));
+                                    $subject->set('invoice_amount', number_format($redeemed_voucher['invoice_amount'],2, $config['dec_point'], $config['thousands_sep']));
+                                    $subject->set('status', $redeemed_voucher['status']);
+                                    $subj = $subject->output();
+
+                                    $message = new Template($e['message']);
+                                    $message->set('contact_name', $redeemed_voucher['account']);
+                                    $message->set('business_name', $config['CompanyName']);
+                                    $message->set('login_url', U.'login/');
+//                                $message->set('password_reset_link', U.'login/');
+                                    $message->set('client_login_url', U.'client/login');
+                                    $message->set('client_email', $redeemed_voucher['email']);
+                                    $message->set('voucher_category', $redeemed_voucher['category_name']);
+                                    $message->set('voucher_number', $redeemed_voucher['prefix'].$redeemed_voucher['serial_number']);
+                                    $message->set('date_activated',date($config['df'], strtotime($redeemed_voucher['date'])));
+                                    $message->set('date_expire', date($config['df'], strtotime($redeemed_voucher['expiry_date'])));
+                                    $message->set('invoice_url', U . 'client/iview/' . $redeemed_voucher['invoice_id'] . '/token_' . $redeemed_voucher['invoice_vtoken']);
+                                    $message->set('invoice_id', $redeemed_voucher['invoice_id']);
+                                    $message->set('invoice_due_date', date($config['df'], strtotime($redeemed_voucher['invoice_due_date'])));
+                                    $message->set('invoice_amount', number_format($redeemed_voucher['invoice_amount'],2, $config['dec_point'], $config['thousands_sep']));
+                                    $message->set('status', $redeemed_voucher['status']);
+                                    $message_o = $message->output();
+
+                                    Notify_Email::_send($redeemed_voucher['account'], $redeemed_voucher['email'], $subj, $message_o);
+                                }
+                                _msglog('r', "Customer's credit balance is not enough");
+                                echo "reload";
+                                break;
+                            }
+                            $customer_info->balance = $customer_info['balance'] - $total_price;
+                            $customer_info->save();
+                        }
+
+                        $invoice_info->status = 'Paid';
+                        $invoice_info->credit = $total_price;
+                        $invoice_info->save();
+
+                        // Transaction change
+
+                        $account = 'Credit';
+                        $type = 'Income';
+                        $amount = $total_price;
+                        $payer_id = $account_id;
+                        $method = 'Credit';
+                        $ref = 'Client Paid with Account Credit';
+                        $des = 'Invoice: ' . $invoice_info->id() . ' Payment from Credit';
+                        $date = date('Y-m-d');
+                        $cr = $total_price;
+                        $iid = $invoice_info->id();
+                        $updated_at = date('Y-m-d H:i:s');
+
+                        $transaction = ORM::for_table('sys_transactions')->create();
+                        $transaction->account = $account;
+                        $transaction->type = $type;
+                        $transaction->amount = $amount;
+                        $transaction->payerid = $payer_id;
+                        $transaction->method = $method;
+                        $transaction->ref = $ref;
+                        $transaction->description = $des;
+                        $transaction->date = $date;
+                        $transaction->cr = $cr;
+                        $transaction->iid = $iid;
+                        $transaction->updated_at = $updated_at;
+                        $transaction->save();
+
+
+                    }
+
+                    // voucher status confirm
+
+                    if($setting['set_status_manually'] != '1'){
+                        $redeemed_voucher->status = 'Active';
+                        $redeemed_voucher->date = $today;
+                        $redeemed_voucher->expiry_date = $expiry_date;
+                        $redeemed_voucher->save();
+
+                        if($setting['voucher_status_active']){
+                            $e = ORM::for_table('sys_email_templates')->find_one($setting['voucher_status_active']);
+                        }
+
+                    }
+
+                    if($e){
+                        $subject = new Template($e['subject']);
+                        $subject->set('contact_name', $redeemed_voucher['account']);
+                        $subject->set('business_name', $config['CompanyName']);
+                        $subject->set('login_url', U.'login/');
+//                                $subject->set('password_reset_link', U.'login/');
+                        $subject->set('client_login_url', U.'client/login');
+                        $subject->set('client_email', $redeemed_voucher['email']);
+                        $subject->set('voucher_category', $redeemed_voucher['category']);
+                        $subject->set('voucher_number', $redeemed_voucher['prefix'].$redeemed_voucher['serial_number']);
+                        $subject->set('date_activated',date($config['df'], strtotime($redeemed_voucher['date'])));
+                        $subject->set('date_expire', date($config['df'], strtotime($redeemed_voucher['expiry_date'])));
+                        $subject->set('invoice_url', U . 'client/iview/' . $redeemed_voucher['invoice_id'] . '/token_' . $redeemed_voucher['invoice_vtoken']);
+                        $subject->set('invoice_id', $redeemed_voucher['invoice_id']);
+                        $subject->set('invoice_due_date', date($config['df'], strtotime($redeemed_voucher['invoice_due_date'])));
+                        $subject->set('invoice_amount', number_format($redeemed_voucher['invoice_amount'],2, $config['dec_point'], $config['thousands_sep']));
+                        $subject->set('status', $redeemed_voucher['status']);
+                        $subj = $subject->output();
+
+                        $message = new Template($e['message']);
+                        $message->set('contact_name', $redeemed_voucher['account']);
+                        $message->set('business_name', $config['CompanyName']);
+                        $message->set('login_url', U.'login/');
+//                                $message->set('password_reset_link', U.'login/');
+                        $message->set('client_login_url', U.'client/login');
+                        $message->set('client_email', $redeemed_voucher['email']);
+                        $message->set('voucher_category', $redeemed_voucher['category_name']);
+                        $message->set('voucher_number', $redeemed_voucher['prefix'].$redeemed_voucher['serial_number']);
+                        $message->set('date_activated',date($config['df'], strtotime($redeemed_voucher['date'])));
+                        $message->set('date_expire', date($config['df'], strtotime($redeemed_voucher['expiry_date'])));
+                        $message->set('invoice_url', U . 'client/iview/' . $redeemed_voucher['invoice_id'] . '/token_' . $redeemed_voucher['invoice_vtoken']);
+                        $message->set('invoice_id', $redeemed_voucher['invoice_id']);
+                        $message->set('invoice_due_date', date($config['df'], strtotime($redeemed_voucher['invoice_due_date'])));
+                        $message->set('invoice_amount', number_format($redeemed_voucher['invoice_amount'],2, $config['dec_point'], $config['thousands_sep']));
+                        $message->set('status', $redeemed_voucher['status']);
+                        $message_o = $message->output();
+
+                        Notify_Email::_send($redeemed_voucher['account'], $redeemed_voucher['email'], $subj, $message_o);
+                    }
+
+                }elseif ($invoice_id != null) {
+                    if($e){
+                        $subject = new Template($e['subject']);
+                        $subject->set('contact_name', $redeemed_voucher['account']);
+                        $subject->set('business_name', $config['CompanyName']);
+                        $subject->set('login_url', U.'login/');
+//                                $subject->set('password_reset_link', U.'login/');
+                        $subject->set('client_login_url', U.'client/login');
+                        $subject->set('client_email', $redeemed_voucher['email']);
+                        $subject->set('voucher_category', $redeemed_voucher['category']);
+                        $subject->set('voucher_number', $redeemed_voucher['prefix'].$redeemed_voucher['serial_number']);
+                        $subject->set('date_activated',date($config['df'], strtotime($redeemed_voucher['date'])));
+                        $subject->set('date_expire', date($config['df'], strtotime($redeemed_voucher['expiry_date'])));
+                        $subject->set('invoice_url', U . 'client/iview/' . $redeemed_voucher['invoice_id'] . '/token_' . $redeemed_voucher['invoice_vtoken']);
+                        $subject->set('invoice_id', $redeemed_voucher['invoice_id']);
+                        $subject->set('invoice_due_date', date($config['df'], strtotime($redeemed_voucher['invoice_due_date'])));
+                        $subject->set('invoice_amount', number_format($redeemed_voucher['invoice_amount'],2, $config['dec_point'], $config['thousands_sep']));
+                        $subject->set('status', $redeemed_voucher['status']);
+                        $subj = $subject->output();
+
+                        $message = new Template($e['message']);
+                        $message->set('contact_name', $redeemed_voucher['account']);
+                        $message->set('business_name', $config['CompanyName']);
+                        $message->set('login_url', U.'login/');
+//                                $message->set('password_reset_link', U.'login/');
+                        $message->set('client_login_url', U.'client/login');
+                        $message->set('client_email', $redeemed_voucher['email']);
+                        $message->set('voucher_category', $redeemed_voucher['category_name']);
+                        $message->set('voucher_number', $redeemed_voucher['prefix'].$redeemed_voucher['serial_number']);
+                        $message->set('date_activated',date($config['df'], strtotime($redeemed_voucher['date'])));
+                        $message->set('date_expire', date($config['df'], strtotime($redeemed_voucher['expiry_date'])));
+                        $message->set('invoice_url', U . 'client/iview/' . $redeemed_voucher['invoice_id'] . '/token_' . $redeemed_voucher['invoice_vtoken']);
+                        $message->set('invoice_id', $redeemed_voucher['invoice_id']);
+                        $message->set('invoice_due_date', date($config['df'], strtotime($redeemed_voucher['invoice_due_date'])));
+                        $message->set('invoice_amount', number_format($redeemed_voucher['invoice_amount'],2, $config['dec_point'], $config['thousands_sep']));
+                        $message->set('status', $redeemed_voucher['status']);
+                        $message_o = $message->output();
+
+                        Notify_Email::_send($redeemed_voucher['account'], $redeemed_voucher['email'], $subj, $message_o);
+                    }
+                    echo $invoice_url;
+                } else {
+                    echo "reload";
+                }
             }
-
         }else{
             _msglog('r',$msg);
             echo "reload";
@@ -400,13 +685,33 @@ switch ($action){
         }
 
 
+        // Mail Setting
+
+        $set_status_manually = ORM::for_table('voucher_setting')->where('setting', 'set_status_manually')->find_one();
+        $voucher_status_processing = ORM::for_table('voucher_setting')->where('setting', 'voucher_status_processing')->find_one();
+        $voucher_status_active = ORM::for_table('voucher_setting')->where('setting', 'voucher_status_active')->find_one();
+        $voucher_status_expired = ORM::for_table('voucher_setting')->where('setting', 'voucher_status_expired')->find_one();
+        $voucher_status_cancelled = ORM::for_table('voucher_setting')->where('setting', 'voucher_status_cancelled')->find_one();
+        $page_status_processing = ORM::for_table('voucher_setting')->where('setting', 'page_status_processing')->find_one();
+        $page_status_confirmed = ORM::for_table('voucher_setting')->where('setting', 'page_status_confirmed')->find_one();
+        $page_status_cancelled = ORM::for_table('voucher_setting')->where('setting', 'page_status_cancelled')->find_one();
+
+        $setting = array(
+            'set_status_manually' => $set_status_manually['value'],
+            'voucher_status_processing' => $voucher_status_processing['value'],
+            'voucher_status_active' => $voucher_status_active['value'],
+            'voucher_status_expired' => $voucher_status_expired['value'],
+            'voucher_status_cancelled' => $voucher_status_cancelled['value'],
+            'page_status_processing' => $page_status_processing['value'],
+            'page_status_confirmed' => $page_status_confirmed['value'],
+            'page_status_cancelled' => $page_status_cancelled['value']
+        );
+
+
+
         $voucher_pages = ORM::for_table('voucher_pages')
             ->inner_join('voucher_generated',array('voucher_pages.voucher_format_id','=','g.voucher_format_id'),'g')
-//            ->left_outer_join('voucher_page_transaction',array('voucher_pages.id', '=', 't.page_id' ), 't')
-//            ->left_outer_join('voucher_page_transaction',array('g.id', '=', 't1.voucher_id'),'t1')
             ->select('voucher_pages.*')
-//            ->select('t.id', 'transaction_id')
-//            ->select('t.status', 'transaction_status')
             ->where_equal('g.id',$voucher_id)
             ->order_by_asc('voucher_pages.id')
             ->find_many();
@@ -417,7 +722,7 @@ switch ($action){
         $transaction_id = array();
 
         foreach($voucher_pages as $vp) {
-            $page_status[$vp['id']] = 'redeem';
+            $page_status[$vp['id']] = 'Redeem';
             if($vp['void_days']){
                 $now_date = date('Y-m-d');
                 $date1 = date_create($now_date);
@@ -434,23 +739,100 @@ switch ($action){
             }
 
             $redeem_page = ORM::for_table('voucher_page_transaction')
+                ->left_outer_join('voucher_generated', array('voucher_generated.id', '=', 'voucher_page_transaction.voucher_id'))
+                ->left_outer_join('crm_accounts', array('crm_accounts.id', '=', 'voucher_generated.contact_id'))
+                ->left_outer_join('sys_invoices', array('sys_invoices.id', '=', 'voucher_page_transaction.invoice_id'))
+                ->select_many('voucher_page_transaction.*')
+                ->select_many('voucher_generated.date', 'voucher_generated.expiry_date')
+                ->select('voucher_generated.status', 'voucher_status')
+                ->select_many('crm_accounts.account', 'crm_accounts.email')
+                ->select('sys_invoices.id', 'invoice_id')
+                ->select('sys_invoices.total', 'invoice_amount')
+                ->select('sys_invoices.duedate', 'invoice_due_date')
+                ->select('sys_invoices.vtoken', 'invoice_vtoken')
+                ->select('sys_invoices.status', 'invoice_status')
                 ->where('voucher_id', $voucher_id)
                 ->where('page_id', $vp['id'])
                 ->find_one();
 
             if($redeem_page){
-                if($redeem_page['status'] == 'Confirm'){
-                    $page_status[$vp['id']] = 'confirm';
-                }elseif($redeem_page['status'] == 'Processing'){
-//                    if($redeem_page['return_date']<$today){
-//                        $redeem_page->status = 'Confirm';
-//                        $page_status[$vp['id']] = 'confirm';
-//                        $redeem_page->save();
-//                    }else{
-                        $page_status[$vp['id']] = 'processing';
-//                    }
-                }
+                if($redeem_page['status'] == 'Confirmed'){
+                    $page_status[$vp['id']] = 'Confirmed';
+                }elseif($redeem_page['status'] == 'Processing') {
+                    $page_status[$vp['id']] = 'Processing';
 
+                    if($setting['set_status_manually'] != '1' && $redeem_page['invoice_status'] == 'Paid'){
+                        $redeem_page->status = 'Confirmed';
+                        $redeem_page->save();
+                        $page_status[$vp['id']] = 'Confirmed';
+
+
+                        if($setting['page_status_confirmed']){
+                            $e = ORM::for_table('sys_email_templates')->find_one($setting['page_status_confirmed']);
+                        }else{
+                            $e = null;
+                        }
+
+                        if($e){
+                            $subject = new Template($e['subject']);
+                            $subject->set('contact_name', $redeem_page['customer_name']);
+                            $subject->set('business_name', $config['CompanyName']);
+                            $subject->set('login_url', U.'login/');
+//                                $subject->set('password_reset_link', U.'login/');
+                            $subject->set('client_login_url', U.'client/login');
+                            $subject->set('client_email', $redeem_page['email']);
+                            $subject->set('voucher_category', $redeem_page['category']);
+                            $subject->set('voucher_number', $redeem_page['voucher_number']);
+                            $subject->set('status', $redeem_page['voucher_status']);
+                            $subject->set('date_activated',date($config['df'], strtotime($redeem_page['date'])));
+                            $subject->set('date_expire', date($config['df'], strtotime($redeem_page['expiry_date'])));
+                            $subject->set('invoice_url', U . 'client/iview/' . $redeem_page['invoice_id'] . '/token_' . $redeem_page['invoice_vtoken']);
+                            $subject->set('invoice_id', $redeem_page['invoice_id']);
+                            $subject->set('invoice_due_date', date($config['df'], strtotime($redeem_page['invoice_due_date'])));
+                            $subject->set('invoice_amount', number_format($redeem_page['invoice_amount'],2, $config['dec_point'], $config['thousands_sep']));
+                            $subject->set('page_title', $redeem_page['page_title']);
+                            $subject->set('product_title', $redeem_page['product_name']);
+                            $subject->set('product_quantity', $redeem_page['product_quantity']);
+                            $subject->set('product_price', $redeem_page['product_price']);
+                            $subject->set('sub_product_title', $redeem_page['sub_product_name']);
+                            $subject->set('sub_product_quantity', $redeem_page['sub_product_quantity']);
+                            $subject->set('sub_product_price', $redeem_page['sub_product_price']);
+                            $subj = $subject->output();
+
+                            $message = new Template($e['message']);
+                            $message->set('contact_name', $redeem_page['customer_name']);
+                            $message->set('business_name', $config['CompanyName']);
+                            $message->set('login_url', U.'login/');
+//                                $message->set('password_reset_link', U.'login/');
+                            $message->set('client_login_url', U.'client/login');
+                            $message->set('client_email', $redeem_page['email']);
+                            $message->set('voucher_category', $redeem_page['category']);
+                            $message->set('voucher_number', $redeem_page['voucher_number']);
+                            $message->set('status', $redeem_page['voucher_status']);
+                            $message->set('date_activated',date($config['df'], strtotime($redeem_page['date'])));
+                            $message->set('date_expire', date($config['df'], strtotime($redeem_page['expiry_date'])));
+                            $message->set('invoice_url', U . 'client/iview/' . $redeem_page['invoice_id'] . '/token_' . $redeem_page['invoice_vtoken']);
+                            $message->set('invoice_id', $redeem_page['invoice_id']);
+                            $message->set('invoice_due_date', date($config['df'], strtotime($redeem_page['invoice_due_date'])));
+                            $message->set('invoice_amount', number_format($redeem_page['invoice_amount'],2, $config['dec_point'], $config['thousands_sep']));
+                            $message->set('page_title', $redeem_page['page_title']);
+                            $message->set('product_title', $redeem_page['product_name']);
+                            $message->set('product_quantity', $redeem_page['product_quantity']);
+                            $message->set('product_price', $redeem_page['product_price']);
+                            $message->set('sub_product_title', $redeem_page['sub_product_name']);
+                            $message->set('sub_product_quantity', $redeem_page['sub_product_quantity']);
+                            $message->set('sub_product_price', $redeem_page['sub_product_price']);
+                            $message_o = $message->output();
+
+                            Notify_Email::_send($redeem_page['account'], $redeem_page['email'], $subj, $message_o);
+                        }
+
+                    }
+
+
+                }elseif($redeem_page['status'] == 'Cancelled') {
+                    $page_status[$vp['id']] = 'Cancelled';
+                }
                 $transaction_id[$vp['id']] = $redeem_page['id'];
             }
 
@@ -538,7 +920,8 @@ switch ($action){
         $page_setting =ORM::for_table('voucher_pages')->find_one($page_id);
 
         $customer_data = ORM::for_table('crm_accounts')->find_one($account_id);
-            $customer_addr =$customer_data['address']."  ".$customer_data['city']."  ".$customer_data['state']."  ".$customer_data['country']."   ".$customer_data['zip'];
+        $customer_addr =$customer_data['address']."  ".$customer_data['city']."  ".$customer_data['state']."  ".$customer_data['country']."   ".$customer_data['zip'];
+
         $product_data = ORM::for_table('sys_items')->find_one($page_setting['product_id']);
         $sub_product_data = ORM::for_table('sys_items')->find_one($page_setting['sub_product_id']);
 
@@ -631,6 +1014,31 @@ switch ($action){
         $invoice_id = $invoice_id?$invoice_id:'';
 
 
+
+
+        // Mail Setting
+
+        $set_status_manually = ORM::for_table('voucher_setting')->where('setting', 'set_status_manually')->find_one();
+        $voucher_status_processing = ORM::for_table('voucher_setting')->where('setting', 'voucher_status_processing')->find_one();
+        $voucher_status_active = ORM::for_table('voucher_setting')->where('setting', 'voucher_status_active')->find_one();
+        $voucher_status_expired = ORM::for_table('voucher_setting')->where('setting', 'voucher_status_expired')->find_one();
+        $voucher_status_cancelled = ORM::for_table('voucher_setting')->where('setting', 'voucher_status_cancelled')->find_one();
+        $page_status_processing = ORM::for_table('voucher_setting')->where('setting', 'page_status_processing')->find_one();
+        $page_status_confirmed = ORM::for_table('voucher_setting')->where('setting', 'page_status_confirmed')->find_one();
+        $page_status_cancelled = ORM::for_table('voucher_setting')->where('setting', 'page_status_cancelled')->find_one();
+
+        $setting = array(
+            'set_status_manually' => $set_status_manually['value'],
+            'voucher_status_processing' => $voucher_status_processing['value'],
+            'voucher_status_active' => $voucher_status_active['value'],
+            'voucher_status_expired' => $voucher_status_expired['value'],
+            'voucher_status_cancelled' => $voucher_status_cancelled['value'],
+            'page_status_processing' => $page_status_processing['value'],
+            'page_status_confirmed' => $page_status_confirmed['value'],
+            'page_status_cancelled' => $page_status_cancelled['value']
+        );
+
+
         $page_setting = array();
         if($page_id){
             $page_setting = ORM::for_table('voucher_pages')->find_one($page_id);
@@ -675,7 +1083,7 @@ switch ($action){
                 }else {
                     $product_amount = round((float)$product_price*$product_quantity,2);
                 }
-                $product = ($sub_product_name != '' && $sub_product_req == 1)?'Voucher page redeem ('.$product_name.' + '.$sub_product_name.')':'Voucher page redeem ('.$product_name.')';
+                $product = ($sub_product_name != '' && $sub_product_req == 1)?$page_title.' ('.$product_name.' + '.$sub_product_name.')':$page_title.' ('.$product_name.')';
 
                 $invoice_data = ORM::for_table('sys_invoices')->find_one($invoice_id);
 
@@ -705,11 +1113,23 @@ switch ($action){
                 }else {
                     $product_amount = round((float)$product_price*$product_quantity,2);
                 }
-                $product = ($sub_product_name != '' && $sub_product_req == 1)?'Voucher page redeem ('.$product_name.' + '.$sub_product_name.')':'Voucher page redeem ('.$product_name.')';
+                $product = ($sub_product_name != '' && $sub_product_req == 1)?$page_title.' ('.$product_name.' + '.$sub_product_name.')':$page_title.' ('.$product_name.')';
                 $invoice = Invoice::forSingleItem($account_id, $product, $product_amount);
                 $invoice_id = $invoice['id'];
                 $invoice_vtoken = $invoice['vtoken'];
                 $invoice_url = U.'client/iview/'.$invoice_id.'/token_'.$invoice_vtoken.'/';
+
+
+                $voucher_info = ORM::for_table('voucher_generated')
+                    ->left_outer_join('voucher_format', array('voucher_format.id', '=', 'voucher_generated.voucher_format_id'))
+                    ->left_outer_join('voucher_category', array('voucher_category.id', '=', 'voucher_format.category_id'))
+                    ->select_many('voucher_generated.*', 'voucher_category.category_name')
+                    ->find_one($voucher_id);
+
+                $invoice_data = ORM::for_table('sys_invoices')->find_one($invoice_id);
+                $invoice_data->title = $voucher_info['category_name'].' '.$voucher_info['prefix'].$voucher_info['serial_number'];
+                $invoice_data->save();
+
             }
 
             $d->voucher_id = $voucher_id;
@@ -771,6 +1191,80 @@ switch ($action){
                     $fc->save();
                 }
 
+            }
+
+            $pd = ORM::for_table('voucher_page_transaction')
+                ->left_outer_join('voucher_generated', array('voucher_generated.id', '=', 'voucher_page_transaction.voucher_id'))
+                ->left_outer_join('crm_accounts', array('crm_accounts.id', '=', 'voucher_generated.contact_id'))
+                ->left_outer_join('sys_invoices', array('sys_invoices.id', '=', 'voucher_page_transaction.invoice_id'))
+                ->select_many('voucher_page_transaction.*')
+                ->select_many('voucher_generated.date', 'voucher_generated.expiry_date')
+                ->select('voucher_generated.status', 'voucher_status')
+                ->select_many('crm_accounts.account', 'crm_accounts.email')
+                ->select('sys_invoices.id', 'invoice_id')
+                ->select('sys_invoices.total', 'invoice_amount')
+                ->select('sys_invoices.duedate', 'invoice_due_date')
+                ->select('sys_invoices.vtoken', 'invoice_vtoken')
+                ->select('sys_invoices.status', 'invoice_status')
+                ->find_one($cid);
+
+            if($setting['page_status_processing']){
+                $e = ORM::for_table('sys_email_templates')->find_one($setting['page_status_processing']);
+            }else{
+                $e = null;
+            }
+            if($e){
+                $subject = new Template($e['subject']);
+                $subject->set('contact_name', $pd['customer_name']);
+                $subject->set('business_name', $config['CompanyName']);
+                $subject->set('login_url', U.'login/');
+//                                $subject->set('password_reset_link', U.'login/');
+                $subject->set('client_login_url', U.'client/login');
+                $subject->set('client_email', $pd['email']);
+                $subject->set('voucher_category', $pd['category']);
+                $subject->set('voucher_number', $pd['voucher_number']);
+                $subject->set('status', $pd['voucher_status']);
+                $subject->set('date_activated',date($config['df'], strtotime($pd['date'])));
+                $subject->set('date_expire', date($config['df'], strtotime($pd['expiry_date'])));
+                $subject->set('invoice_url', U . 'client/iview/' . $pd['invoice_id'] . '/token_' . $pd['invoice_vtoken']);
+                $subject->set('invoice_id', $pd['invoice_id']);
+                $subject->set('invoice_due_date', date($config['df'], strtotime($pd['invoice_due_date'])));
+                $subject->set('invoice_amount', number_format($pd['invoice_amount'],2, $config['dec_point'], $config['thousands_sep']));
+                $subject->set('page_title', $pd['page_title']);
+                $subject->set('product_title', $pd['product_name']);
+                $subject->set('product_quantity', $pd['product_quantity']);
+                $subject->set('product_price', $pd['product_price']);
+                $subject->set('sub_product_title', $pd['sub_product_name']);
+                $subject->set('sub_product_quantity', $pd['sub_product_quantity']);
+                $subject->set('sub_product_price', $pd['sub_product_price']);
+                $subj = $subject->output();
+
+                $message = new Template($e['message']);
+                $message->set('contact_name', $pd['customer_name']);
+                $message->set('business_name', $config['CompanyName']);
+                $message->set('login_url', U.'login/');
+//                                $message->set('password_reset_link', U.'login/');
+                $message->set('client_login_url', U.'client/login');
+                $message->set('client_email', $pd['email']);
+                $message->set('voucher_category', $pd['category']);
+                $message->set('voucher_number', $pd['voucher_number']);
+                $message->set('status', $pd['voucher_status']);
+                $message->set('date_activated',date($config['df'], strtotime($pd['date'])));
+                $message->set('date_expire', date($config['df'], strtotime($pd['expiry_date'])));
+                $message->set('invoice_url', U . 'client/iview/' . $pd['invoice_id'] . '/token_' . $pd['invoice_vtoken']);
+                $message->set('invoice_id', $pd['invoice_id']);
+                $message->set('invoice_due_date', date($config['df'], strtotime($pd['invoice_due_date'])));
+                $message->set('invoice_amount', number_format($pd['invoice_amount'],2, $config['dec_point'], $config['thousands_sep']));
+                $message->set('page_title', $pd['page_title']);
+                $message->set('product_title', $pd['product_name']);
+                $message->set('product_quantity', $pd['product_quantity']);
+                $message->set('product_price', $pd['product_price']);
+                $message->set('sub_product_title', $pd['sub_product_name']);
+                $message->set('sub_product_quantity', $pd['sub_product_quantity']);
+                $message->set('sub_product_price', $pd['sub_product_price']);
+                $message_o = $message->output();
+
+                Notify_Email::_send($pd['account'], $pd['email'], $subj, $message_o);
             }
 
             if($page_setting['payment_req'] == 1 && $tid == '') {
@@ -999,6 +1493,28 @@ switch ($action){
         $total_voucher = _post('total_voucher');
         $template_id = _post('template_id');
 
+        // Settings
+
+        $set_status_manually = ORM::for_table('voucher_setting')->where('setting', 'set_status_manually')->find_one();
+        $voucher_status_processing = ORM::for_table('voucher_setting')->where('setting', 'voucher_status_processing')->find_one();
+        $voucher_status_active = ORM::for_table('voucher_setting')->where('setting', 'voucher_status_active')->find_one();
+        $voucher_status_expired = ORM::for_table('voucher_setting')->where('setting', 'voucher_status_expired')->find_one();
+        $voucher_status_cancelled = ORM::for_table('voucher_setting')->where('setting', 'voucher_status_cancelled')->find_one();
+        $page_status_processing = ORM::for_table('voucher_setting')->where('setting', 'page_status_processing')->find_one();
+        $page_status_confirmed = ORM::for_table('voucher_setting')->where('setting', 'page_status_confirmed')->find_one();
+        $page_status_cancelled = ORM::for_table('voucher_setting')->where('setting', 'page_status_cancelled')->find_one();
+
+        $setting = array(
+            'set_status_manually' => $set_status_manually['value'],
+            'voucher_status_processing' => $voucher_status_processing['value'],
+            'voucher_status_active' => $voucher_status_active['value'],
+            'voucher_status_expired' => $voucher_status_expired['value'],
+            'voucher_status_cancelled' => $voucher_status_cancelled['value'],
+            'page_status_processing' => $page_status_processing['value'],
+            'page_status_confirmed' => $page_status_confirmed['value'],
+            'page_status_cancelled' => $page_status_cancelled['value']
+        );
+
 
         $voucher_info = ORM::for_table('voucher_format')
             ->left_outer_join('voucher_country', array('voucher_country.id','=','voucher_format.country_id'))
@@ -1033,40 +1549,29 @@ switch ($action){
 
         for($i=1;$i<=$total_voucher;$i++){
 
-
             $d = ORM::for_table('voucher_generated')->create();
             _msglog('s','Voucher Generated Successfully');
-
             $serial_number = $voucher_numbers[$i-1];
-
-            // voucher pdf create
-
-//            $template_file = 'apps/voucher/public/template/'.$voucher_template;
-//            $newfile = 'apps/voucher/public/vouchers/'.$serial_number.'.pdf';
             $voucher_pdf = $serial_number.'.pdf';
-//            if(!copy($template_file,$newfile))
-//            {
-//                echo "failed to copy $file";
-//                break;
-//            } else {
-//                $voucher_pdf = $serial_number.'.pdf';
-//            }
+
 
             // Create Invoice
 
             $invoice_id = null;
-
             $amount = $voucher_info['sales_price'];
             $item_name = $voucher_info['category_name'].' '.$voucher_info['prefix'].$serial_number;
             $invoice = Invoice::forSingleItem($contact_id, $item_name, $amount);
             $invoice_id = $invoice['id'];
             $invoice_vtoken = $invoice['vtoken'];
 
+            $invoice_data = ORM::for_table('sys_invoices')->find_one($invoice_id);
+            $invoice_data->title = $item_name;
+            $invoice_data->save();
+
 
             // insert into database
 
             $d->voucher_format_id = $id;
-//            $d->template_id = $template_id;
             $d->contact_id = $contact_id;
             $d->serial_number = $serial_number;
             $d->create_invoice = 1;
@@ -1076,16 +1581,81 @@ switch ($action){
             $d->description = $description;
             $d->invoice_id = $invoice_id;
             $d->voucher_pdf = $voucher_pdf;
-            $d->status = 'Active';
+//            $d->status = 'Active';
             $d->redeem_status = 'Redeem';
 
             $d->save();
+
+            $gid = $d->id();
+
+            $dp = ORM::for_table('voucher_generated')
+                ->left_outer_join('crm_accounts', array('crm_accounts.id', '=', 'voucher_generated.contact_id'))
+                ->left_outer_join('voucher_format', array('voucher_format.id', '=', 'voucher_generated.voucher_format_id'))
+                ->left_outer_join('sys_invoices', array('sys_invoices.id', '=', 'voucher_generated.invoice_id'))
+                ->left_outer_join('voucher_category', array('voucher_category.id', '=', 'voucher_format.category_id'))
+                ->select_many('voucher_generated.*')
+                ->select('voucher_category.category_name')
+                ->select_many('crm_accounts.account', 'crm_accounts.email')
+                ->select('sys_invoices.id', 'invoice_id')
+                ->select('sys_invoices.total', 'invoice_amount')
+                ->select('sys_invoices.duedate', 'invoice_due_date')
+                ->select('sys_invoices.vtoken', 'invoice_vtoken')
+                ->select('sys_invoices.status', 'invoice_status')
+                ->find_one($gid);
+
+            if($setting['voucher_status_processing']){
+                $e = ORM::for_table('sys_email_templates')->find_one($setting['voucher_status_processing']);
+            }else{
+                $e = null;
+            }
+
+            // Send Mail
+
+            if($e){
+                $subject = new Template($e['subject']);
+                $subject->set('contact_name', $dp['account']);
+                $subject->set('business_name', $config['CompanyName']);
+                $subject->set('login_url', U.'login/');
+//                                $subject->set('password_reset_link', U.'login/');
+                $subject->set('client_login_url', U.'client/login');
+                $subject->set('client_email', $dp['email']);
+                $subject->set('voucher_category', $dp['category']);
+                $subject->set('voucher_number', $dp['prefix'].$dp['serial_number']);
+                $subject->set('date_activated',date($config['df'], strtotime($dp['date'])));
+                $subject->set('date_expire', date($config['df'], strtotime($dp['expiry_date'])));
+                $subject->set('invoice_url', U . 'client/iview/' . $dp['invoice_id'] . '/token_' . $dp['invoice_vtoken']);
+                $subject->set('invoice_id', $dp['invoice_id']);
+                $subject->set('invoice_due_date', date($config['df'], strtotime($dp['invoice_due_date'])));
+                $subject->set('invoice_amount', number_format($dp['invoice_amount'],2, $config['dec_point'], $config['thousands_sep']));
+                $subject->set('status', $dp['status']);
+                $subj = $subject->output();
+
+                $message = new Template($e['message']);
+                $message->set('contact_name', $dp['account']);
+                $message->set('business_name', $config['CompanyName']);
+                $message->set('login_url', U.'login/');
+//                                $message->set('password_reset_link', U.'login/');
+                $message->set('client_login_url', U.'client/login');
+                $message->set('client_email', $dp['email']);
+                $message->set('voucher_category', $dp['category_name']);
+                $message->set('voucher_number', $dp['prefix'].$dp['serial_number']);
+                $message->set('date_activated',date($config['df'], strtotime($dp['date'])));
+                $message->set('date_expire', date($config['df'], strtotime($dp['expiry_date'])));
+                $message->set('invoice_url', U . 'client/iview/' . $dp['invoice_id'] . '/token_' . $dp['invoice_vtoken']);
+                $message->set('invoice_id', $dp['invoice_id']);
+                $message->set('invoice_due_date', date($config['df'], strtotime($dp['invoice_due_date'])));
+                $message->set('invoice_amount', number_format($dp['invoice_amount'],2, $config['dec_point'], $config['thousands_sep']));
+                $message->set('status', $dp['status']);
+                $message_o = $message->output();
+
+                Notify_Email::_send($dp['account'], $dp['email'], $subj, $message_o);
+            }
 
         }
 
 //        r2(U.'client/iview/'.$invoice_id.'/token_'.$invoice_vtoken.'/','s');
 
-        $str = U.'client/invoices/';
+        $str = U.'client/iview/'.$invoice_id.'/token_'.$invoice_vtoken.'/';
         echo $str;
 
         break;
@@ -1267,7 +1837,7 @@ switch ($action){
                 7 => htmlentities($xs['description']),
                 8 => $voucher_status,
                 9 => '
-                <a href="' . U . 'voucher/client/download_generated_voucher/' . $xs['id'] . '" class="btn btn-primary btn-xs cview" id="vid' . $xs['id'] . '"><i class="fa fa-download"></i> </a>
+                <a href="' . U . 'voucher/client/download_generated_voucher/' . $xs['id'] . '" class="btn btn-primary btn-xs cview" style="background-color: #92278F; border-color:#92278F" id="vid' . $xs['id'] . '"><i class="fa fa-file-pdf-o"></i> </a>
                 ',
 
                 "DT_RowId" => 'dtr_' . $xs['id']
@@ -1327,8 +1897,6 @@ switch ($action){
 
 
         break;
-
-
 
     default:
         echo 'action not defined';

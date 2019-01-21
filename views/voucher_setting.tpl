@@ -52,17 +52,18 @@
 
                         <div class="form-group">
                             <div class="col-md-10">
-                                <span style="font-weight: 600;">Require admin approval before user can redeem voucher</span>
+                                <span style="font-weight: 600;">Set voucher & voucher page status manually</span>
                                 <br>
                             </div>
 
                             <div class="col-md-2">
-                                <input type="checkbox" data-toggle="toggle" data-size="small" {if $setting['require_admin_approval_redeem_voucher'] eq 1} checked {/if}
-                                       data-on="{$_L['Yes']}" data-off="{$_L['No']}" id="require_admin_approval">
+                                <input type="checkbox" data-toggle="toggle" data-size="small" {if $setting['set_status_manually'] eq 1} checked {/if}
+                                       data-on="{$_L['Yes']}" data-off="{$_L['No']}" id="set_status_manually">
 
                             </div>
                         </div>
                     </div>
+
 
                     <div class="ibox-title">
                         <h5>
@@ -179,12 +180,132 @@
 
                         <br>
 
+                    </div>
+
+                    <div class="ibox-title">
+                        <h5>
+                            Voucher Email Notification
+                        </h5>
+                    </div>
+
+                    <div class="ibox-content">
+                        <div class="form-group">
+                            <div class="col-md-12">
+                                <label class="col-md-3 control-label" for="voucher_status_processing">Status Processing </label>
+                                <div class="col-md-6">
+                                    <select class="form-control" id="voucher_status_processing" name="voucher_status_processing">
+                                        <option value="" >Select Email Template</option>
+                                        {foreach $mail_templates as $m}
+                                            <option value="{$m['id']}" {if $m['id'] eq $setting['voucher_status_processing']} selected {/if}>{$m['tplname']}</option>
+                                        {/foreach}
+                                    </select>
+                                </div>
+                            </div>
+                        </div>
+
+                        <div class="form-group">
+                            <div class="col-md-12">
+                                <label class="col-md-3 control-label" for="voucher_status_active">Status Active </label>
+                                <div class="col-md-6">
+                                    <select class="form-control" id="voucher_status_active" name="voucher_status_active">
+                                        <option value="" >Select Email Template</option>
+                                        {foreach $mail_templates as $m}
+                                            <option value="{$m['id']}" {if $m['id'] eq $setting['voucher_status_active']} selected {/if}>{$m['tplname']}</option>
+                                        {/foreach}
+                                    </select>
+                                </div>
+                            </div>
+                        </div>
+
+                        <div class="form-group">
+                            <div class="col-md-12">
+                                <label class="col-md-3 control-label" for="voucher_status_expired">Status Expired </label>
+                                <div class="col-md-6">
+                                    <select class="form-control" id="voucher_status_expired" name="voucher_status_expired">
+                                        <option value="" >Select Email Template</option>
+                                        {foreach $mail_templates as $m}
+                                            <option value="{$m['id']}" {if $m['id'] eq $setting['voucher_status_expired']} selected {/if}>{$m['tplname']}</option>
+                                        {/foreach}
+                                    </select>
+                                </div>
+                            </div>
+                        </div>
+
+                        <div class="form-group">
+                            <div class="col-md-12">
+                                <label class="col-md-3 control-label" for="voucher_status_cancelled">Status Cancelled </label>
+                                <div class="col-md-6">
+                                    <select class="form-control" id="voucher_status_cancelled" name="voucher_status_cancelled">
+                                        <option value="" >Select Email Template</option>
+                                        {foreach $mail_templates as $m}
+                                            <option value="{$m['id']}" {if $m['id'] eq $setting['voucher_status_cancelled']} selected {/if}>{$m['tplname']}</option>
+                                        {/foreach}
+                                    </select>
+                                </div>
+                            </div>
+                        </div>
+
+                    </div>
+
+                    <div class="ibox-title">
+                        <h5>
+                            Voucher Page Email Notification
+                        </h5>
+                    </div>
+
+                    <div class="ibox-content">
+                        <div class="form-group">
+                            <div class="col-md-12">
+                                <label class="col-md-3 control-label" for="page_status_processing">Status Processing </label>
+                                <div class="col-md-6">
+                                    <select class="form-control" id="page_status_processing" name="page_status_processing">
+                                        <option value="" >Select Email Template</option>
+                                        {foreach $mail_templates as $m}
+                                            <option value="{$m['id']}" {if $m['id'] eq $setting['page_status_processing']} selected {/if}>{$m['tplname']}</option>
+                                        {/foreach}
+                                    </select>
+                                </div>
+                            </div>
+                        </div>
+
+                        <div class="form-group">
+                            <div class="col-md-12">
+                                <label class="col-md-3 control-label" for="page_status_active">Status Confirmed </label>
+                                <div class="col-md-6">
+                                    <select class="form-control" id="page_status_confirmed" name="page_status_confirmed">
+                                        <option value="" >Select Email Template</option>
+                                        {foreach $mail_templates as $m}
+                                            <option value="{$m['id']}" {if $m['id'] eq $setting['page_status_confirmed']} selected {/if}>{$m['tplname']}</option>
+                                        {/foreach}
+                                    </select>
+                                </div>
+                            </div>
+                        </div>
+
+
+                        <div class="form-group">
+                            <div class="col-md-12">
+                                <label class="col-md-3 control-label" for="page_status_cancelled">Status Cancelled </label>
+                                <div class="col-md-6">
+                                    <select class="form-control" id="page_status_cancelled" name="page_status_cancelled">
+                                        <option value="" >Select Email Template</option>
+                                        {foreach $mail_templates as $m}
+                                            <option value="{$m['id']}" {if $m['id'] eq $setting['page_status_cancelled']} selected {/if}>{$m['tplname']}</option>
+                                        {/foreach}
+                                    </select>
+                                </div>
+                            </div>
+                        </div>
+
                         <div class="form-group">
                             <div class="col-md-offset-10 col-md-2" style="text-align:right">
                                 <button class="btn btn-primary" type="submit" id="submit2"><i class="fa fa-check"></i>{$_L['Submit']}</button>
                             </div>
                         </div>
+
+
                     </div>
+
                 </div>
             </form>
         </div>
@@ -213,6 +334,35 @@
         $('#activation_fee').select2({
             theme:"bootstrap"
         });
+
+        $('#voucher_status_processing').select2({
+            theme:"bootstrap"
+        });
+
+        $('#voucher_status_active').select2({
+            theme:"bootstrap"
+        });
+
+        $('#voucher_status_expired').select2({
+            theme:"bootstrap"
+        });
+
+        $('#voucher_status_cancelled').select2({
+            theme:"bootstrap"
+        });
+
+        $('#page_status_processing').select2({
+            theme:"bootstrap"
+        });
+
+        $('#page_status_confirmed').select2({
+            theme:"bootstrap"
+        });
+
+        $('#page_status_cancelled').select2({
+            theme:"bootstrap"
+        });
+
 
         var _url = $("#_url").val();
         var ib_submit1 = $("#submit1");
@@ -243,14 +393,14 @@
             }
         });
 
-        $('#require_admin_approval').change(function() {
+        $('#set_status_manually').change(function() {
 
             $('#ibox_form').block({ message: null });
 
 
             if($(this).prop('checked')){
 
-                $.post( _url+'voucher/app/update_settings/', { opt: "require_admin_approval_redeem_voucher", val: "1" })
+                $.post( _url+'voucher/app/update_settings/', { opt: "set_status_manually", val: "1" })
                     .done(function( data ) {
                         $('#ibox_form').unblock();
                         location.reload();
@@ -258,7 +408,7 @@
 
             }
             else{
-                $.post( _url+'voucher/app/update_settings', { opt: "require_admin_approval_redeem_voucher", val: "0" })
+                $.post( _url+'voucher/app/update_settings', { opt: "set_status_manually", val: "0" })
                     .done(function( data ) {
                         $('#ibox_form').unblock();
                         location.reload();

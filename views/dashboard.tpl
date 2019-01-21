@@ -71,7 +71,7 @@
                     <h3 style="font-weight: 600">Recent Redeem Voucher</h3>
                 </div>
                 <div class="ibox-content">
-                    <table class="table table-bordered table-hover sys_table footable" data-page-size="10">
+                    <table class="table table-bordered table-hover sys_table" id="recent_redeem_voucher" >
                         <thead>
                         <tr>
                             <th>#</th>
@@ -119,14 +119,14 @@
                         {/foreach}
 
                         </tbody>
-                        <tfoot>
-                        <tr>
-                            <td style="text-align: left;" colspan="6">
-                                <ul class="pagination">
-                                </ul>
-                            </td>
-                        </tr>
-                        </tfoot>
+                        {*<tfoot>*}
+                        {*<tr>*}
+                            {*<td style="text-align: left;" colspan="6">*}
+                                {*<ul class="pagination">*}
+                                {*</ul>*}
+                            {*</td>*}
+                        {*</tr>*}
+                        {*</tfoot>*}
                     </table>
                 </div>
             </div>
@@ -138,7 +138,7 @@
                 </div>
 
                 <div class="ibox-content">
-                    <table class="table table-bordered table-hover sys_table footable" data-filter="#foo_filter" data-page-size="10">
+                    <table class="table table-bordered table-hover sys_table" id="recent_redeem_page">
                         <thead>
                         <tr>
                             <th>#</th>
@@ -180,14 +180,14 @@
                         {/foreach}
 
                         </tbody>
-                        <tfoot>
-                        <tr>
-                            <td style="text-align: left;" colspan="6">
-                                <ul class="pagination">
-                                </ul>
-                            </td>
-                        </tr>
-                        </tfoot>
+                        {*<tfoot>*}
+                        {*<tr>*}
+                            {*<td style="text-align: left;" colspan="6">*}
+                                {*<ul class="pagination">*}
+                                {*</ul>*}
+                            {*</td>*}
+                        {*</tr>*}
+                        {*</tfoot>*}
                     </table>
                 </div>
 
@@ -244,7 +244,7 @@
                     Recent Vouchers
                 </div>
                 <div class="ibox-content">
-                    <table class="table table-bordered table-hover sys_table footable" data-page-size="10">
+                    <table class="table table-bordered table-hover sys_table" id="recent_vouchers">
                         <thead>
                             <tr>
                                 <th>#</th>
@@ -296,14 +296,14 @@
                             </tr>
                         {/foreach}
                         </tbody>
-                        <tfoot>
-                        <tr>
-                            <td style="text-align: left;" colspan="6">
-                                <ul class="pagination">
-                                </ul>
-                            </td>
-                        </tr>
-                        </tfoot>
+                        {*<tfoot>*}
+                        {*<tr>*}
+                            {*<td style="text-align: left;" colspan="6">*}
+                                {*<ul class="pagination">*}
+                                {*</ul>*}
+                            {*</td>*}
+                        {*</tr>*}
+                        {*</tfoot>*}
                     </table>
                 </div>
             </div>
@@ -426,6 +426,47 @@
                 vMin: '-9999999999999999.00'
 
             });
+
+            $.fn.dataTable.ext.classes.sPageButton = 'button button-primary';
+            $.fn.DataTable.ext.pager.numbers_length = 10;
+
+            $('#recent_vouchers').DataTable({
+                "processing": false,
+                "paging": true,
+                "pageLength": 10,
+                "bFilter": false,
+                "bInfo": false,
+                "bLengthChange": false,
+                "order": [[0, "asc"]],
+                "pagingType": "simple_numbers",
+                "responsive": false
+            });
+
+            $('#recent_redeem_voucher').DataTable({
+                "processing": false,
+                "paging": true,
+                "pageLength": 10,
+                "bFilter": false,
+                "bInfo": false,
+                "bLengthChange": false,
+                "order": [[0, "asc"]],
+                "pagingType": "simple_numbers",
+                "responsive": false
+            });
+
+            $('#recent_redeem_page').DataTable({
+                "processing": false,
+                "paging": true,
+                "pageLength": 10,
+                "bFilter": false,
+                "bInfo": false,
+                "bLengthChange": false,
+                "order": [[0, "asc"]],
+                "pagingType": "simple_numbers",
+                "responsive": false
+            });
+
+
 
         });
 

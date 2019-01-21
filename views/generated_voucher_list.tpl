@@ -19,12 +19,17 @@
             <div class="panel panel-default">
 
                 <div class="panel-body">
+                    <div id="ib_act_hidden" style="display: none;">
+                        <a href="#" id="delete_multiple_vouchers" class="btn btn-danger"><i class="fa fa-trash"></i> {$_L['Delete']}</a>
+                        <hr>
+                    </div>
 
                     <div class="table-responsive" id="ib_data_panel">
 
                         <table class="table table-bordered table-hover display" id="ib_dt">  <!--width="100%" -->
                             <thead>
                             <tr class="heading">
+                                <th><input id="d_select_all" type="checkbox" value="" name=""  class="i-checks"/></th>
                                 <th>#</th>
                                 <th>Image</th>
                                 <th style="width: 80px;">Date</th>
@@ -40,6 +45,7 @@
                             </tr>
 
                             <tr class="heading">
+                                <td></td>
                                 <td></td>
                                 <td></td>
                                 <td></td>
@@ -166,7 +172,6 @@
 
             $.fn.modal.defaults.width = '850px';
             var $modal = $('#ajax-modal');
-            $('[data-toggle="tooltip"]').tooltip();
 
             $('.footable').footable();
 
@@ -194,6 +199,18 @@
             var $ib_data_panel = $("#ib_data_panel");
 
             $ib_data_panel.block({ message:block_msg });
+
+
+            var selected = [];
+            var ib_act_hidden = $("#ib_act_hidden");
+            function ib_btn_trigger() {
+                if(selected.length > 0){
+                    ib_act_hidden.show(200);
+                }
+                else{
+                    ib_act_hidden.hide(200);
+                }
+            }
 
 
             $('[data-toggle="tooltip"]').tooltip();
@@ -274,19 +291,21 @@
                     //     },
                     //     "targets": 4
                     // },
-                    { "orderable": false, "targets": 1 },
-                    { "orderable": false, "targets": 3 },
+                    { "orderable": false, "targets": 0 },
+                    { "orderable": false, "targets": 2 },
+                    { "orderable": false, "targets": 4 },
                     { "orderable": false, "targets": 9 },
-                    { "orderable": false, "targets": 11 },
-                    { className: "text-center", "targets": [ 1 ] },
-                    { "type": "html-num", "targets": 1 }
+                    { "orderable": false, "targets": 10 },
+                    { "orderable": false, "targets": 12 },
+                    { className: "text-center", "targets": [ 2 ] },
+                    { "type": "html-num", "targets": 2 }
                 ],
-                "order": [[ 0, 'desc' ]],
+                "order": [[ 1, 'desc' ]],
                 "scrollX": true,
                 "initComplete": function () {
                     $ib_data_panel.unblock();
                     //
-                    // listen_change();
+                    listen_change();
                 },
                 select: {
                     info: false
@@ -303,7 +322,7 @@
                 ib_dt.ajax.reload(
                     function () {
                         $ib_data_panel.unblock();
-                        // listen_change();
+                        listen_change();
                     }
                 );
 
@@ -323,8 +342,8 @@
                             ib_dt.ajax.reload(
                                 function () {
                                     $ib_data_panel.unblock();
-                                    // listen_change();
-                                    // $('.i-checks').iCheck('uncheck');
+                                    listen_change();
+                                    $('.i-checks').iCheck('uncheck');
                                 }
                             );
                         });
@@ -350,6 +369,71 @@
                     $modal.modal();
 
                 });
+            });
+
+
+            function listen_change() {
+
+                var i_checks = $('.i-checks');
+                i_checks.iCheck({
+                    checkboxClass: 'icheckbox_square-blue'
+                });
+
+                i_checks.on('ifChanged', function (event) {
+
+                    var id = $(this)[0].id;
+
+                    var index = $.inArray(id, selected);
+
+                    if($(this).iCheck('update')[0].checked){
+
+                        if(id == 'd_select_all'){
+
+                            //   ib_dt.rows().select();
+
+                            i_checks.iCheck('check');
+
+                            return;
+                        }
+
+                        selected.push( id );
+
+                        //  $(this).closest('tr').toggleClass('selected');
+
+                        ib_btn_trigger();
+
+                    }
+                    else{
+
+                        if(id == 'd_select_all'){
+
+                            i_checks.iCheck('uncheck');
+
+                            return;
+                        }
+
+                        selected.splice( index, 1 );
+
+                        //  $(this).closest('tr').toggleClass('selected');
+
+                        ib_btn_trigger();
+
+                    }
+
+                });
+            }
+
+            listen_change();
+
+            $("#delete_multiple_vouchers").click(function(e){
+                e.preventDefault();
+                var format_id = $('#vid').val();
+                bootbox.confirm(_L['are_you_sure'], function(result) {
+                    if(result){
+                        $.redirect(_url + "voucher/app/delete_many_voucher/",{ format_id: format_id, ids: selected});
+                    }
+                });
+
             });
 
 

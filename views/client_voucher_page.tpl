@@ -97,7 +97,7 @@
                                         {if $v['front_img'] eq ''}
                                             <img src="{$baseUrl}/apps/voucher/views/img/item_placeholder.png" width="40px" />
                                         {else}
-                                            {if $page_status[$v['id']] eq 'confirm'}
+                                            {if $page_status[$v['id']] eq 'Confirmed'}
                                                 <a href="#" class="view_page" id="{$t_id[$v['id']]}"><img src="{$baseUrl}/apps/voucher/public/voucher_imgs/{$v['front_img']}" width="40px" /></a>
                                             {else}
                                                 <img src="{$baseUrl}/apps/voucher/public/voucher_imgs/{$v['front_img']}" width="40px" />
@@ -107,7 +107,7 @@
                                     </td>
 
                                     <td data-value="{$v['title']}" id="{$v['id']}">
-                                        {if $page_status[$v['id']] eq 'confirm'}
+                                        {if $page_status[$v['id']] eq 'Confirmed'}
                                             <a href="#" class="view_page" id="{$t_id[$v['id']]}">{$v['title']}</a>
                                         {else}
                                             {$v['title']}
@@ -120,7 +120,7 @@
 
                                     <td data-value="{$page_status[$v['id']]}">
                                         {if $v['void_days']}
-                                            {if $page_status[$v['id']] eq 'processing' || $page_status[$v['id']] eq 'confirm'}
+                                            {if $page_status[$v['id']] eq 'Processing' || $page_status[$v['id']] eq 'Confirmed' || $page_status[$v['id']] eq 'Cancelled'}
                                                 <span style="color: #2bb673;"><i class="fa fa-check"></i> </span>
                                             {elseif $page_status[$v['id']] eq 'void'}
                                                 <button class="btn btn-xs btn-danger" style="width:85px;color:white">Void</button>
@@ -128,7 +128,7 @@
                                                 <button class="btn btn-xs" style="background-color: #FBB040; width:85px; color:white">{$page_status[$v['id']]}</button>
                                             {/if}
                                         {else}
-                                            {if $page_status[$v['id']] neq 'redeem'}
+                                            {if $page_status[$v['id']] neq 'Redeem'}
                                                 <span style="color: #2bb673;"><i class="fa fa-check"></i> </span>
                                             {/if}
                                         {/if}
@@ -137,7 +137,7 @@
                                     <td class="text-center">
                                         {if $page_status[$v['id']] eq 'void'}
                                             <button class="btn btn-xs square-deactive">Redeem</button>
-                                        {elseif $page_status[$v['id']] eq 'redeem' || $page_status[$v['id']] eq ''}
+                                        {elseif $page_status[$v['id']] eq 'Redeem' || $page_status[$v['id']] eq ''}
                                             {if $view_type eq 'view'}
                                                 <a href="#" class="btn btn-xs square-redeem" id="{$v['id']}" data-toggle="tooltip" data-placement="top" title="Redeem">
                                                     Redeem
@@ -147,14 +147,21 @@
                                                     Redeem
                                                 </a>
                                             {/if}
-                                        {elseif $page_status[$v['id']] eq 'confirm'}
-                                            <a href="#" class="btn btn-primary btn-xs view_page" id="{$t_id[$v['id']]}" data-toggle="tooltip" data-placement="top" title="{$_L['View']}">
+                                        {elseif $page_status[$v['id']] eq 'Confirmed'}
+                                            <a href="#" class="btn btn-primary btn-xs view_page" id="{$t_id[$v['id']]}" data-toggle="tooltip" data-placement="top" title="Confirmed">
                                                 <i class="fa fa-file-text-o"></i>
                                             </a>
                                             <a href="#" class="btn btn-xs square-active" id="{$v['id']}" data-toggle="tooltip" data-placement="top" title="Confirmed">
                                                 Confirmed
                                             </a>
-                                        {elseif $page_status[$v['id']] eq 'processing'}
+                                        {elseif $page_status[$v['id']] eq 'Cancelled'}
+                                            <a href="#" class="btn btn-xs square-deactive" id="{$t_id[$v['id']]}" data-toggle="tooltip" data-placement="top" title="{$_L['Cancelled']}">
+                                                <i class="fa fa-file-text-o"></i>
+                                            </a>
+                                            <a href="#" class="btn btn-xs square-active" id="{$v['id']}" data-toggle="tooltip" data-placement="top" title="Confirmed">
+                                                Confirmed
+                                            </a>
+                                        {elseif $page_status[$v['id']] eq 'Processing'}
                                             <a href="#" class="btn btn-xs square-deactive" id="{$v['id']}" data-toggle="tooltip" data-placement="top" title="Processing">
                                                 Processing
                                             </a>

@@ -183,7 +183,11 @@
                             </td>
 
                             <td data-value="{$v['serial_number']}">
-                                &nbsp;<a href="{$_url}voucher/app/list_voucher_page/{$v['voucher_format_id']}/{$v['id']}/">{$v['prefix']}{$v['serial_number']}</a>
+                                {if $v['status'] eq 'Active'}
+                                    <a href="{$_url}voucher/app/list_voucher_page/{$v['voucher_format_id']}/{$v['id']}/">{$v['prefix']}{$v['serial_number']}</a>
+                                {else}
+                                    {$v['prefix']}{$v['serial_number']}
+                                {/if}
                             </td>
                             <td data-value="{$v['invoice_status']}">
                                 <a href="{$_url}invoices/view/{$v['invoice_id']}/" class="btn btn-primary btn-xs view_invoice" id="{$v['id']}" data-toggle="tooltip" data-placement="top" title="{$_L['View']}">

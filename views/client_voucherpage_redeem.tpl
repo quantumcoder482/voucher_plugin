@@ -64,7 +64,7 @@
                                     <div class="col-md-10">
                                         <textarea id="customer_address" name="customer_address" class="form-control" rows="3" disabled>{$customer_addr}</textarea>
                                     </div>
-                                    <span class="col-md-offset-3 help-block">    Your address is editable from your profile page.</span>
+                                    <span class="col-md-offset-2 help-block" style="padding-left: 30px">Your address is editable from your profile page.</span>
                                 </div>
                                 {/if}
 

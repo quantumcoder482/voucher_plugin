@@ -76,7 +76,7 @@
                                 <div class="input-group-addon">
                                     <span class="fa fa-search"></span>
                                 </div>
-                                <input type="text" name="name" id="foo_filter" class="form-control" placeholder="{$_L['Search']}..." />
+                                <input type="text" name="name" id="global_filter" class="form-control global_filter" placeholder="{$_L['Search']}..." />
 
                             </div>
                         </div>
@@ -84,7 +84,7 @@
                     </div>
                 </form>
 
-                <table class="table table-bordered table-hover sys_table footable" data-filter="#foo_filter" data-page-size="10">
+                <table class="table table-bordered table-hover sys_table default" id="vouchers" data-filter="#foo_filter">
                     <thead>
                     <tr>
                         <th>#</th>
@@ -148,7 +148,7 @@
                             </td>
 
                             <td data-value="{$v['prefix']}{$v['serial_number']}">
-                                {if $setting['require_admin_approval'] eq '0'}
+                                {if $setting['set_status_manually'] eq '0'}
                                     {if $voucher_status[$v['id']] eq 'Active' && $v['invoice_status'] eq 'Paid'}
                                         <a href="{{$_url}}voucher/client/voucher_page/{$v['id']}" class="view_voucherpage">{$v['prefix']}{$v['serial_number']}</a>
                                     {else}
@@ -176,8 +176,16 @@
                                     <div class="label-danger" style="color:#ff2222;margin:0 auto;font-size:85%;width:65px">
                                         {$voucher_status[$v['id']]}
                                     </div>
-                                {else}
+                                {elseif $voucher_status[$v['id']] eq 'Processing'}
                                     <div class="label-default" style="margin:0 auto;font-size:85%;width:65px;">
+                                        {$voucher_status[$v['id']]}
+                                    </div>
+                                {elseif $voucher_status[$v['id']] eq 'Cancelled'}
+                                    <div class="label-default" style="margin:0 auto;font-size:85%;width:65px;">
+                                        {$voucher_status[$v['id']]}
+                                    </div>
+                                {else}
+                                    <div class="label-warning" style="margin:0 auto;font-size:85%;width:65px;">
                                         {$voucher_status[$v['id']]}
                                     </div>
                                 {/if} 
@@ -186,14 +194,14 @@
                     {/foreach}
 
                     </tbody>
-                        <tfoot>
-                        <tr>
-                            <td style="text-align: right;" colspan="11">
-                                <ul class="pagination">
-                                </ul>
-                            </td>
-                        </tr>
-                        </tfoot>
+                        {*<tfoot>*}
+                        {*<tr>*}
+                            {*<td style="text-align: right;" colspan="11">*}
+                                {*<ul class="pagination">*}
+                                {*</ul>*}
+                            {*</td>*}
+                        {*</tr>*}
+                        {*</tfoot>*}
                 </table>
             </div>
 
@@ -201,7 +209,7 @@
                 Recent Transaction
             </div>
             <div class="ibox-content">
-                <table class="table table-bordered table-hover sys-table footable" data-page-size="10">
+                <table class="table table-bordered table-hover sys-table" id="recent_transactions">
                     <thead>
                     <tr>
                         <th>Invoice #</th>
@@ -263,14 +271,14 @@
                             </tr>
                         {/foreach}
                     </tbody>
-                    <tfoot>
-                    <tr>
-                        <td style="text-align: right;" colspan="11">
-                            <ul class="pagination">
-                            </ul>
-                        </td>
-                    </tr>
-                    </tfoot>
+                    {*<tfoot>*}
+                    {*<tr>*}
+                        {*<td style="text-align: right;" colspan="11">*}
+                            {*<ul class="pagination">*}
+                            {*</ul>*}
+                        {*</td>*}
+                    {*</tr>*}
+                    {*</tfoot>*}
                 </table>
 
             </div>
@@ -294,7 +302,6 @@
 
             var require_agree = $('#require_agree').val();
 
-
             $('.amount').autoNumeric('init', {
 
                 aSign: '{$config['currency_code']} ',
@@ -307,6 +314,45 @@
                 vMin: '-9999999999999999.00'
 
             });
+
+            $.fn.dataTable.ext.classes.sPageButton = 'button button-primary';
+            $.fn.DataTable.ext.pager.numbers_length = 5;
+
+            $('#vouchers').DataTable({
+                "processing": false,
+                "paging": true,
+                "pageLength": 10,
+                // "bFilter": false,
+                "bInfo": false,
+                "bLengthChange": false,
+                "order": [[0, "asc"]],
+                "pagingType": "simple_numbers",
+                "responsive": false,
+                "dom": 'tp'
+            });
+
+            $('#recent_transactions').DataTable({
+                "processing": false,
+                "paging": true,
+                "pageLength": 10,
+                "bFilter": false,
+                "bInfo": false,
+                "bLengthChange": false,
+                "order": [[0, "asc"]],
+                "pagingType": "simple_numbers",
+                "responsive": false,
+            });
+
+
+            $('input.global_filter').on( 'keyup click', function(){
+                filterGlobal();
+            });
+
+            function filterGlobal () {
+                $('#vouchers').DataTable().search(
+                       $('#global_filter').val()
+                 ).draw();
+            }
 
             $('.redeem_submit').on('click', function(e){
                 e.preventDefault();
@@ -337,7 +383,6 @@
                 }
 
             });
-
 
             $modal.on('click', '.modal_submit', function (e) {
 

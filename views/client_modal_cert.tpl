@@ -5,7 +5,7 @@
 <div class="modal-header">
     <button type="button" class="close" data-dismiss="modal" aria-hidden="true">&times;</button>
     <h3>
-       Cert
+       Checkout
     </h3>
 </div>
 
@@ -40,11 +40,11 @@
                             <td class="cart_quantity text-center">
 
                                 <input class="form-control" size="2" type="text" id="total_voucher" name="total_voucher" autocomplete="off"  value="1" disabled>
-                                <div style="margin-top: 10px;">
-                                    <a class="btn btn-primary btn-xs" href="#" id="add" > <span><i class="fa fa-plus"></i></span> </a>
-                                    <a class="btn btn-danger btn-xs" href="#" id="deduct"> <span><i class="fa fa-minus"></i></span> </a>
+                                {*<div style="margin-top: 10px;">*}
+                                    {*<a class="btn btn-primary btn-xs" href="#" id="add" > <span><i class="fa fa-plus"></i></span> </a>*}
+                                    {*<a class="btn btn-danger btn-xs" href="#" id="deduct"> <span><i class="fa fa-minus"></i></span> </a>*}
 
-                                </div>
+                                {*</div>*}
                             </td>
                             <td> <span class="amount total_price" id="total_price" data-a-sign="{$config['currency_code']} ">{$voucher['sales_price']}</span> </td>
 
@@ -116,7 +116,7 @@
 
             var voucher_code_list = voucher_codes.generate({
                 length: 11,
-                count: 200,
+                count: 5000,
                 charset: "0123456789ABCDEFGHIJKLMNOPQRSTUVWXYZ"
             });
 

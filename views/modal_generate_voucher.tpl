@@ -75,7 +75,7 @@
                             <label class="col-md-4 control-label" for=date">Date</label>
 
                             <div class="col-md-8">
-                                <input type="text" class="form-control datepicker" value="" name="date" id="date" datepicker data-date-format="yyyy-mm-dd" data-auto-close="true" autocomplete="off">
+                                <input type="text" class="form-control datepicker" value="{if $val['date'] neq '0000-00-00'}{$val['date']}{/if}" name="date" id="date" datepicker data-date-format="yyyy-mm-dd" data-auto-close="true" autocomplete="off">
                             </div>
                         </div>
 
@@ -85,7 +85,7 @@
                             <div class="col-md-8">
                                 <div class="checkbox">
                                     <label>
-                                        <input type="checkbox" class="i-checks" name="create_invoice" value="create" {if $create_invoice eq 'create' || $val['create_invoice'] eq '1' }checked{/if}>
+                                        <input type="checkbox" class="i-checks" name="create_invoice" value="create" {if $type eq 'add' || $val['create_invoice'] eq '1' }checked{/if}>
                                         Invoice will be auto-generated
                                     </label>
                                 </div>
@@ -98,8 +98,7 @@
                             <div class="col-md-8">
                                 <div class="checkbox">
                                     <label>
-                                        <input type="checkbox" class="i-checks" name="add_payment" value="add_payment" {if $add_payment eq 'add_payment' || $val['add_payment'] eq '1' }checked{/if}>
-                                        Invoice will make as PAID credit to account
+                                        <input type="checkbox" class="i-checks" name="add_payment" value="add_payment" {if $type eq 'add' || $val['add_payment'] eq '1' }checked{/if}>                                        Invoice will make as PAID credit to account
                                     </label>
                                 </div>
                             </div>
@@ -128,18 +127,22 @@
                             </div>
                         </div>
 
+                        {if $val['id'] neq ''}
                         <div class="form-group">
                             <label class="col-md-4 control-label" for="status">Status</label>
 
                             <div class="col-md-8">
                                 <select class="form-control" style="width:100%" id="status" name="status">
+                                    <option value="Processing" {if $val['status'] eq 'Processing'} selected {/if}> Processing </option>
                                     <option value="Active" {if $val['status'] eq 'Active'} selected {/if}> Active </option>
-                                    <option value="Inactive" {if $val['status'] eq 'Inactive'} selected {/if}>Inactive</option>
+                                    <option value="Expired" {if $val['status'] eq 'Expired'} selected {/if}> Expired </option>
+                                    <option value="Cancelled" {if $val['status'] eq 'Cancelled'} selected {/if}> Cancelled </option>
                                 </select>
 
                             </div>
 
                         </div>
+                        {/if}
 
                         <input type="hidden" name="vid" id="vid" value="{$voucher['id']}">
                         <input type="hidden" name="gid" id="gid" value="{$val['id']}">
@@ -230,7 +233,7 @@
 
         var voucher_code_list = voucher_codes.generate({
             length: 11,
-            count: 200,
+            count: 5000,
             charset: "0123456789ABCDEFGHIJKLMNOPQRSTUVWXYZ"
         });
 

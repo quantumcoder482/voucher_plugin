@@ -67,9 +67,9 @@
                                 <div class="form-group">
                                     <label class="col-md-2 control-label" for="customer_address">Address</label>
                                     <div class="col-md-10">
-                                        <textarea id="customer_address" name="customer_address" class="form-control" rows="3" disabled>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;{$customer_addr}</textarea>
+                                        <textarea id="customer_address" name="customer_address" class="form-control" rows="3" disabled>{$customer_addr}</textarea>
                                     </div>
-                                    <span class="col-md-offset-3 help-block">&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;Your address is editable from your profile page.</span>
+                                    <span class="col-md-offset-2" style="padding-left: 30px">Your address is editable from your profile page.</span>
                                 </div>
                                 {/if}
 
@@ -222,7 +222,8 @@
                                         <select class="form-control" id="status" name="status" {if $type eq 'view'}disabled{/if}>
                                             <option value="Redeem" {if $transaction_data['status'] eq 'Redeem'}selected{/if}>Redeem</option>
                                             <option value="Processing" {if $transaction_data['status'] eq 'Processing'}selected{/if}>Processing</option>
-                                            <option value="Confirm" {if $transaction_data['status'] eq 'Confirm'}selected{/if}>Confirm</option>
+                                            <option value="Confirmed" {if $transaction_data['status'] eq 'Confirmed'}selected{/if}>Confirmed</option>
+                                            <option value="Cancelled" {if $transaction_data['status'] eq 'Cancelled'}selected{/if}>Cancelled</option>
                                         </select>
                                     </div>
                                 </div>

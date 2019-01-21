@@ -30,13 +30,6 @@
                             </div>
                         </div>
 
-                        <div class="form-group">
-                            <label class="col-md-3 control-label" for="voucher_pgnum">PDF Page No. <small class="red">*</small></label>
-
-                            <div class="col-md-9">
-                                <input class="form-control" type="text" id="voucher_pgnum" name="voucher_pgnum" value="" placeholder="Enter Page Number">
-                            </div>
-                        </div>
 
                         <div class="form-group">
                             <label class="col-md-3 control-label" for="description">Description</label>
@@ -108,10 +101,9 @@
 
         </div>
         <div class="col-lg-8">
-
             <div class="panel">
                 <div class="panel-body">
-
+                    <div class="col-md-6"></div>
                     <form class="form-horizontal" method="post" action="">
                         <div class="form-group">
                             <div class="col-md-12">

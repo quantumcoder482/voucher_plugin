@@ -54,8 +54,10 @@
                                     <label for="status">Status</label>
                                     <select id="status" name="status" class="form-control">
                                         <option value="">{$_L['All']}</option>
-                                        <option value="Confirm">Confirm</option>
-                                        <option value="Pending">Pending</option>
+                                        {*<option value="Redeem">Redeem</option>*}
+                                        <option value="Processing">Processing</option>
+                                        <option value="Confirmed">Confirmed</option>
+                                        <option value="Cancelled">Cancelled</option>
                                     </select>
                                 </div>
 

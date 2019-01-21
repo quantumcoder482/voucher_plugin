@@ -64,9 +64,10 @@
                                     <label for="status">Status</label>
                                     <select id="status" name="status" class="form-control">
                                         <option value="">{$_L['All']}</option>
+                                        <option value="Processing">Processing</option>
                                         <option value="Active">Active</option>
-                                        <option value="Inactive">Inactive</option>
                                         <option value="Expired">Expired</option>
+                                        <option value="Cancelled">Cancelled</option>
                                     </select>
                                 </div>
 

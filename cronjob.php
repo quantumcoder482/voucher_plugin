@@ -97,8 +97,16 @@ if($setting['set_status_manually'] != '1'){
             $message->set('client_email', $v['email']);
             $message->set('voucher_category', $v['category_name']);
             $message->set('voucher_number', $v['prefix'].$v['serial_number']);
-            $message->set('date_activated',date($config['df'], strtotime($v['date'])));
-            $message->set('date_expire', date($config['df'], strtotime($v['expiry_date'])));
+            if($v['date'] == '0000-00-00' || $v['date'] == ''){
+                $message->set('date_activated','-');
+            }else{
+                $message->set('date_activated',date($config['df'], strtotime($v['date'])));
+            }
+            if($v['expiry_date'] == '0000-00-00' || $v['expiry_date'] == ''){
+                $message->set('date_expire', '-');
+            }else{
+                $message->set('date_expire', date($config['df'], strtotime($v['expiry_date'])));
+            }
             $message->set('invoice_url', U . 'client/iview/' . $v['invoice_id'] . '/token_' . $v['invoice_vtoken']);
             $message->set('invoice_id', $v['invoice_id']);
             $message->set('invoice_due_date', date($config['df'], strtotime($v['invoice_due_date'])));
@@ -175,13 +183,32 @@ if($setting['set_status_manually'] != '1'){
             $message->set('voucher_category', $p['category']);
             $message->set('voucher_number', $p['voucher_number']);
             $message->set('status', $p['voucher_status']);
-            $message->set('date_activated',date($config['df'], strtotime($p['date'])));
-            $message->set('date_expire', date($config['df'], strtotime($p['expiry_date'])));
+            if($p['date'] == '0000-00-00' || $p['date'] == ''){
+                $message->set('date_activated','-');
+            }else{
+                $message->set('date_activated',date($config['df'], strtotime($p['date'])));
+            }
+            if($p['expiry_date'] == '0000-00-00' || $p['expiry_date'] == ''){
+                $message->set('date_expire', '-');
+            }else{
+                $message->set('date_expire', date($config['df'], strtotime($p['expiry_date'])));
+            }
             $message->set('invoice_url', U . 'client/iview/' . $p['invoice_id'] . '/token_' . $p['invoice_vtoken']);
             $message->set('invoice_id', $p['invoice_id']);
             $message->set('invoice_due_date', date($config['df'], strtotime($p['invoice_due_date'])));
             $message->set('invoice_amount', number_format($p['invoice_amount'],2, $config['dec_point'], $config['thousands_sep']));
             $message->set('page_title', $p['page_title']);
+            if($p['departure_date'] == '0000-00-00' || $p['departure_date'] == ''){
+                $message->set('departure_date','-');
+            }else{
+                $message->set('departure_date',date($config['df'], strtotime($p['departure_date'])));
+            }
+            if($p['return_date'] == '0000-00-00' || $p['return_date'] == ''){
+                $message->set('return_date', '-');
+            }else{
+                $message->set('return_date', date($config['df'], strtotime($p['return_date'])));
+            }
+            $message->set('remark', $p['remark']);
             $message->set('product_title', $p['product_name']);
             $message->set('product_quantity', $p['product_quantity']);
             $message->set('product_price', $p['product_price']);

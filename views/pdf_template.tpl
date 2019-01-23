@@ -30,6 +30,13 @@
                             </div>
                         </div>
 
+                        <div class="form-group">
+                            <label class="col-md-3 control-label" for="voucher_pgnum">PDF Page No. <small class="red">*</small></label>
+
+                            <div class="col-md-9">
+                                <input class="form-control" type="text" id="voucher_pgnum" name="voucher_pgnum" value="" placeholder="Enter Page Number">
+                            </div>
+                        </div>
 
                         <div class="form-group">
                             <label class="col-md-3 control-label" for="description">Description</label>

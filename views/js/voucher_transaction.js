@@ -34,6 +34,22 @@ $(document).ready(function() {
 
     var _url = $("#_url").val();
 
+    $.fn.modal.defaults.width = '850px';
+    var $modal = $('#ajax-modal');
+
+
+    var selected = [];
+    var ib_act_hidden = $("#ib_act_hidden");
+    function ib_btn_trigger() {
+        if(selected.length > 0){
+            ib_act_hidden.show(200);
+        }
+        else{
+            ib_act_hidden.hide(200);
+        }
+    }
+
+
     $(".cdelete").click(function (e) {
 
         e.preventDefault();
@@ -150,12 +166,14 @@ $(document).ready(function() {
         ],
         "orderCellsTop": true,
         "columnDefs": [
-            { "orderable": false, "targets":9 }
+            { "orderable": false, "targets":10 }
         ],
-        "order": [[ 0, 'desc' ]],
+        "order": [[ 1, 'desc' ]],
         "scrollX": true,
         "initComplete": function () {
             $ib_data_panel.unblock();
+            listen_change();
+
         }
     } );
 
@@ -186,6 +204,8 @@ $(document).ready(function() {
         ib_dt.ajax.reload(
             function () {
                 $ib_data_panel.unblock();
+                listen_change();
+                $('.i-checks').iCheck('uncheck');
             }
         );
     });
@@ -198,10 +218,11 @@ $(document).ready(function() {
         ib_dt.ajax.reload(
             function () {
                 $ib_data_panel.unblock();
+                listen_change();
+                $('.i-checks').iCheck('uncheck');
             }
         );
     });
-
 
     $ib_data_panel.on('click', '.cdelete', function(e){
 
@@ -216,13 +237,113 @@ $(document).ready(function() {
                     ib_dt.ajax.reload(
                         function () {
                             $ib_data_panel.unblock();
-                            // listen_change();
-                            // $('.i-checks').iCheck('uncheck');
+                            listen_change();
+                            $('.i-checks').iCheck('uncheck');
                         }
                     );
                 });
 
 
+            }
+        });
+
+    });
+
+    $ib_data_panel.on('click', '.cedit', function(e) {
+
+        e.preventDefault();
+        var id = this.id;
+
+        e.preventDefault();
+
+        $('body').modalmanager('loading');
+
+        $modal.load(_url + 'voucher/app/edit_generated_voucher/'+id, '', function () {
+
+            $modal.modal();
+
+        });
+    });
+
+    $modal.on('click', '.generate_modal_submit', function (e) {
+
+        $('#serial_number').prop('disabled', false);
+        $('#total_voucher').prop('disabled', false);
+
+        e.preventDefault();
+
+        $modal.modal('loading');
+
+        $.post(_url + 'voucher/app/post_generate_voucher', $("#mrform").serialize())
+            .done(function (data) {
+                if ($.isNumeric(data)) {
+                    window.location.reload();
+                }
+                else {
+                    $modal.modal('loading');
+                    toastr.error(data);
+                }
+            });
+    });
+
+    function listen_change() {
+
+        var i_checks = $('.i-checks');
+        i_checks.iCheck({
+            checkboxClass: 'icheckbox_square-blue'
+        });
+
+        i_checks.on('ifChanged', function (event) {
+
+            var id = $(this)[0].id;
+
+            var index = $.inArray(id, selected);
+
+            if($(this).iCheck('update')[0].checked){
+
+                if(id == 'd_select_all'){
+
+                    //   ib_dt.rows().select();
+
+                    i_checks.iCheck('check');
+
+                    return;
+                }
+
+                selected.push( id );
+
+                //  $(this).closest('tr').toggleClass('selected');
+
+                ib_btn_trigger();
+
+            }
+            else{
+
+                if(id == 'd_select_all'){
+
+                    i_checks.iCheck('uncheck');
+
+                    return;
+                }
+
+                selected.splice( index, 1 );
+
+                //  $(this).closest('tr').toggleClass('selected');
+
+                ib_btn_trigger();
+
+            }
+
+        });
+    }
+
+    listen_change();
+
+    $("#delete_multiple_vouchers").click(function(e){
+        e.preventDefault();
+        bootbox.confirm(_L['are_you_sure'], function(result) {
+            if(result){
+                $.redirect(_url + "voucher/app/delete_voucher_transactions/",{ ids: selected});
             }
         });
 

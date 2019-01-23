@@ -16,11 +16,11 @@
                     {/if}
                 </h5>
 
-                {if $gid eq ''}
+                {*if $gid eq ''*}
                 <div class="ibox-tools">
                     <a href="{$_url}voucher/app/add_page/{$voucher_id}" class="btn btn-primary btn-xs add_page"><i class="fa fa-plus"></i>Add Page</a>
                 </div>
-                {/if}
+                {*/if*}
 
             </div>
             <div class="ibox-content">

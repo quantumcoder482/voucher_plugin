@@ -73,9 +73,14 @@
                             <div class="row">
                                 <div class="col-md-12">
                                     <div class="table-responsive" id="ib_data_panel">
+                                        <div id="ib_act_hidden" style="display: none;">
+                                            <a href="#" id="delete_multiple_vouchers" class="btn btn-danger"><i class="fa fa-trash"></i> {$_L['Delete']}</a>
+                                            <hr>
+                                        </div>
                                         <table class="table table-bordered table-hover display" id="ib_dt">
                                             <thead>
                                             <tr class="heading">
+                                                <th><input id="d_select_all" type="checkbox" value="" name=""  class="i-checks"/></th>
                                                 <th> # </th>
                                                 <th width="80px">Date</th>
                                                 <th>Serial No.</th>
@@ -87,6 +92,7 @@
                                                 <th class="text-right" style="width: 80px;">Manage</th>
                                             </tr>
                                             <tr class="heading">
+                                                <td></td>
                                                 <td></td>
                                                 <td></td>
                                                 <td><input type="text" id="filter_serialnumber" name="filter_serialnumber" class="form-control"></td>

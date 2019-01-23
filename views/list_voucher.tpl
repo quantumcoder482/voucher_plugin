@@ -93,7 +93,7 @@
 
                             <td class="text-center">
                                 <a href="{$_url}voucher/app/list_voucher_page/{$v['id']}" class="btn btn-primary btn-xs add_page" id="{$v['id']}" data-toggle="tooltip" data-placement="top" title="Add Page">
-                                    + Page
+                                    Pages
                                 </a>
                                 {*{if $v['pay_status'] neq 0 && $v['expired'] neq 1}*}
                                     <a href="#" class="btn btn-xs generate" id="{$v['id']}" style="background-color:#4B0082; border-color:#4B0082; color:#f8f8f8"

@@ -298,14 +298,73 @@
                         </div>
 
                         <div class="form-group">
+                            <div class="col-md-12">
+                                  <textarea id="shortcodes" name="shortcodes" class="form-control" rows="6">{$shortcodes}</textarea>
+
+                            </div>
+                            <div class="col-md-12">
+                                <span>You copy & past this shortcode to us in email template</span>
+                            </div>
+                        </div>
+
+                    </div>
+
+                    <div class="ibox-title">
+                        <h5>
+                            Voucher Template Settings
+                        </h5>
+                    </div>
+
+                    <div  class="ibox-content">
+                        <div class="col-md-7">
+                            <div class="form-group">
+                                <label class="col-md-4 control-label" for="pos_x">Position X </label>
+
+                                <div class="col-md-4">
+                                    <input class="form-control" type="text" id="pos_x" name="pos_x" value="{$setting['pos_x']}" placeholder="Position X">
+                                </div>
+                                <div class="col-md-4">
+                                    &nbsp;&nbsp;(MM)
+                                </div>
+                            </div>
+                            <div class="form-group">
+                                <label class="col-md-4 control-label" for="pos_y">Position Y </label>
+
+                                <div class="col-md-4">
+                                    <input class="form-control" type="text" id="pos_y" name="pos_y" value="{$setting['pos_y']}" placeholder="Position Y">
+                                </div>
+                                <div class="col-md-4">
+                                    &nbsp;&nbsp;(MM)
+                                </div>
+                            </div>
+                        </div>
+                        <div class="col-md-5">
+                            <div class="form-group">
+                                <label class="col-md-6 control-label" for="font_color">Font Color </label>
+
+                                <div class="col-md-6>">
+                                    &nbsp;&nbsp;&nbsp;&nbsp;<input class="form-control color" type="text" id="font_color" name="font_color" value="{$setting['font_color']}">
+                                </div>
+                            </div>
+
+                            <div class="form-group">
+                                <label class="col-md-6 control-label" for="font_size">Font Size </label>
+
+                                <div class="col-md-6">
+                                    <input class="form-control" type="number" id="font_size" name="font_size" value="{$setting['font_size']}">
+                                </div>
+                            </div>
+
+                        </div>
+
+
+                        <div class="form-group">
                             <div class="col-md-offset-10 col-md-2" style="text-align:right">
                                 <button class="btn btn-primary" type="submit" id="submit2"><i class="fa fa-check"></i>{$_L['Submit']}</button>
                             </div>
                         </div>
 
-
                     </div>
-
                 </div>
             </form>
         </div>
@@ -330,6 +389,14 @@
                 minHeight: 200 // pixels
             }
         );
+
+        // $('#shortcodes').redactor(
+        //     {
+        //         toolbar:false,
+        //         contenteditable:false,
+        //         minHeight:130
+        //     }
+        // );
 
         $('#activation_fee').select2({
             theme:"bootstrap"
@@ -415,8 +482,6 @@
                     });
             }
         });
-
-
 
 
         $('#require_agree').change(function() {
@@ -511,7 +576,13 @@
             }
         });
 
-
+        $('#font_color').spectrum({
+            preferredFormat: "hex",
+            showInput: true,
+            showPalette: true,
+            palette: [["#F44336", "#E91E63", "#9C27B0", "#673AB7", "#3F51B5", "#2196F3", "#03A9F4", "#00BCD4", "#009688", "#4CAF50", "#8BC34A", "#CDDC39", "#FFEB3B", "#FFC107", "#FF9800", "#FF5722", "#795548", "#9E9E9E", "#607D8B", "#000000"]],
+            //color: "#2196f3"
+        });
 
         ib_submit1.click(function (e) {
 

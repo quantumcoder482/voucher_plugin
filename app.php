@@ -470,10 +470,10 @@ switch ($action){
         }
         if(!$voucher_pgnum){
             $msg .= 'PDF Page No is required <br>';
-        }elseif(!is_numeric($voucher_pgnum)){
-            $msg = 'PDf Page No is not Integer <br>';
         }
-
+//        elseif(!is_numeric($voucher_pgnum)){
+//            $msg = 'PDf Page No is not Integer <br>';
+//        }
 
         if($msg == ''){
             if($id == ''){
@@ -845,7 +845,9 @@ switch ($action){
         break;
 
     case 'modal_generate_voucher':
+
         Event::trigger('voucher/app/modal_generate_voucher/');
+
         $id = route(3);
         $g_id = route(4);
         $baseUrl = APP_URL;
@@ -1011,6 +1013,30 @@ switch ($action){
                     if($gid == ''){
                         $d = ORM::for_table('voucher_generated')->create();
                         _msglog('s','Voucher Generated Successfully');
+
+                        $voucher_info = ORM::for_table('voucher_format')
+                            ->left_outer_join('voucher_category', array('voucher_category.id', '=', 'voucher_format.category_id'))
+                            ->select_many('voucher_format.*',  'voucher_category.category_name')
+                            ->find_one($id);
+
+//                         Create Auto Invoice
+
+                        $invoice_id = null;
+                        $invoice_url = "";
+                        if($create_invoice == 'create' && $contact_id != ''){
+                            $invoice = Invoice::forSingleItem($contact_id, $voucher_info['category_name'].' '.$prefix.$voucher_numbers[$i-1], $voucher_info['sales_price']);
+                            $invoice_id = $invoice['id'];
+                            $invoice_vtoken = $invoice['vtoken'];
+                            $invoice_url = U.'client/iview/'.$invoice_id.'/token_'.$invoice_vtoken.'/';
+
+                            $invoice_data = ORM::for_table('sys_invoices')->find_one($invoice_id);
+                            $invoice_data->title = $voucher_info['category_name'].' '.$prefix.$voucher_numbers[$i-1];
+                            $invoice_data->save();
+                        }
+
+
+
+
                     }else {
                         $d = ORM::for_table('voucher_generated')
                             ->left_outer_join('crm_accounts', array('crm_accounts.id', '=', 'voucher_generated.contact_id'))
@@ -1043,8 +1069,8 @@ switch ($action){
                                         $e = null;
                                     }
 
-                                    $date = '';
-                                    $expiry_date = '';
+                                    // $date = '';
+                                    // $expiry_date = '';
                                     break;
 
                                 case 'Active':
@@ -1108,8 +1134,8 @@ switch ($action){
                                     }else{
                                         $e = null;
                                     }
-//                                    $date = $d['date']!='0000-00-00'?$d['date']:'';
-//                                    $expiry_date = $d['expiry_date']!='0000-00-00'?$d['expiry_date']:'';
+                                    //   $date = $d['date']!='0000-00-00'?$d['date']:'';
+                                    //   $expiry_date = $d['expiry_date']!='0000-00-00'?$d['expiry_date']:'';
                                     $date = $d['date'];
                                     $expiry_date = $d['expiry_date'];
                                     break;
@@ -1131,11 +1157,23 @@ switch ($action){
                                 $subject->set('client_email', $d['email']);
                                 $subject->set('voucher_category', $d['category']);
                                 $subject->set('voucher_number', $d['prefix'].$d['serial_number']);
-                                $subject->set('date_activated',date($config['df'], strtotime($date)));
-                                $subject->set('date_expire', date($config['df'], strtotime($expiry_date)));
+                                if($date == '0000-00-00' || $date == ''){
+                                    $subject->set('date_activated','-');
+                                }else{
+                                    $subject->set('date_activated',date($config['df'], strtotime($date)));
+                                }
+                                if($expiry_date == '0000-00-00' || $expiry_date == ''){
+                                    $subject->set('date_expire', '-');
+                                }else{
+                                    $subject->set('date_expire', date($config['df'], strtotime($expiry_date)));
+                                }
                                 $subject->set('invoice_url', U . 'client/iview/' . $d['invoice_id'] . '/token_' . $d['invoice_vtoken']);
                                 $subject->set('invoice_id', $d['invoice_id']);
-                                $subject->set('invoice_due_date', date($config['df'], strtotime($d['invoice_due_date'])));
+                                if($d['invoice_due_date'] == '0000-00-00' || $d['invoice_due_date'] == ''){
+                                    $subject->set('invoice_due_date', '-');
+                                }else{
+                                    $subject->set('invoice_due_date', date($config['df'], strtotime($d['invoice_due_date'])));
+                                }
                                 $subject->set('invoice_amount', number_format($d['invoice_amount'],2, $config['dec_point'], $config['thousands_sep']));
                                 $subject->set('status', $d['status']);
                                 $subj = $subject->output();
@@ -1149,11 +1187,23 @@ switch ($action){
                                 $message->set('client_email', $d['email']);
                                 $message->set('voucher_category', $d['category_name']);
                                 $message->set('voucher_number', $d['prefix'].$d['serial_number']);
-                                $message->set('date_activated',date($config['df'], strtotime($date)));
-                                $message->set('date_expire', date($config['df'], strtotime($expiry_date)));
+                                if($date == '0000-00-00' || $date == ''){
+                                    $message->set('date_activated','-');
+                                }else{
+                                    $message->set('date_activated',date($config['df'], strtotime($date)));
+                                }
+                                if($expiry_date == '0000-00-00' || $expiry_date == ''){
+                                    $message->set('date_expire', '-');
+                                }else{
+                                    $message->set('date_expire', date($config['df'], strtotime($expiry_date)));
+                                }
                                 $message->set('invoice_url', U . 'client/iview/' . $d['invoice_id'] . '/token_' . $d['invoice_vtoken']);
                                 $message->set('invoice_id', $d['invoice_id']);
-                                $message->set('invoice_due_date', date($config['df'], strtotime($d['invoice_due_date'])));
+                                if($d['invoice_due_date'] == '0000-00-00' || $d['invoice_due_date'] == ''){
+                                    $message->set('invoice_due_date', '-');
+                                }else{
+                                    $message->set('invoice_due_date', date($config['df'], strtotime($d['invoice_due_date'])));
+                                }
                                 $message->set('invoice_amount', number_format($d['invoice_amount'],2, $config['dec_point'], $config['thousands_sep']));
                                 $message->set('status', $d['status']);
                                 $message_o = $message->output();
@@ -1171,7 +1221,7 @@ switch ($action){
                     $serial_number = $voucher_numbers[$i-1];
                     $voucher_pdf = $serial_number.'.pdf';
 
-                    // insert into database
+                    // Insert into database
 
                     $d->voucher_format_id = $id;
                     $d->contact_id = $contact_id;
@@ -1198,9 +1248,153 @@ switch ($action){
                     $d->status = $status;
                     $d->save();
 
+                    $gen_id = $d->id();
+
+                    // Processing Mail
+
+                    if($gid == '' && $contact_id){
+                        $gd = ORM::for_table('voucher_generated')
+                            ->left_outer_join('crm_accounts', array('crm_accounts.id', '=', 'voucher_generated.contact_id'))
+                            ->left_outer_join('voucher_format', array('voucher_format.id', '=', 'voucher_generated.voucher_format_id'))
+                            ->left_outer_join('sys_invoices', array('sys_invoices.id', '=', 'voucher_generated.invoice_id'))
+                            ->left_outer_join('voucher_category', array('voucher_category.id', '=', 'voucher_format.category_id'))
+                            ->select_many('voucher_generated.*')
+                            ->select('voucher_category.category_name')
+                            ->select_many('crm_accounts.account', 'crm_accounts.email')
+                            ->select('sys_invoices.id', 'invoice_id')
+                            ->select('sys_invoices.total', 'invoice_amount')
+                            ->select('sys_invoices.duedate', 'invoice_due_date')
+                            ->select('sys_invoices.vtoken', 'invoice_vtoken')
+                            ->select('sys_invoices.status', 'invoice_status')
+                            ->find_one($gen_id);
+
+                        if($setting['voucher_status_processing']){
+                            $e = ORM::for_table('sys_email_templates')->find_one($setting['voucher_status_processing']);
+                        }else{
+                            $e = null;
+                        }
+
+
+                        if($e){
+                            $subject = new Template($e['subject']);
+                            $subject->set('contact_name', $gd['account']);
+                            $subject->set('business_name', $config['CompanyName']);
+                            $subject->set('login_url', U.'login/');
+//                                $subject->set('password_reset_link', U.'login/');
+                            $subject->set('client_login_url', U.'client/login');
+                            $subject->set('client_email', $gd['email']);
+                            $subject->set('voucher_category', $gd['category']);
+                            $subject->set('voucher_number', $gd['prefix'].$gd['serial_number']);
+                            if($gd['date'] == '0000-00-00' || $gd['date'] == ''){
+                                $subject->set('date_activated','-');
+                            }else{
+                                $subject->set('date_activated',date($config['df'], strtotime($gd['date'])));
+                            }
+                            if($gd['expiry_date'] == '0000-00-00' || $gd['expiry_date'] == ''){
+                                $subject->set('date_expire', '-');
+                            }else{
+                                $subject->set('date_expire', date($config['df'], strtotime($gd['expiry_date'])));
+                            }
+                            $subject->set('invoice_url', U . 'client/iview/' . $gd['invoice_id'] . '/token_' . $gd['invoice_vtoken']);
+                            $subject->set('invoice_id', $gd['invoice_id']);
+                            $subject->set('invoice_due_date', date($config['df'], strtotime($gd['invoice_due_date'])));
+                            $subject->set('invoice_amount', number_format($gd['invoice_amount'],2, $config['dec_point'], $config['thousands_sep']));
+                            $subject->set('status', $gd['status']);
+                            $subj = $subject->output();
+
+                            $message = new Template($e['message']);
+                            $message->set('contact_name', $gd['account']);
+                            $message->set('business_name', $config['CompanyName']);
+                            $message->set('login_url', U.'login/');
+//                                $message->set('password_reset_link', U.'login/');
+                            $message->set('client_login_url', U.'client/login');
+                            $message->set('client_email', $gd['email']);
+                            $message->set('voucher_category', $gd['category_name']);
+                            $message->set('voucher_number', $gd['prefix'].$gd['serial_number']);
+                            if($gd['date'] == '0000-00-00' || $gd['date'] == ''){
+                                $message->set('date_activated','-');
+                            }else{
+                                $message->set('date_activated',date($config['df'], strtotime($gd['date'])));
+                            }
+                            if($gd['expiry_date'] == '0000-00-00' || $gd['expiry_date'] == ''){
+                                $message->set('date_expire', '-');
+                            }else{
+                                $message->set('date_expire', date($config['df'], strtotime($gd['expiry_date'])));
+                            }
+                            $message->set('invoice_url', U . 'client/iview/' . $gd['invoice_id'] . '/token_' . $gd['invoice_vtoken']);
+                            $message->set('invoice_id', $gd['invoice_id']);
+                            if($gd['invoice_due_date'] == '0000-00-00' || $gd['invoice_due_date'] == ''){
+                                $message->set('invoice_due_date', '-');
+                            }else{
+                                $message->set('invoice_due_date', date($config['df'], strtotime($gd['invoice_due_date'])));
+                            }
+                            $message->set('invoice_amount', number_format($gd['invoice_amount'],2, $config['dec_point'], $config['thousands_sep']));
+                            $message->set('status', $gd['status']);
+                            $message_o = $message->output();
+
+                            Notify_Email::_send($gd['account'], $gd['email'], $subj, $message_o);
+                        }
+
+
+
+                        if($add_payment == 'add_payment'){
+                            $invoice_info = ORM::for_table('sys_invoices')->find_one($invoice_id);
+                            $total_price = $invoice_info['total'];
+                            if ($invoice_info) {
+
+                                // Customer balance chanage
+
+                                $customer_info = ORM::for_table('crm_accounts')->find_one($contact_id);
+                                if ($customer_info) {
+                                    if ($customer_info['balance'] < $total_price) {
+                                        echo "We are verifying your voucher, you with receive an email notification within 24-hours";
+                                        exit;
+                                    }
+                                    $customer_info->balance = $customer_info['balance'] - $total_price;
+                                    $customer_info->save();
+                                }
+
+                                $invoice_info->status = 'Paid';
+                                $invoice_info->credit = $total_price;
+                                $invoice_info->save();
+
+                                // Transaction change
+
+                                $account = 'Credit';
+                                $type = 'Income';
+                                $amount = $total_price;
+                                $payer_id = $contact_id;
+                                $method = 'Credit';
+                                $ref = 'Client Paid with Account Credit';
+                                $des = 'Invoice: ' . $invoice_info->id() . ' Payment from Credit';
+                                $date = date('Y-m-d');
+                                $cr = $total_price;
+                                $iid = $invoice_info->id();
+                                $updated_at = date('Y-m-d H:i:s');
+
+                                $transaction = ORM::for_table('sys_transactions')->create();
+                                $transaction->account = $account;
+                                $transaction->type = $type;
+                                $transaction->amount = $amount;
+                                $transaction->payerid = $payer_id;
+                                $transaction->method = $method;
+                                $transaction->ref = $ref;
+                                $transaction->description = $des;
+                                $transaction->date = $date;
+                                $transaction->cr = $cr;
+                                $transaction->iid = $iid;
+                                $transaction->updated_at = $updated_at;
+                                $transaction->save();
+
+
+                            }
+                        }
+
+                    }
+
                 }
 
-                echo $d->id();
+                echo $gen_id;
             }
 
         } else {
@@ -1515,8 +1709,37 @@ switch ($action){
 
     case 'edit_generated_voucher':
 
-        $id = route(3);
+        $g_id = route(3);
+        $baseUrl = APP_URL;
 
+        $g_id = str_replace('eid', '', $g_id);
+        $val = ORM::for_table('voucher_generated')
+            ->left_outer_join('voucher_format', array('voucher_format.id', '=', 'voucher_generated.voucher_format_id'))
+            ->left_outer_join('voucher_template', array('voucher_template.id', '=', 'voucher_format.template_id'))
+            ->select_many('voucher_generated.*', 'voucher_template.cover_img', 'voucher_template.voucher_template', 'voucher_template.voucher_pgnum')
+            ->find_one($g_id);
+
+        $type = 'edit';
+
+        $voucher = ORM::for_table('voucher_format')
+            ->left_outer_join('voucher_country',array('voucher_country.id','=','voucher_format.country_id'))
+            ->left_outer_join('voucher_category', array('voucher_category.id', '=', 'voucher_format.category_id'))
+            ->select_many('voucher_format.*','voucher_country.country_name', 'voucher_country.prefix', 'voucher_category.category_name')
+            ->order_by_asc('voucher_format.id')
+            ->find_one($val['voucher_format_id']);
+
+        $customers = ORM::for_table('crm_accounts')->where_in('type',array('Customer','Customer,Supplier'))->order_by_asc('account')->find_many();
+        $suppliers = ORM::for_table('crm_accounts')->where_in('type',array('Supplier','Customer,Supplier'))->order_by_asc('account')->find_many();
+
+        view('wrapper_modal',[
+            '_include' => 'modal_generate_voucher',
+            'customers' => $customers,
+            'suppliers' => $suppliers,
+            'val' => $val,
+            'voucher' => $voucher,
+            'baseUrl' => $baseUrl,
+            'type' => $type
+        ]);
 
         break;
 
@@ -1530,6 +1753,20 @@ switch ($action){
             ->select_many('voucher_generated.*', 'voucher_template.cover_img', 'voucher_template.voucher_template', 'voucher_template.voucher_pgnum')
             ->find_one($id);
 
+        // Get Setting Data
+
+        $posx = ORM::for_table('voucher_setting')->where('setting', 'pos_x')->find_one();
+        $posy = ORM::for_table('voucher_setting')->where('setting', 'pos_y')->find_one();
+        $font_color = ORM::for_table('voucher_setting')->where('setting', 'font_color')->find_one();
+        $font_size = ORM::for_table('voucher_setting')->where('setting', 'font_size')->find_one();
+
+        $color_str = str_split(str_replace('#','',$font_color['value']),2);
+        $r = hexdec($color_str[0]);
+        $g = hexdec($color_str[1]);
+        $b = hexdec($color_str[2]);
+
+        $voucher_numbers = explode(',', $voucher_data['voucher_pgnum']);
+
         $template_file = 'apps/voucher/public/template/'.$voucher_data['voucher_template'];
         $newfile = $voucher_data['serial_number'].'.pdf';
 
@@ -1541,17 +1778,27 @@ switch ($action){
             $import_page = $pdf->ImportPage($i);
             $pdf->SetPageTemplate($import_page);
 
-            if($i == 8){
-                $pdf->SetFont('Arial','B',16);
-                $pdf->SetXY(140,109);
-                $pdf->cell(0,0,$voucher_data['prefix'].$voucher_data['serial_number']);
+            foreach ($voucher_numbers as $v){
+                if($i == (int)$v+1){
+                    $pdf->SetTextColor($r,$g,$b);
+                    $pdf->SetFont('Arial','B',$font_size['value']);
+                    $pdf->SetXY((int)$posx['value'],(int)$posy['value']);
+                    $pdf->cell(0,0,$voucher_data['prefix'].$voucher_data['serial_number']);
+                }
             }
 
-            if($i == $voucher_data['voucher_pgnum']+1 ){
-                $pdf->SetFont('Arial','B',16);
-                $pdf->SetXY(109,74);
-                $pdf->cell(0,0,$voucher_data['prefix'].$voucher_data['serial_number']);
-            }
+//            if($i == 8){
+//                $pdf->SetFont('Arial','B',16);
+//                $pdf->SetXY(140,109);
+//                $pdf->cell(0,0,$voucher_data['prefix'].$voucher_data['serial_number']);
+//            }
+//
+//            if($i == $voucher_data['voucher_pgnum']+1 ){
+//                $pdf->SetFont('Arial','B',16);
+//                $pdf->SetXY(109,74);
+//                $pdf->cell(0,0,$voucher_data['prefix'].$voucher_data['serial_number']);
+//            }
+
             $pdf->AddPage();
 
         }
@@ -1577,8 +1824,8 @@ switch ($action){
         $categories = ORM::for_table('voucher_category')->order_by_asc('category_name')->find_array();
 
 
-        $ui->assign('xheader', Asset::css(array('s2/css/select2.min', 'dt/dt', 'fc/fc', 'fc/fc_ibilling', 'daterangepicker/daterangepicker')));
-        $ui->assign('xfooter', Asset::js(array('s2/js/select2.min', 's2/js/i18n/' . lan() , 'dt/dt', 'fc/fc', 'daterangepicker/daterangepicker','numeric')));
+        $ui->assign('xheader', Asset::css(array('modal','s2/css/select2.min', 'dt/dt', 'fc/fc', 'fc/fc_ibilling','redactor/redactor', 'daterangepicker/daterangepicker')));
+        $ui->assign('xfooter', Asset::js(array('modal','s2/js/select2.min', 's2/js/i18n/' . lan() , 'js/redirect','dt/dt', 'fc/fc','redactor/redactor.min', 'daterangepicker/daterangepicker','numeric')));
         $ui->assign('xjq', '
             $(\'.amount\').autoNumeric(\'init\', {
             dGroup: ' . $config['thousand_separator_placement'] . ',
@@ -1609,12 +1856,13 @@ switch ($action){
         //  sleep(5);
 
         $columns = array();
+        $columns[] = '';
         $columns[] = 'id';
         $columns[] = 'date';
         $columns[] = 'customer';
         $columns[] = 'agent';
         $columns[] = 'country_name';
-        $columns[] = 'category';
+        $columns[] = 'category_name';
         $columns[] = 'date';
         $columns[] = 'serialnumber';
         $columns[] = 'status';
@@ -1806,16 +2054,18 @@ switch ($action){
 //            $xs['serialnumber'] = '<a href="'. U .'voucher/app/list_voucher_page/'.$xs['voucher_format_id'].'/'.$xs['id'].'">'.$xs['prefix'].$xs['serialnumber'].'</a>';
 
             $records["data"][] = array(
-                0 => $xs['id'],
-                1 => $xs['date'],
-                2 => $xs['customer'],
-                3 => $xs['agent'],
-                4 => htmlentities($xs['country_name']),
-                5 => htmlentities($xs['category_name']),
-                6 => $xs['expiry_date'],
-                7 => $xs['serialnumber'],
-                8 => $status_str,
-                9 => '<a href="' . U . 'voucher/app/list_voucher_page/' .$xs['voucher_format_id'].'/'.$xs['id']. '" class="btn btn-primary btn-xs"><i class="fa fa-file-text-o"></i></a>'.' '.'<a href="#" class="btn btn-danger btn-xs cdelete" id="'.$xs['id'].'"><i class="fa fa-trash"></i></a>',
+                0 => '<input id="row_'.$xs['id'].'" type="checkbox" value="" name="" class="i-checks"/>',
+                1 => $xs['id'],
+                2 => $xs['date'],
+                3 => $xs['customer'],
+                4 => $xs['agent'],
+                5 => htmlentities($xs['country_name']),
+                6 => htmlentities($xs['category_name']),
+                7 => $xs['expiry_date'],
+                8 => $xs['serialnumber'],
+                9 => $status_str,
+                10 => '<a href="#" class="btn btn-warning btn-xs cedit" id="eid' . $xs['id'] . '"><i class="glyphicon glyphicon-pencil"></i> </a>'.' '.'<a href="' . U . 'voucher/app/list_voucher_page/' .$xs['voucher_format_id'].'/'.$xs['id']. '" class="btn btn-primary btn-xs"><i class="fa fa-file-text-o"></i></a>'.' '.'<a href="#" class="btn btn-danger btn-xs cdelete" id="'.$xs['id'].'"><i class="fa fa-trash"></i></a>',
+                11 => $xs['voucher_format_id']
             );
         }
 
@@ -1842,6 +2092,27 @@ switch ($action){
 
         break;
 
+    case 'delete_voucher_transactions':
+        Event::trigger('voucher/app/delete_voucher_transactions/');
+
+        if(!isset($_POST['ids'])){
+            exit;
+        }
+
+        $ids_raw = $_POST['ids'];
+
+        $ids = array();
+
+        foreach ($ids_raw as $id_single){
+            $id = str_replace('row_','',$id_single);
+            array_push($ids,$id);
+        }
+
+        $contacts = ORM::for_table('voucher_generated')->where_id_in($ids)->delete_many();
+
+        r2(U.'voucher/app/voucher_transaction/','s',$_L['Deleted Successfully']);
+
+        break;
 
 /*
  *  Page Transaction
@@ -1857,8 +2128,8 @@ switch ($action){
         $categories = ORM::for_table('voucher_category')->order_by_asc('category_name')->find_array();
 
 
-        $ui->assign('xheader', Asset::css(array('s2/css/select2.min', 'dt/dt', 'fc/fc', 'fc/fc_ibilling', 'daterangepicker/daterangepicker')));
-        $ui->assign('xfooter', Asset::js(array('s2/js/select2.min', 's2/js/i18n/' . lan() , 'dt/dt', 'fc/fc', 'daterangepicker/daterangepicker','numeric')));
+        $ui->assign('xheader', Asset::css(array('modal','s2/css/select2.min', 'dt/dt', 'fc/fc', 'fc/fc_ibilling', 'daterangepicker/daterangepicker')));
+        $ui->assign('xfooter', Asset::js(array('modal','s2/js/select2.min', 's2/js/i18n/' . lan() , 'js/redirect','dt/dt', 'fc/fc', 'daterangepicker/daterangepicker','numeric')));
         $ui->assign('xjq', '
             $(\'.amount\').autoNumeric(\'init\', {
             dGroup: ' . $config['thousand_separator_placement'] . ',
@@ -1893,11 +2164,12 @@ switch ($action){
         //  sleep(5);
 
         $columns = array();
+        $columns[] = '';
         $columns[] = 'id';
-        $columns[] = 'date';
-        $columns[] = 'serialnumber';
-        $columns[] = 'title';
-        $columns[] = 'customer';
+        $columns[] = 'createdon';
+        $columns[] = 'voucher_number';
+        $columns[] = 'page_title';
+        $columns[] = 'customer_name';
         $columns[] = 'country_name';
         $columns[] = 'category';
         $columns[] = 'status';
@@ -2031,15 +2303,16 @@ switch ($action){
             }
 
             $records["data"][] = array(
-                0 => $xs['id'],
-                1 => date($config['df'], strtotime($xs['createdon'])),
-                2 => $xs['voucher_number'],
-                3 => $xs['page_title'],
-                4 => $xs['customer_name'],
-                5 => htmlentities($xs['country_name']),
-                6 => htmlentities($xs['category']),
-                7 => $status_str,
-                8 => '<a href="'.U.'voucher/app/view_redeem_page/'.$xs['voucher_id'].'/'.$xs['page_id'].'/view/" class="btn btn-primary btn-xs"><i class="fa fa-file-text-o"></i></a>'.' '.'<a href="#" class="btn btn-danger btn-xs cdelete" id="'.$xs['id'].'"><i class="fa fa-trash"></i></a>',
+                0 => '<input id="row_'.$xs['id'].'" type="checkbox" value="" name="" class="i-checks"/>',
+                1 => $xs['id'],
+                2 => date($config['df'], strtotime($xs['createdon'])),
+                3 => $xs['voucher_number'],
+                4 => $xs['page_title'],
+                5 => $xs['customer_name'],
+                6 => htmlentities($xs['country_name']),
+                7 => htmlentities($xs['category']),
+                8 => $status_str,
+                9 => '<a href="'.U.'voucher/app/view_redeem_page/'.$xs['voucher_id'].'/'.$xs['page_id'].'/edit/" class="btn btn-warning btn-xs cedit"><i class="glyphicon glyphicon-pencil"></i></a>'.' '.'<a href="'.U.'voucher/app/view_redeem_page/'.$xs['voucher_id'].'/'.$xs['page_id'].'/view/" class="btn btn-primary btn-xs"><i class="fa fa-file-text-o"></i></a>'.' '.'<a href="#" class="btn btn-danger btn-xs cdelete" id="'.$xs['id'].'"><i class="fa fa-trash"></i></a>',
             );
         }
 
@@ -2066,13 +2339,38 @@ switch ($action){
 
         break;
 
+    case 'delete_page_transactions':
+        Event::trigger('voucher/app/delete_page_transactions/');
 
-/*
- *  Voucher Settings
- */
+        if(!isset($_POST['ids'])){
+            exit;
+        }
+
+        $ids_raw = $_POST['ids'];
+
+        $ids = array();
+
+        foreach ($ids_raw as $id_single){
+            $id = str_replace('row_','',$id_single);
+            array_push($ids,$id);
+        }
+
+        $contacts = ORM::for_table('voucher_page_transaction')->where_id_in($ids)->delete_many();
+
+        r2(U.'voucher/app/voucher_page_transaction/','s',$_L['Deleted Successfully']);
+
+        break;
+
+
+
+    /*
+     *  Voucher Settings
+     */
 
     case 'voucher_setting':
+
         Event::trigger('voucher/app/voucher_setting/');
+
         $setting_data = ORM::for_table('voucher_setting')->find_array();
 
         $mail_templates = ORM::for_table('sys_email_templates')->find_array();
@@ -2085,8 +2383,20 @@ switch ($action){
 
         $products = ORM::for_table('sys_items')->order_by_asc('name')->find_array();
 
-        $ui->assign('xheader', Asset::css(array('modal','dp/dist/datepicker.min','footable/css/footable.core.min','dropzone/dropzone','redactor/redactor','s2/css/select2.min')));
-        $ui->assign('xfooter', Asset::js(array('modal','dp/dist/datepicker.min','footable/js/footable.all.min','dropzone/dropzone','redactor/redactor.min','numeric','s2/js/select2.min',
+        $shortcodes = "{{contact_name}} \t {{business_name}} \t {{login_url}} \t {{client_login_url}} \t {{client_email}} \t {{voucher_category}} \t {{voucher_number}} \t {{date_activated}} \t {{date_expire}} \t {{invoice_url}} \t {{invoice_id}} \t {{invoice_due_date}} \t {{invoice_amount}} \t {{page_title}} \t {{product_title}} \t {{product_quantity}} \t {{product_price}} \t {{sub_product_title}} \t {{sub_product_quantity}} \t {{sub_product_price}} \t {{status}}";
+
+//        $shortcodes = "<pre style='border-width: 0px'>
+//{{contact_name}}         {{business_name}}     {{login_url}}
+//{{client_login_url}}     {{client_email}}      {{voucher_category}}
+//{{voucher_number}}       {{date_activated}}    {{date_expire}}
+//{{invoice_url}}          {{invoice_id}}        {{invoice_due_date}}
+//{{invoice_amount}}       {{page_title}}        {{product_title}}
+//{{product_quantity}}     {{product_price}}     {{sub_product_title}}
+//{{sub_product_quantity}} {{sub_product_price}} {{status}}</pre>";
+
+
+        $ui->assign('xheader', Asset::css(array('spectrum/spectrum','modal','dp/dist/datepicker.min','footable/css/footable.core.min','dropzone/dropzone','redactor/redactor','s2/css/select2.min')));
+        $ui->assign('xfooter', Asset::js(array('spectrum/spectrum','spectrum/i18n/'.$config['language'],'modal','dp/dist/datepicker.min','footable/js/footable.all.min','dropzone/dropzone','redactor/redactor.min','numeric','s2/js/select2.min',
             's2/js/i18n/'.lan(),)));
         $ui->assign('xjq', '
             $(\'.amount\').autoNumeric(\'init\', {
@@ -2107,7 +2417,8 @@ switch ($action){
             '_include' => 'voucher_setting',
             'mail_templates' => $mail_templates,
             'setting' => $setting,
-            'products' => $products
+            'products' => $products,
+            'shortcodes' => $shortcodes
         ]);
 
         break;
@@ -2139,12 +2450,30 @@ switch ($action){
 
     case 'post_alert':
         Event::trigger('voucher/app/post_alert/');
+
         $alert_message = _post('alert_message');
         $d = ORM::for_table('voucher_setting')->where_equal('setting','alert_message')->find_one();
         $d->value = $alert_message;
         $d->save();
 
 
+        $posx = _post('pos_x');
+        $d = ORM::for_table('voucher_setting')->where_equal('setting', 'pos_x')->find_one();
+        $d->value = $posx;
+        $d->save();
+        $posy = _post('pos_y');
+        $d = ORM::for_table('voucher_setting')->where_equal('setting', 'pos_y')->find_one();
+        $d->value = $posy;
+        $d->save();
+
+        $font_color = _post('font_color');
+        $d = ORM::for_table('voucher_setting')->where_equal('setting', 'font_color')->find_one();
+        $d->value = $font_color;
+        $d->save();
+        $font_size = _post('font_size');
+        $d = ORM::for_table('voucher_setting')->where_equal('setting', 'font_size')->find_one();
+        $d->value = $font_size;
+        $d->save();
 
         $voucher_status_processing = _post('voucher_status_processing');
         $voucher_status_active = _post('voucher_status_active');
@@ -2153,8 +2482,6 @@ switch ($action){
         $page_status_processing = _post('page_status_processing');
         $page_status_confirmed = _post('page_status_confirmed');
         $page_status_cancelled = _post('page_status_cancelled');
-
-
 
         $msg = '';
 
@@ -2317,13 +2644,33 @@ switch ($action){
                         $subject->set('voucher_category', $redeem_page['category']);
                         $subject->set('voucher_number', $redeem_page['voucher_number']);
                         $subject->set('status', $redeem_page['voucher_status']);
-                        $subject->set('date_activated',date($config['df'], strtotime($redeem_page['date'])));
-                        $subject->set('date_expire', date($config['df'], strtotime($redeem_page['expiry_date'])));
+                        if($redeem_page['date'] == '0000-00-00' || $redeem_page['date'] == ''){
+                            $subject->set('date_activated','-');
+                        }else{
+                            $subject->set('date_activated',date($config['df'], strtotime($redeem_page['date'])));
+                        }
+                        if($redeem_page['expiry_date'] == '0000-00-00' || $redeem_page['expiry_date'] == ''){
+                            $subject->set('date_expire', '-');
+                        }else{
+                            $subject->set('date_expire', date($config['df'], strtotime($redeem_page['expiry_date'])));
+                        }
+
                         $subject->set('invoice_url', U . 'client/iview/' . $redeem_page['invoice_id'] . '/token_' . $redeem_page['invoice_vtoken']);
                         $subject->set('invoice_id', $redeem_page['invoice_id']);
                         $subject->set('invoice_due_date', date($config['df'], strtotime($redeem_page['invoice_due_date'])));
                         $subject->set('invoice_amount', number_format($redeem_page['invoice_amount'],2, $config['dec_point'], $config['thousands_sep']));
                         $subject->set('page_title', $redeem_page['page_title']);
+                        if($redeem_page['departure_date'] == '0000-00-00' || $redeem_page['departure_date'] == ''){
+                            $subject->set('departure_date','-');
+                        }else{
+                            $subject->set('departure_date',date($config['df'], strtotime($redeem_page['departure_date'])));
+                        }
+                        if($redeem_page['return_date'] == '0000-00-00' || $redeem_page['return_date'] == ''){
+                            $subject->set('return_date', '-');
+                        }else{
+                            $subject->set('return_date', date($config['df'], strtotime($redeem_page['return_date'])));
+                        }
+                        $subject->set('remark', $redeem_page['remark']);
                         $subject->set('product_title', $redeem_page['product_name']);
                         $subject->set('product_quantity', $redeem_page['product_quantity']);
                         $subject->set('product_price', $redeem_page['product_price']);
@@ -2342,13 +2689,32 @@ switch ($action){
                         $message->set('voucher_category', $redeem_page['category']);
                         $message->set('voucher_number', $redeem_page['voucher_number']);
                         $message->set('status', $redeem_page['voucher_status']);
-                        $message->set('date_activated',date($config['df'], strtotime($redeem_page['date'])));
-                        $message->set('date_expire', date($config['df'], strtotime($redeem_page['expiry_date'])));
+                        if($redeem_page['date'] == '0000-00-00' || $redeem_page['date'] == ''){
+                            $subject->set('date_activated','-');
+                        }else{
+                            $subject->set('date_activated',date($config['df'], strtotime($redeem_page['date'])));
+                        }
+                        if($redeem_page['expiry_date'] == '0000-00-00' || $redeem_page['expiry_date'] == ''){
+                            $subject->set('date_expire', '-');
+                        }else{
+                            $subject->set('date_expire', date($config['df'], strtotime($redeem_page['expiry_date'])));
+                        }
                         $message->set('invoice_url', U . 'client/iview/' . $redeem_page['invoice_id'] . '/token_' . $redeem_page['invoice_vtoken']);
                         $message->set('invoice_id', $redeem_page['invoice_id']);
                         $message->set('invoice_due_date', date($config['df'], strtotime($redeem_page['invoice_due_date'])));
                         $message->set('invoice_amount', number_format($redeem_page['invoice_amount'],2, $config['dec_point'], $config['thousands_sep']));
                         $message->set('page_title', $redeem_page['page_title']);
+                        if($redeem_page['departure_date'] == '0000-00-00' || $redeem_page['departure_date'] == ''){
+                            $message->set('departure_date','-');
+                        }else{
+                            $message->set('departure_date',date($config['df'], strtotime($redeem_page['departure_date'])));
+                        }
+                        if($redeem_page['return_date'] == '0000-00-00' || $redeem_page['return_date'] == ''){
+                            $message->set('return_date', '-');
+                        }else{
+                            $message->set('return_date', date($config['df'], strtotime($redeem_page['return_date'])));
+                        }
+                        $message->set('remark', $redeem_page['remark']);
                         $message->set('product_title', $redeem_page['product_name']);
                         $message->set('product_quantity', $redeem_page['product_quantity']);
                         $message->set('product_price', $redeem_page['product_price']);
@@ -3134,13 +3500,32 @@ switch ($action){
                                         $subject->set('voucher_category', $d['category']);
                                         $subject->set('voucher_number', $d['voucher_number']);
                                         $subject->set('status', $d['voucher_status']);
-                                        $subject->set('date_activated',date($config['df'], strtotime($d['date'])));
-                                        $subject->set('date_expire', date($config['df'], strtotime($d['expiry_date'])));
+                                        if($d['date'] == '0000-00-00' || $d['date'] == ''){
+                                            $subject->set('date_activated','-');
+                                        }else{
+                                            $subject->set('date_activated',date($config['df'], strtotime($d['date'])));
+                                        }
+                                        if($d['expiry_date'] == '0000-00-00' || $d['expiry_date'] == ''){
+                                            $subject->set('date_expire', '-');
+                                        }else{
+                                            $subject->set('date_expire', date($config['df'], strtotime($d['expiry_date'])));
+                                        }
                                         $subject->set('invoice_url', U . 'client/iview/' . $d['invoice_id'] . '/token_' . $d['invoice_vtoken']);
                                         $subject->set('invoice_id', $d['invoice_id']);
                                         $subject->set('invoice_due_date', date($config['df'], strtotime($d['invoice_due_date'])));
                                         $subject->set('invoice_amount', number_format($d['invoice_amount'],2, $config['dec_point'], $config['thousands_sep']));
                                         $subject->set('page_title', $d['page_title']);
+                                        if($d['departure_date'] == '0000-00-00' || $d['departure_date'] == ''){
+                                            $subject->set('departure_date','-');
+                                        }else{
+                                            $subject->set('departure_date',date($config['df'], strtotime($d['departure_date'])));
+                                        }
+                                        if($d['return_date'] == '0000-00-00' || $d['return_date'] == ''){
+                                            $subject->set('return_date', '-');
+                                        }else{
+                                            $subject->set('return_date', date($config['df'], strtotime($d['return_date'])));
+                                        }
+                                        $subject->set('remark', $d['remark']);
                                         $subject->set('product_title', $d['product_name']);
                                         $subject->set('product_quantity', $d['product_quantity']);
                                         $subject->set('product_price', $d['product_price']);
@@ -3159,13 +3544,32 @@ switch ($action){
                                         $message->set('voucher_category', $d['category']);
                                         $message->set('voucher_number', $d['voucher_number']);
                                         $message->set('status', $d['voucher_status']);
-                                        $message->set('date_activated',date($config['df'], strtotime($d['date'])));
-                                        $message->set('date_expire', date($config['df'], strtotime($d['expiry_date'])));
+                                        if($d['date'] == '0000-00-00' || $d['date'] == ''){
+                                            $message->set('date_activated','-');
+                                        }else{
+                                            $message->set('date_activated',date($config['df'], strtotime($d['date'])));
+                                        }
+                                        if($d['expiry_date'] == '0000-00-00' || $d['expiry_date'] == ''){
+                                            $message->set('date_expire', '-');
+                                        }else{
+                                            $message->set('date_expire', date($config['df'], strtotime($d['expiry_date'])));
+                                        }
                                         $message->set('invoice_url', U . 'client/iview/' . $d['invoice_id'] . '/token_' . $d['invoice_vtoken']);
                                         $message->set('invoice_id', $d['invoice_id']);
                                         $message->set('invoice_due_date', date($config['df'], strtotime($d['invoice_due_date'])));
                                         $message->set('invoice_amount', number_format($d['invoice_amount'],2, $config['dec_point'], $config['thousands_sep']));
                                         $message->set('page_title', $d['page_title']);
+                                        if($d['departure_date'] == '0000-00-00' || $d['departure_date'] == ''){
+                                            $message->set('departure_date','-');
+                                        }else{
+                                            $message->set('departure_date',date($config['df'], strtotime($d['departure_date'])));
+                                        }
+                                        if($d['return_date'] == '0000-00-00' || $d['return_date'] == ''){
+                                            $message->set('return_date', '-');
+                                        }else{
+                                            $message->set('return_date', date($config['df'], strtotime($d['return_date'])));
+                                        }
+                                        $message->set('remark', $d['remark']);
                                         $message->set('product_title', $d['product_name']);
                                         $message->set('product_quantity', $d['product_quantity']);
                                         $message->set('product_price', $d['product_price']);
@@ -3208,13 +3612,32 @@ switch ($action){
                                     $subject->set('voucher_category', $d['category']);
                                     $subject->set('voucher_number', $d['voucher_number']);
                                     $subject->set('status', $d['voucher_status']);
-                                    $subject->set('date_activated',date($config['df'], strtotime($d['date'])));
-                                    $subject->set('date_expire', date($config['df'], strtotime($d['expiry_date'])));
+                                    if($d['date'] == '0000-00-00' || $d['date'] == ''){
+                                        $subject->set('date_activated','-');
+                                    }else{
+                                        $subject->set('date_activated',date($config['df'], strtotime($d['date'])));
+                                    }
+                                    if($d['expiry_date'] == '0000-00-00' || $d['expiry_date'] == ''){
+                                        $subject->set('date_expire', '-');
+                                    }else{
+                                        $subject->set('date_expire', date($config['df'], strtotime($d['expiry_date'])));
+                                    }
                                     $subject->set('invoice_url', U . 'client/iview/' . $d['invoice_id'] . '/token_' . $d['invoice_vtoken']);
                                     $subject->set('invoice_id', $d['invoice_id']);
                                     $subject->set('invoice_due_date', date($config['df'], strtotime($d['invoice_due_date'])));
                                     $subject->set('invoice_amount', number_format($d['invoice_amount'],2, $config['dec_point'], $config['thousands_sep']));
                                     $subject->set('page_title', $d['page_title']);
+                                    if($d['departure_date'] == '0000-00-00' || $d['departure_date'] == ''){
+                                        $subject->set('departure_date','-');
+                                    }else{
+                                        $subject->set('departure_date',date($config['df'], strtotime($d['departure_date'])));
+                                    }
+                                    if($d['return_date'] == '0000-00-00' || $d['return_date'] == ''){
+                                        $subject->set('return_date', '-');
+                                    }else{
+                                        $subject->set('return_date', date($config['df'], strtotime($d['return_date'])));
+                                    }
+                                    $subject->set('remark', $d['remark']);
                                     $subject->set('product_title', $d['product_name']);
                                     $subject->set('product_quantity', $d['product_quantity']);
                                     $subject->set('product_price', $d['product_price']);
@@ -3233,13 +3656,32 @@ switch ($action){
                                     $message->set('voucher_category', $d['category']);
                                     $message->set('voucher_number', $d['voucher_number']);
                                     $message->set('status', $d['voucher_status']);
-                                    $message->set('date_activated',date($config['df'], strtotime($d['date'])));
-                                    $message->set('date_expire', date($config['df'], strtotime($d['expiry_date'])));
+                                    if($d['date'] == '0000-00-00' || $d['date'] == ''){
+                                        $message->set('date_activated','-');
+                                    }else{
+                                        $message->set('date_activated',date($config['df'], strtotime($d['date'])));
+                                    }
+                                    if($d['expiry_date'] == '0000-00-00' || $d['expiry_date'] == ''){
+                                        $message->set('date_expire', '-');
+                                    }else{
+                                        $message->set('date_expire', date($config['df'], strtotime($d['expiry_date'])));
+                                    }
                                     $message->set('invoice_url', U . 'client/iview/' . $d['invoice_id'] . '/token_' . $d['invoice_vtoken']);
                                     $message->set('invoice_id', $d['invoice_id']);
                                     $message->set('invoice_due_date', date($config['df'], strtotime($d['invoice_due_date'])));
                                     $message->set('invoice_amount', number_format($d['invoice_amount'],2, $config['dec_point'], $config['thousands_sep']));
                                     $message->set('page_title', $d['page_title']);
+                                    if($d['departure_date'] == '0000-00-00' || $d['departure_date'] == ''){
+                                        $message->set('departure_date','-');
+                                    }else{
+                                        $message->set('departure_date',date($config['df'], strtotime($d['departure_date'])));
+                                    }
+                                    if($d['return_date'] == '0000-00-00' || $d['return_date'] == ''){
+                                        $message->set('return_date', '-');
+                                    }else{
+                                        $message->set('return_date', date($config['df'], strtotime($d['return_date'])));
+                                    }
+                                    $message->set('remark', $d['remark']);
                                     $message->set('product_title', $d['product_name']);
                                     $message->set('product_quantity', $d['product_quantity']);
                                     $message->set('product_price', $d['product_price']);
@@ -3399,13 +3841,32 @@ switch ($action){
                 $subject->set('voucher_category', $pd['category']);
                 $subject->set('voucher_number', $pd['voucher_number']);
                 $subject->set('status', $pd['voucher_status']);
-                $subject->set('date_activated',date($config['df'], strtotime($pd['date'])));
-                $subject->set('date_expire', date($config['df'], strtotime($pd['expiry_date'])));
+                if($pd['date'] == '0000-00-00' || $pd['date'] == ''){
+                    $subject->set('date_activated','-');
+                }else{
+                    $subject->set('date_activated',date($config['df'], strtotime($pd['date'])));
+                }
+                if($pd['expiry_date'] == '0000-00-00' || $pd['expiry_date'] == ''){
+                    $subject->set('date_expire', '-');
+                }else{
+                    $subject->set('date_expire', date($config['df'], strtotime($pd['expiry_date'])));
+                }
                 $subject->set('invoice_url', U . 'client/iview/' . $pd['invoice_id'] . '/token_' . $pd['invoice_vtoken']);
                 $subject->set('invoice_id', $pd['invoice_id']);
                 $subject->set('invoice_due_date', date($config['df'], strtotime($pd['invoice_due_date'])));
                 $subject->set('invoice_amount', number_format($pd['invoice_amount'],2, $config['dec_point'], $config['thousands_sep']));
                 $subject->set('page_title', $pd['page_title']);
+                if($pd['departure_date'] == '0000-00-00' || $pd['departure_date'] == ''){
+                    $subject->set('departure_date','-');
+                }else{
+                    $subject->set('departure_date',date($config['df'], strtotime($pd['departure_date'])));
+                }
+                if($pd['return_date'] == '0000-00-00' || $pd['return_date'] == ''){
+                    $subject->set('return_date', '-');
+                }else{
+                    $subject->set('return_date', date($config['df'], strtotime($pd['return_date'])));
+                }
+                $subject->set('remark', $pd['remark']);
                 $subject->set('product_title', $pd['product_name']);
                 $subject->set('product_quantity', $pd['product_quantity']);
                 $subject->set('product_price', $pd['product_price']);
@@ -3424,13 +3885,32 @@ switch ($action){
                 $message->set('voucher_category', $pd['category']);
                 $message->set('voucher_number', $pd['voucher_number']);
                 $message->set('status', $pd['voucher_status']);
-                $message->set('date_activated',date($config['df'], strtotime($pd['date'])));
-                $message->set('date_expire', date($config['df'], strtotime($pd['expiry_date'])));
+                if($pd['date'] == '0000-00-00' || $pd['date'] == ''){
+                    $message->set('date_activated','-');
+                }else{
+                    $message->set('date_activated',date($config['df'], strtotime($pd['date'])));
+                }
+                if($pd['expiry_date'] == '0000-00-00' || $pd['expiry_date'] == ''){
+                    $message->set('date_expire', '-');
+                }else{
+                    $message->set('date_expire', date($config['df'], strtotime($pd['expiry_date'])));
+                }
                 $message->set('invoice_url', U . 'client/iview/' . $pd['invoice_id'] . '/token_' . $pd['invoice_vtoken']);
                 $message->set('invoice_id', $pd['invoice_id']);
                 $message->set('invoice_due_date', date($config['df'], strtotime($pd['invoice_due_date'])));
                 $message->set('invoice_amount', number_format($pd['invoice_amount'],2, $config['dec_point'], $config['thousands_sep']));
                 $message->set('page_title', $pd['page_title']);
+                if($pd['departure_date'] == '0000-00-00' || $pd['departure_date'] == ''){
+                    $message->set('departure_date','-');
+                }else{
+                    $message->set('departure_date',date($config['df'], strtotime($pd['departure_date'])));
+                }
+                if($pd['return_date'] == '0000-00-00' || $pd['return_date'] == ''){
+                    $message->set('return_date', '-');
+                }else{
+                    $message->set('return_date', date($config['df'], strtotime($pd['return_date'])));
+                }
+                $message->set('remark', $pd['remark']);
                 $message->set('product_title', $pd['product_name']);
                 $message->set('product_quantity', $pd['product_quantity']);
                 $message->set('product_price', $pd['product_price']);

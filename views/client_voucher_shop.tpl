@@ -41,7 +41,7 @@
                             {if $v['id'] eq $voucher_id}
                                 <a href="#"><img src="{$baseUrl}/apps/voucher/public/voucher_imgs/{$v['voucher_img']}" id="vid{$v['id']}" class="voucher_format" style="border:1px solid darkgray" width="100%" ></a>
                                 <div style="text-align: center; margin-top: 10px">
-                                    <span class="amount" style="color:dimgray; text-decoration: line-through">{$v['cost_price']}</span>
+                                    <span class="amount" style="color:dimgray; text-decoration: line-through">{if $v['cost_price'] neq 0}{$v['cost_price']}{/if}</span>
                                     &nbsp;&nbsp;
                                     <span class="amount" style="color:black">{$v['sales_price']}</span>
                                 </div>

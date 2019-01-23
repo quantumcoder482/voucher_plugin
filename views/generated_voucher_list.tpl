@@ -4,16 +4,16 @@
 {/block}
 {block name="content"}
     <div class="row">
-        {*<div class="col-md-12">*}
-            {*<div class="panel panel-default">*}
+        <div class="col-md-12">
+            <div class="panel panel-default">
 
-                {*<div class="panel-body" style="text-align: right">*}
+                <div class="panel-body" style="text-align: right">
 
-                    {*<a href="{$_url}contacts/add/" class="btn btn-primary"><i class="fa fa-plus"></i> Add Page</a>*}
+                    <a href="#" class="btn btn-primary generate" style="background-color:#4B0082; border-color:#4B0082; color:#f8f8f8">Generate Serial No.</a>
 
-                {*</div>*}
-            {*</div>*}
-        {*</div>*}
+                </div>
+            </div>
+        </div>
 
         <div class="col-md-12">
             <div class="panel panel-default">
@@ -370,6 +370,24 @@
 
                 });
             });
+
+            $('.generate').click(function (e) {
+                e.preventDefault();
+
+                var vid = $('#vid').val();
+
+                e.preventDefault();
+
+                $('body').modalmanager('loading');
+
+                $modal.load(_url + 'voucher/app/modal_generate_voucher/'+vid, '', function () {
+
+                    $modal.modal();
+
+                });
+            });
+
+
 
 
             function listen_change() {

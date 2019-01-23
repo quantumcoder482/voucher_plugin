@@ -96,6 +96,7 @@
                         <th>Serial No.</th>
                         <th>Redeem(Balance)</th>
                         <th>Status</th>
+                        <th>Manage</th>
                     </tr>
                     </thead>
                     <tbody>
@@ -189,6 +190,9 @@
                                         {$voucher_status[$v['id']]}
                                     </div>
                                 {/if} 
+                            </td>
+                            <td>
+                                <a href="{{$_url}}voucher/client/download_generated_voucher/{$v['id']}" class="btn btn-primary btn-xs" style="background-color: #92278F; border-color:#92278F" id="vid{$v['id']}"><i class="fa fa-file-pdf-o"></i> </a>
                             </td>
                         </tr>
                     {/foreach}

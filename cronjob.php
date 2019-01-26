@@ -1,25 +1,18 @@
 <?php
 // Settings
 
-$set_status_manually = ORM::for_table('voucher_setting')->where('setting', 'set_status_manually')->find_one();
-$voucher_status_processing = ORM::for_table('voucher_setting')->where('setting', 'voucher_status_processing')->find_one();
-$voucher_status_active = ORM::for_table('voucher_setting')->where('setting', 'voucher_status_active')->find_one();
-$voucher_status_expired = ORM::for_table('voucher_setting')->where('setting', 'voucher_status_expired')->find_one();
-$voucher_status_cancelled = ORM::for_table('voucher_setting')->where('setting', 'voucher_status_cancelled')->find_one();
-$page_status_processing = ORM::for_table('voucher_setting')->where('setting', 'page_status_processing')->find_one();
-$page_status_confirmed = ORM::for_table('voucher_setting')->where('setting', 'page_status_confirmed')->find_one();
-$page_status_cancelled = ORM::for_table('voucher_setting')->where('setting', 'page_status_cancelled')->find_one();
+$setting_data = ORM::for_table('voucher_setting')->find_array();
+$setting = array();
 
-$setting = array(
-    'set_status_manually' => $set_status_manually['value'],
-    'voucher_status_processing' => $voucher_status_processing['value'],
-    'voucher_status_active' => $voucher_status_active['value'],
-    'voucher_status_expired' => $voucher_status_expired['value'],
-    'voucher_status_cancelled' => $voucher_status_cancelled['value'],
-    'page_status_processing' => $page_status_processing['value'],
-    'page_status_confirmed' => $page_status_confirmed['value'],
-    'page_status_cancelled' => $page_status_cancelled['value']
-);
+foreach($setting_data as $s){
+    $setting[$s['setting']] = $s['value'];
+}
+
+$admin_data = ORM::for_table('sys_users')
+    ->where('user_type', 'Admin')
+    ->where('status', 'Active')
+    ->where('email_notify', '1')
+    ->find_array();
 
 $today = date('Y-m-d');
 
@@ -115,6 +108,11 @@ if($setting['set_status_manually'] != '1'){
             $message_o = $message->output();
 
             Notify_Email::_send($v['account'], $v['email'], $subj, $message_o);
+            if($setting['admin_notification'] == '1'){
+                foreach ($admin_data as $admin){
+                    Notify_Email::_send($admin['fullname'], $admin['username'], $subj, $message_o);
+                }
+            }
         }
 
     }
@@ -218,6 +216,11 @@ if($setting['set_status_manually'] != '1'){
             $message_o = $message->output();
 
             Notify_Email::_send($p['account'], $p['email'], $subj, $message_o);
+            if($setting['admin_notification'] == '1'){
+                foreach ($admin_data as $admin){
+                    Notify_Email::_send($admin['fullname'], $admin['username'], $subj, $message_o);
+                }
+            }
         }
 
 

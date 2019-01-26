@@ -176,6 +176,21 @@
                             </div>
                         </div>
 
+
+                        <div class="form-group">
+                            <div class="col-md-10">
+                                <span style="text-align:left">Send Notification to Admin</span>
+                                <br>
+                                <span style="text-align:left">Admin will receive Voucher Email Notification & Voucher Page Notification</span>
+                            </div>
+
+                            <div class="col-md-2">
+                                <input type="checkbox" data-toggle="toggle" data-size="small" {if $setting['admin_notification'] eq 1} checked {/if}
+                                       data-on="{$_L['Yes']}" data-off="{$_L['No']}" id="admin_notification">
+
+                            </div>
+                        </div>
+
                         <div class="hr-line-dashed"></div>
 
                         <br>
@@ -569,6 +584,29 @@
             }
             else{
                 $.post( _url+'voucher/app/update_settings', { opt: "show_alert_message", val: "0" })
+                    .done(function( data ) {
+                        $('#ibox_form').unblock();
+                        location.reload();
+                    });
+            }
+        });
+
+        $('#admin_notification').change(function() {
+
+            $('#ibox_form').block({ message: null });
+
+
+            if($(this).prop('checked')){
+
+                $.post( _url+'voucher/app/update_settings/', { opt: "admin_notification", val: "1" })
+                    .done(function( data ) {
+                        $('#ibox_form').unblock();
+                        location.reload();
+                    });
+
+            }
+            else{
+                $.post( _url+'voucher/app/update_settings', { opt: "admin_notification", val: "0" })
                     .done(function( data ) {
                         $('#ibox_form').unblock();
                         location.reload();

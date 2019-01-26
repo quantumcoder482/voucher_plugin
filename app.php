@@ -954,25 +954,19 @@ switch ($action){
 
         // Settings
 
-        $set_status_manually = ORM::for_table('voucher_setting')->where('setting', 'set_status_manually')->find_one();
-        $voucher_status_processing = ORM::for_table('voucher_setting')->where('setting', 'voucher_status_processing')->find_one();
-        $voucher_status_active = ORM::for_table('voucher_setting')->where('setting', 'voucher_status_active')->find_one();
-        $voucher_status_expired = ORM::for_table('voucher_setting')->where('setting', 'voucher_status_expired')->find_one();
-        $voucher_status_cancelled = ORM::for_table('voucher_setting')->where('setting', 'voucher_status_cancelled')->find_one();
-        $page_status_processing = ORM::for_table('voucher_setting')->where('setting', 'page_status_processing')->find_one();
-        $page_status_confirmed = ORM::for_table('voucher_setting')->where('setting', 'page_status_confirmed')->find_one();
-        $page_status_cancelled = ORM::for_table('voucher_setting')->where('setting', 'page_status_cancelled')->find_one();
+        $setting_data = ORM::for_table('voucher_setting')->find_array();
+        $setting = array();
 
-        $setting = array(
-            'set_status_manually' => $set_status_manually['value'],
-            'voucher_status_processing' => $voucher_status_processing['value'],
-            'voucher_status_active' => $voucher_status_active['value'],
-            'voucher_status_expired' => $voucher_status_expired['value'],
-            'voucher_status_cancelled' => $voucher_status_cancelled['value'],
-            'page_status_processing' => $page_status_processing['value'],
-            'page_status_confirmed' => $page_status_confirmed['value'],
-            'page_status_cancelled' => $page_status_cancelled['value']
-        );
+        foreach($setting_data as $s){
+            $setting[$s['setting']] = $s['value'];
+        }
+
+        $admin_data = ORM::for_table('sys_users')
+            ->where('user_type', 'Admin')
+            ->where('status', 'Active')
+            ->where('email_notify', '1')
+            ->find_array();
+
 
 
         if($msg == ''){
@@ -1209,6 +1203,12 @@ switch ($action){
                                 $message_o = $message->output();
 
                                 Notify_Email::_send($d['account'], $d['email'], $subj, $message_o);
+
+                                if($setting['admin_notification'] == '1'){
+                                    foreach ($admin_data as $admin){
+                                        Notify_Email::_send($admin['fullname'], $admin['username'], $subj, $message_o);
+                                    }
+                                }
                             }
 
 
@@ -1333,6 +1333,12 @@ switch ($action){
                             $message_o = $message->output();
 
                             Notify_Email::_send($gd['account'], $gd['email'], $subj, $message_o);
+
+                            if($setting['admin_notification'] == '1'){
+                                foreach ($admin_data as $admin){
+                                    Notify_Email::_send($admin['fullname'], $admin['username'], $subj, $message_o);
+                                }
+                            }
                         }
 
 
@@ -1367,7 +1373,7 @@ switch ($action){
                                 $method = 'Credit';
                                 $ref = 'Client Paid with Account Credit';
                                 $des = 'Invoice: ' . $invoice_info->id() . ' Payment from Credit';
-                                $date = date('Y-m-d');
+                                $t_date = date('Y-m-d');
                                 $cr = $total_price;
                                 $iid = $invoice_info->id();
                                 $updated_at = date('Y-m-d H:i:s');
@@ -1380,7 +1386,7 @@ switch ($action){
                                 $transaction->method = $method;
                                 $transaction->ref = $ref;
                                 $transaction->description = $des;
-                                $transaction->date = $date;
+                                $transaction->date = $t_date;
                                 $transaction->cr = $cr;
                                 $transaction->iid = $iid;
                                 $transaction->updated_at = $updated_at;
@@ -2153,9 +2159,6 @@ switch ($action){
             'customers' => $customers,
             'agents' => $agents
         ]);
-        break;
-
-
 
         break;
 
@@ -2567,26 +2570,18 @@ switch ($action){
 
         // Mail Setting
 
-        $set_status_manually = ORM::for_table('voucher_setting')->where('setting', 'set_status_manually')->find_one();
-        $voucher_status_processing = ORM::for_table('voucher_setting')->where('setting', 'voucher_status_processing')->find_one();
-        $voucher_status_active = ORM::for_table('voucher_setting')->where('setting', 'voucher_status_active')->find_one();
-        $voucher_status_expired = ORM::for_table('voucher_setting')->where('setting', 'voucher_status_expired')->find_one();
-        $voucher_status_cancelled = ORM::for_table('voucher_setting')->where('setting', 'voucher_status_cancelled')->find_one();
-        $page_status_processing = ORM::for_table('voucher_setting')->where('setting', 'page_status_processing')->find_one();
-        $page_status_confirmed = ORM::for_table('voucher_setting')->where('setting', 'page_status_confirmed')->find_one();
-        $page_status_cancelled = ORM::for_table('voucher_setting')->where('setting', 'page_status_cancelled')->find_one();
+        $setting_data = ORM::for_table('voucher_setting')->find_array();
+        $setting = array();
 
-        $setting = array(
-            'set_status_manually' => $set_status_manually['value'],
-            'voucher_status_processing' => $voucher_status_processing['value'],
-            'voucher_status_active' => $voucher_status_active['value'],
-            'voucher_status_expired' => $voucher_status_expired['value'],
-            'voucher_status_cancelled' => $voucher_status_cancelled['value'],
-            'page_status_processing' => $page_status_processing['value'],
-            'page_status_confirmed' => $page_status_confirmed['value'],
-            'page_status_cancelled' => $page_status_cancelled['value']
-        );
+        foreach($setting_data as $s){
+            $setting[$s['setting']] = $s['value'];
+        }
 
+        $admin_data = ORM::for_table('sys_users')
+            ->where('user_type', 'Admin')
+            ->where('status', 'Active')
+            ->where('email_notify', '1')
+            ->find_array();
 
 
         $voucher_pages = ORM::for_table('voucher_pages')->where_equal('voucher_format_id',$vid)->order_by_asc('id')->find_many();
@@ -2724,6 +2719,11 @@ switch ($action){
                         $message_o = $message->output();
 
                         Notify_Email::_send($redeem_page['account'], $redeem_page['email'], $subj, $message_o);
+                        if($setting['admin_notification'] == '1'){
+                            foreach ($admin_data as $admin){
+                                Notify_Email::_send($admin['fullname'], $admin['username'], $subj, $message_o);
+                            }
+                        }
                     }
 
                     $page_status[$v['id']] = 'Confirmed';
@@ -3350,26 +3350,18 @@ switch ($action){
 
 
         // Mail Setting
+        $setting_data = ORM::for_table('voucher_setting')->find_array();
+        $setting = array();
 
-        $set_status_manually = ORM::for_table('voucher_setting')->where('setting', 'set_status_manually')->find_one();
-        $voucher_status_processing = ORM::for_table('voucher_setting')->where('setting', 'voucher_status_processing')->find_one();
-        $voucher_status_active = ORM::for_table('voucher_setting')->where('setting', 'voucher_status_active')->find_one();
-        $voucher_status_expired = ORM::for_table('voucher_setting')->where('setting', 'voucher_status_expired')->find_one();
-        $voucher_status_cancelled = ORM::for_table('voucher_setting')->where('setting', 'voucher_status_cancelled')->find_one();
-        $page_status_processing = ORM::for_table('voucher_setting')->where('setting', 'page_status_processing')->find_one();
-        $page_status_confirmed = ORM::for_table('voucher_setting')->where('setting', 'page_status_confirmed')->find_one();
-        $page_status_cancelled = ORM::for_table('voucher_setting')->where('setting', 'page_status_cancelled')->find_one();
+        foreach($setting_data as $s){
+            $setting[$s['setting']] = $s['value'];
+        }
 
-        $setting = array(
-            'set_status_manually' => $set_status_manually['value'],
-            'voucher_status_processing' => $voucher_status_processing['value'],
-            'voucher_status_active' => $voucher_status_active['value'],
-            'voucher_status_expired' => $voucher_status_expired['value'],
-            'voucher_status_cancelled' => $voucher_status_cancelled['value'],
-            'page_status_processing' => $page_status_processing['value'],
-            'page_status_confirmed' => $page_status_confirmed['value'],
-            'page_status_cancelled' => $page_status_cancelled['value']
-        );
+        $admin_data = ORM::for_table('sys_users')
+            ->where('user_type', 'Admin')
+            ->where('status', 'Active')
+            ->where('email_notify', '1')
+            ->find_array();
 
 
         $page_setting = array();
@@ -3579,6 +3571,12 @@ switch ($action){
                                         $message_o = $message->output();
 
                                         Notify_Email::_send($d['account'], $d['email'], $subj, $message_o);
+
+                                        if($setting['admin_notification'] == '1'){
+                                            foreach ($admin_data as $admin){
+                                                Notify_Email::_send($admin['fullname'], $admin['username'], $subj, $message_o);
+                                            }
+                                        }
                                     }
 
                                 }
@@ -3691,6 +3689,12 @@ switch ($action){
                                     $message_o = $message->output();
 
                                     Notify_Email::_send($d['account'], $d['email'], $subj, $message_o);
+
+                                    if($setting['admin_notification'] == '1'){
+                                        foreach ($admin_data as $admin){
+                                            Notify_Email::_send($admin['fullname'], $admin['username'], $subj, $message_o);
+                                        }
+                                    }
                                 }
 
                             }
@@ -3920,6 +3924,12 @@ switch ($action){
                 $message_o = $message->output();
 
                 Notify_Email::_send($pd['account'], $pd['email'], $subj, $message_o);
+
+                if($setting['admin_notification'] == '1'){
+                    foreach ($admin_data as $admin){
+                        Notify_Email::_send($admin['fullname'], $admin['username'], $subj, $message_o);
+                    }
+                }
             }
 
 

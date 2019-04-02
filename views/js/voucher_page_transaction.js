@@ -85,7 +85,7 @@ $(document).ready(function() {
 
     cb(start, end);
 
-    var ib_dt = $('#ib_dt').DataTable( {
+    var ib_dt = $('#ib_dt').DataTable({
 
         "serverSide": true,
         "ajax": {
@@ -163,8 +163,11 @@ $(document).ready(function() {
         "initComplete": function () {
             $ib_data_panel.unblock();
             listen_change();
+        },
+        "drawCallback": function() {
+            listen_change();
         }
-    } );
+    });
 
     // var init_data = function () {
     //     $.post(_url + "transactions/get_tr_searchdata/", $("#frm_search").serialize())

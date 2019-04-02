@@ -215,7 +215,7 @@
 
             $('[data-toggle="tooltip"]').tooltip();
 
-            var ib_dt = $('#ib_dt').DataTable( {
+            var ib_dt = $('#ib_dt').DataTable({
 
                 "serverSide": true,
                 "ajax": {
@@ -307,10 +307,13 @@
                     //
                     listen_change();
                 },
+                "drawCallback": function() {
+                    listen_change();
+                },
                 select: {
                     info: false
                 }
-            } );
+            });
 
             var $ib_filter = $("#ib_filter");
 

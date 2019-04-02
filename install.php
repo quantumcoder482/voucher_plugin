@@ -21,7 +21,7 @@ $table->add('flag_img','text');
 $table->save();
 
 /*
- *  voucher custome fields
+ *  voucher custom fields
  */
 $table = new Schema('voucher_customfields');
 $table->add('ctype', 'text');

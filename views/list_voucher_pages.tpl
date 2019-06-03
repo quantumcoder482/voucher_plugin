@@ -26,7 +26,7 @@
             <div class="ibox-content">
                 <div class="row">
                     <div class="col-md-4">
-                        <img src="{$baseUrl}/apps/voucher/public/voucher_imgs/{$voucher_img}" width="100%" />
+                        <img src="{$baseUrl}/storage/system/{$voucher_img}" width="100%" />
                         <br>
                         {if $gid neq ''}
                         <div class="ibox-title">
@@ -104,13 +104,13 @@
                                     <td data-value="{$v['front_img']}" alt="voucher front image">
                                         {if $gid neq ''}
                                             <a href="#" class="{if $page_status[$v['id']] neq 'redeem'}view_redeem_page{/if}" id="{$v['id']}">
-                                                <img src="{$baseUrl}/apps/voucher/public/voucher_imgs/{$v['front_img']}" width="40px" />
+                                                <img src="{$baseUrl}/storage/system/{$v['front_img']}" width="40px" />
                                             </a>
                                         {else}
                                             {if {$v['front_img']} eq ''}
                                                 <img src="{$baseUrl}/apps/voucher/views/img/item_placeholder.png" width="40px" />
                                             {else}
-                                                <img src="{$baseUrl}/apps/voucher/public/voucher_imgs/{$v['front_img']}" width="40px" />
+                                                <img src="{$baseUrl}/storage/system/{$v['front_img']}" width="40px" />
                                             {/if}
                                         {/if}
 

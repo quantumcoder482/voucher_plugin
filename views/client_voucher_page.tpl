@@ -17,7 +17,7 @@
             <div class="ibox-content">
                 <div class="row">
                     <div class="col-md-4">
-                        <img src="{$baseUrl}/apps/voucher/public/voucher_imgs/{$voucher_img}" width="100%" />
+                        <img src="{$baseUrl}/storage/system/{$voucher_img}" width="100%" />
                         <br>
 
                             <div class="ibox-title">
@@ -98,9 +98,9 @@
                                             <img src="{$baseUrl}/apps/voucher/views/img/item_placeholder.png" width="40px" />
                                         {else}
                                             {if $page_status[$v['id']] eq 'Confirmed'}
-                                                <a href="#" class="view_page" id="{$t_id[$v['id']]}"><img src="{$baseUrl}/apps/voucher/public/voucher_imgs/{$v['front_img']}" width="40px" /></a>
+                                                <a href="#" class="view_page" id="{$t_id[$v['id']]}"><img src="{$baseUrl}/storage/system/{$v['front_img']}" width="40px" /></a>
                                             {else}
-                                                <img src="{$baseUrl}/apps/voucher/public/voucher_imgs/{$v['front_img']}" width="40px" />
+                                                <img src="{$baseUrl}/storage/system/{$v['front_img']}" width="40px" />
                                             {/if}
                                         {/if}
 

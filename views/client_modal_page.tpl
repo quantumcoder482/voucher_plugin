@@ -13,10 +13,10 @@
 
     <div class="row">
         <div class="col-md-12">
-            <img src="{$baseUrl}/apps/voucher/public/voucher_imgs/{$page_data['front_img']}" style="border:1px solid darkgray" width="650px" >
+            <img src="{$baseUrl}/storage/system/{$page_data['front_img']}" style="border:1px solid darkgray" width="650px" >
         </div>
         <div class="col-md-12">
-            <img src="{$baseUrl}/apps/voucher/public/voucher_imgs/{$page_data['back_img']}" style="border:1px solid darkgray" width="650px" >
+            <img src="{$baseUrl}/storage/system/{$page_data['back_img']}" style="border:1px solid darkgray" width="650px" >
         </div>
     </div> <!-- Row end-->
 

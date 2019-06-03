@@ -20,10 +20,10 @@
                     <div class="row">
                         <div class="col-md-6">
                             <div style="text-align: center">
-                                <img src="{$baseUrl}/apps/voucher/public/voucher_imgs/{$page_setting['front_img']}" width="100%" />
+                                <img src="{$baseUrl}/storage/system/{$page_setting['front_img']}" width="100%" />
                             </div>
                             <div style="text-align: center">
-                                <img src="{$baseUrl}/apps/voucher/public/voucher_imgs/{$page_setting['back_img']}" width="100%" />
+                                <img src="{$baseUrl}/storage/system/{$page_setting['back_img']}" width="100%" />
                             </div>
 
                         </div>

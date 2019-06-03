@@ -19,9 +19,9 @@
                     {foreach $country_list as $c}
                         <div class="col-md-2">
                             {if $c['id'] eq $country_id}
-                                <a href="#"><img src="{$baseUrl}/apps/voucher/public/flags/{$c['flag_img']}" id="cid{$c['id']}" class="country" style="border:1px solid darkgray" width="100%" ></a>
+                                <a href="#"><img src="{$baseUrl}/storage/system/{$c['flag_img']}" id="cid{$c['id']}" class="country" style="border:1px solid darkgray" width="100%" ></a>
                             {else}
-                                <a href="#"><img src="{$baseUrl}/apps/voucher/public/flags/{$c['flag_img']}" id="cid{$c['id']}" class="country" style="border:1px solid darkgray; opacity: 0.2;" width="100%" ></a>
+                                <a href="#"><img src="{$baseUrl}/storage/system/{$c['flag_img']}" id="cid{$c['id']}" class="country" style="border:1px solid darkgray; opacity: 0.2;" width="100%" ></a>
                             {/if}
                         </div>
                     {/foreach}
@@ -39,7 +39,7 @@
                     {foreach $voucher_formats as $v}
                         <div class="col-md-2">
                             {if $v['id'] eq $voucher_id}
-                                <a href="#"><img src="{$baseUrl}/apps/voucher/public/voucher_imgs/{$v['voucher_img']}" id="vid{$v['id']}" class="voucher_format" style="border:1px solid darkgray" width="100%" ></a>
+                                <a href="#"><img src="{$baseUrl}/storage/system/{$v['voucher_img']}" id="vid{$v['id']}" class="voucher_format" style="border:1px solid darkgray" width="100%" ></a>
                                 <div style="text-align: center; margin-top: 10px">
                                     <span class="amount" style="color:dimgray; text-decoration: line-through">{if $v['cost_price'] neq 0}{$v['cost_price']}{/if}</span>
                                     &nbsp;&nbsp;
@@ -49,7 +49,7 @@
                                     <button class="btn btn-primary buy_now" type="submit" id="submit"><i class="fa fa-shopping-cart"></i> Buy Now </button>
                                 </div>
                             {else}
-                                <a href="#"><img src="{$baseUrl}/apps/voucher/public/voucher_imgs/{$v['voucher_img']}" id="vid{$v['id']}" class="voucher_format" style="border:1px solid darkgray; opacity: 0.2" width="100%" ></a>
+                                <a href="#"><img src="{$baseUrl}/storage/system/{$v['voucher_img']}" id="vid{$v['id']}" class="voucher_format" style="border:1px solid darkgray; opacity: 0.2" width="100%" ></a>
                             {/if}
                         </div>
 
@@ -69,7 +69,7 @@
                     <div class="row">
                     {foreach $voucher_pages as $p}
                         <div class="col-md-2">
-                            <a href="#"><img src="{$baseUrl}/apps/voucher/public/voucher_imgs/{$p['front_img']}" id="pid{$p['id']}" class="voucher_page" style="border:1px solid darkgray" width="100%" ></a>
+                            <a href="#"><img src="{$baseUrl}/storage/system/{$p['front_img']}" id="pid{$p['id']}" class="voucher_page" style="border:1px solid darkgray" width="100%" ></a>
                         </div>
                     {/foreach}
                     </div>

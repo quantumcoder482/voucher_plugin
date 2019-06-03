@@ -65,7 +65,7 @@
                                 {if {$v['voucher_img']} eq ''}
                                     <a href="#"><img src="{$baseUrl}/apps/voucher/views/img/item_placeholder.png" width="40px" /></a>
                                 {else}
-                                    <a href="#"><img src="{$baseUrl}/apps/voucher/public/voucher_imgs/{$v['voucher_img']}" width="40px" /></a>
+                                    <a href="#"><img src="{$baseUrl}/storage/system/{$v['voucher_img']}" width="40px" /></a>
                                 {/if}
 
                             </td>

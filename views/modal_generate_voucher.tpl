@@ -159,7 +159,7 @@
                         Voucher Image
                     </div>
                     <div class="ibox-content" id="ibox_form" style="text-align: center;">
-                        <img id="voucher_img" src="{$baseUrl}/apps/voucher/public/voucher_imgs/{$voucher['voucher_img']}" width="100%">
+                        <img id="voucher_img" src="{$baseUrl}/storage/system/{$voucher['voucher_img']}" width="100%">
                     </div>
                 </div>
 

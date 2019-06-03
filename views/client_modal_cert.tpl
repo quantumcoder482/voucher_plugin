@@ -28,7 +28,7 @@
                     <tbody>
                         <tr>
                             <td>
-                                <img class="img-responsive" src="{$baseUrl}/apps/voucher/public/voucher_imgs/{$voucher['voucher_img']}">
+                                <img class="img-responsive" src="{$baseUrl}/storage/system/{$voucher['voucher_img']}">
                             </td>
                             <td>
                                <textarea id="description" name="description" rows="5" style="width: 100%; border-style: none; border-color: Transparent; overflow: auto;outline: none;"></textarea>

@@ -1868,7 +1868,7 @@ switch ($action){
 
         foreach ($x as $xs) {
 
-            $img = '<img src="' . APP_URL . '/apps/voucher/public/voucher_imgs/' . $xs['img'] . '" width="42px" alt="">';
+            $img = '<img src="' . APP_URL . '/storage/system/' . $xs['img'] . '" width="42px" alt="">';
 
             if($xs['contact_name'] == ''){
                 $xs['contact_name'] = '-';
@@ -1964,7 +1964,7 @@ switch ($action){
         $b = hexdec($color_str[2]);
 
         $voucher_numbers = explode(',', $voucher_data['voucher_pgnum']);
-        $template_file = 'apps/voucher/public/template/'.$voucher_data['voucher_template'];
+        $template_file = 'storage/system/'.$voucher_data['voucher_template'];
         $newfile = $voucher_data['serial_number'].'.pdf';
 
         $pdf = new \Mpdf\Mpdf(['format' => [250, 148]]);

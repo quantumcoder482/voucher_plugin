@@ -150,7 +150,7 @@
                                 {*<td data-value="{$country['category']}">{$country['category']}</td>*}
                                 <td data-value="{$country['description']}">{$country['description']}</td>
                                 <td data-value="{$country['flag_img']}">
-                                    <img src="{$baseUrl}/apps/voucher/public/flags/{$country['flag_img']}" style="border:1px solid darkgray"  width="40px" />
+                                    <img src="{$baseUrl}/storage/system/{$country['flag_img']}" style="border:1px solid darkgray"  width="40px" />
                                 </td>
                                 <td class="text-center">
                                     <a href="#" class="btn btn-info btn-xs edit_country" id="{$country['id']}" data-toggle="tooltip" data-placement="top" title="{$_L['Edit']}">

@@ -1570,7 +1570,7 @@ switch ($action){
 
         foreach ($x as $xs) {
 
-            $img = '<img src="' . APP_URL . '/apps/voucher/public/voucher_imgs/' . $xs['img'] . '" width="42px" alt="">';
+            $img = '<img src="' . APP_URL . '/storage/system/' . $xs['img'] . '" width="42px" alt="">';
 
             if($xs['agent_name'] == ''){
                 $xs['agent_name']  =  '-';
@@ -1773,7 +1773,7 @@ switch ($action){
 
         $voucher_numbers = explode(',', $voucher_data['voucher_pgnum']);
 
-        $template_file = 'apps/voucher/public/template/'.$voucher_data['voucher_template'];
+        $template_file = 'storage/system/'.$voucher_data['voucher_template'];
         $newfile = $voucher_data['serial_number'].'.pdf';
 
         $pdf = new \Mpdf\Mpdf(['format' => [250, 148]]);
@@ -3957,7 +3957,7 @@ switch ($action){
 
 
         $uploader   =   new Uploader();
-        $uploader->setDir('apps/voucher/public/flags/');
+        $uploader->setDir('storage/system/');
         $uploader->sameName(false);
         $uploader->setExtensions(array('jpg','jpeg','png','gif'));  //allowed extensions list//
         //$uploader->allowAllFormats();  //allowed extensions list//
@@ -3974,13 +3974,13 @@ switch ($action){
             $image = new Img();
 
             // indicate a source image (a GIF, PNG or JPEG file)
-            $image->source_path = 'apps/voucher/public/flags/'.$file;
+            $image->source_path = 'storage/system/'.$file;
 
             // indicate a target image
             // note that there's no extra property to set in order to specify the target
             // image's type -simply by writing '.jpg' as extension will instruct the script
             // to create a 'jpg' file
-            $image->target_path = 'apps/voucher/public/flags/thumb'.$file;
+            $image->target_path = 'storage/system/thumb'.$file;
 
             // since in this example we're going to have a jpeg file, let's set the output
             // image's quality
@@ -4012,7 +4012,7 @@ switch ($action){
             'success' => $success,
             'msg' =>$msg,
             'file' =>$file,
-            'fullpath' => APP_URL.'/apps/voucher/public/flags/'.$file
+            'fullpath' => APP_URL.'/storage/system/'.$file
         );
 
         header('Content-Type: application/json');
@@ -4027,7 +4027,7 @@ switch ($action){
         }
 
         $uploader   =   new Uploader();
-        $uploader->setDir('apps/voucher/public/voucher_imgs/');
+        $uploader->setDir('storage/system/');
         $uploader->sameName(false);
         $uploader->setExtensions(array('jpg','jpeg','png','gif'));  //allowed extensions list//
         //$uploader->allowAllFormats();  //allowed extensions list//
@@ -4043,13 +4043,13 @@ switch ($action){
             $image = new Img();
 
             // indicate a source image (a GIF, PNG or JPEG file)
-            $image->source_path = 'apps/voucher/public/voucher_imgs/'.$file;
+            $image->source_path = 'storage/system/'.$file;
 
             // indicate a target image
             // note that there's no extra property to set in order to specify the target
             // image's type -simply by writing '.jpg' as extension will instruct the script
             // to create a 'jpg' file
-            $image->target_path = 'apps/voucher/public/voucher_imgs/thumb'.$file;
+            $image->target_path = 'storage/system/thumb'.$file;
 
             // since in this example we're going to have a jpeg file, let's set the output
             // image's quality
@@ -4080,7 +4080,7 @@ switch ($action){
             'success' => $success,
             'msg' =>$msg,
             'file' =>$file,
-            'fullpath' => APP_URL.'/apps/voucher/public/voucher_imgs/'.$file
+            'fullpath' => APP_URL.'/storage/system/'.$file
         );
 
         header('Content-Type: application/json');
@@ -4096,7 +4096,7 @@ switch ($action){
 
 
         $uploader   =   new Uploader();
-        $uploader->setDir('apps/voucher/public/template/');
+        $uploader->setDir('storage/system/');
         $uploader->sameName(false);
         $uploader->setExtensions(array('pdf','doc'));  //allowed extensions list//
         //$uploader->allowAllFormats();  //allowed extensions list//
@@ -4119,7 +4119,7 @@ switch ($action){
             'success' => $success,
             'msg' =>$msg,
             'file' =>$file,
-            'fullpath' => APP_URL.'/apps/voucher/public/template/'.$file
+            'fullpath' => APP_URL.'/storage/system/'.$file
         );
 
         header('Content-Type: application/json');

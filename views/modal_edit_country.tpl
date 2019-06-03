@@ -107,7 +107,7 @@
                     {if $val['flag_img'] eq NULL || $val['flag_img'] eq " "}
                         <img id="view_flag_img" src="" style="border:1px solid darkgray" width="100%">
                     {else}
-                        <img id="view_flag_img" src="{$baseUrl}/apps/voucher/public/flags/{$val['flag_img']}" style="border:1px solid darkgray" width="100%">
+                        <img id="view_flag_img" src="{$baseUrl}/storage/system/{$val['flag_img']}" style="border:1px solid darkgray" width="100%">
                     {/if}
                 </div>
             </div>

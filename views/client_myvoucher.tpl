@@ -126,10 +126,10 @@
                             <td class="text-center" data-value="{$v['voucher_img']}" id="{$v['id']}" >
                                 {if $voucher_status[$v['id']] eq 'Active'}
                                     <a href="{{$_url}}voucher/client/voucher_page/{$v['id']}" class="view_voucherpage">
-                                        <img src="{$baseUrl}/apps/voucher/public/voucher_imgs/{$v['voucher_img']}" width="40px" />
+                                        <img src="{$baseUrl}/storage/system/{$v['voucher_img']}" width="40px" />
                                     </a>
                                 {else}
-                                    <img src="{$baseUrl}/apps/voucher/public/voucher_imgs/{$v['voucher_img']}" width="40px" />
+                                    <img src="{$baseUrl}/storage/system/{$v['voucher_img']}" width="40px" />
                                 {/if}
 
                             </td>

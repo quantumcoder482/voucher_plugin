@@ -74,7 +74,7 @@ $(document).ready(function () {
                console.log(data);
                if(data){
                    $voucher_img.val(data.cover_img);
-                   $("#voucher_image").attr("src",'apps/voucher/public/voucher_imgs/'+data.cover_img);
+                   $("#voucher_image").attr("src",'storage/system/'+data.cover_img);
                }
            });
     });

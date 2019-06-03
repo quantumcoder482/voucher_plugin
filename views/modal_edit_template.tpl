@@ -98,7 +98,7 @@
                     {if $val['cover_img'] eq NULL || $val['cover_img'] eq " "}
                         <img id="view_cover_img" src="" style="border:1px solid darkgray" width="100%">
                     {else}
-                        <img id="view_cover_img" src="{$baseUrl}/apps/voucher/public/voucher_imgs/{$val['cover_img']}" style="border:1px solid darkgray" width="100%">
+                        <img id="view_cover_img" src="{$baseUrl}/storage/system/{$val['cover_img']}" style="border:1px solid darkgray" width="100%">
                     {/if}
                 </div>
             </div>

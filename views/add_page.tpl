@@ -287,7 +287,7 @@
 
                 <div class="ibox-content" id="ibox_form" style="text-align: center;">
                     {if $type neq 'add'}
-                        <img id="voucher_front" src="{$baseUrl}/apps/voucher/public/voucher_imgs/{$val['front_img']}" style="border:1px solid darkgray" width="100%">
+                        <img id="voucher_front" src="{$baseUrl}/storage/system/{$val['front_img']}" style="border:1px solid darkgray" width="100%">
                     {else}
                         <img id="voucher_front" src="" style="border:1px solid darkgray" width="100%">
                     {/if}
@@ -314,7 +314,7 @@
 
                 <div class="ibox-content" id="ibox_form" style="text-align: center;">
                     {if $type neq 'add'}
-                        <img id="voucher_back" src="{$baseUrl}/apps/voucher/public/voucher_imgs/{$val['back_img']}" style="border:1px solid darkgray"  width="100%">
+                        <img id="voucher_back" src="{$baseUrl}/storage/system/{$val['back_img']}" style="border:1px solid darkgray"  width="100%">
                     {else}
                         <img id="voucher_back" src="" style="border:1px solid darkgray" width="100%">
                     {/if}

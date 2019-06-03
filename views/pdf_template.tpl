@@ -144,7 +144,7 @@
                                 <td data-value="{$template['template_name']}">{$template['template_name']}</td>
                                 <td data-value="{$template['description']}">{$template['description']}</td>
                                 <td data-value="{$template['cover_img']}">
-                                    <img src="{$baseUrl}/apps/voucher/public/voucher_imgs/{$template['cover_img']}" style="border:1px solid darkgray"  width="40px" />
+                                    <img src="{$baseUrl}/storage/system/{$template['cover_img']}" style="border:1px solid darkgray"  width="40px" />
                                 </td>
                                 <td class="text-center">
                                     <a href="#" class="btn btn-info btn-xs edit_template" id="{$template['id']}" data-toggle="tooltip" data-placement="top" title="{$_L['Edit']}">

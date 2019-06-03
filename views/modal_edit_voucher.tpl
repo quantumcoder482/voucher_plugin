@@ -132,7 +132,7 @@
                         Voucher Image
                     </div>
                     <div class="ibox-content" id="ibox_form" style="text-align: center;">
-                        <img id="voucher_image" src="{$baseUrl}/apps/voucher/public/voucher_imgs/{$voucher['voucher_img']}" width="100%">
+                        <img id="voucher_image" src="{$baseUrl}/storage/system/{$voucher['voucher_img']}" width="100%">
                     </div>
 
                 </div>
@@ -206,7 +206,7 @@
                     console.log(data);
                     if(data){
                         $voucher_img.val(data.cover_img);
-                        $("#voucher_image").attr("src",'{$app_url}apps/voucher/public/voucher_imgs/'+data.cover_img);
+                        $("#voucher_image").attr("src",'{$app_url}storage/system/'+data.cover_img);
                     }
                 });
         });
